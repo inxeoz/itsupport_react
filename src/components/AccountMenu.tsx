@@ -12,7 +12,6 @@ import { SvgIconComponent } from "@mui/icons-material";
 import PersonAdd from "@mui/icons-material/PersonAdd";
 import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
-import Person from "@mui/icons-material/Person";
 
 interface MenuItemData {
   id: string;
@@ -30,6 +29,7 @@ interface AccountMenuProps {
   items?: MenuItemData[];
   onSelect?: (id: string) => void;
   tooltip?: string;
+  textColor?: string;
 }
 
 const defaultItems: MenuItemData[] = [
