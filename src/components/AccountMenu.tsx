@@ -1,64 +1,103 @@
-import * as React from "react";
-import Avatar from "@mui/material/Avatar";
-import Menu from "@mui/material/Menu";
-import MenuItem from "@mui/material/MenuItem";
-import ListItemIcon from "@mui/material/ListItemIcon";
-import Divider from "@mui/material/Divider";
-import IconButton from "@mui/material/IconButton";
-import Tooltip from "@mui/material/Tooltip";
+import React, { useState } from "react";
+import {
+  Avatar,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  Divider,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import { SvgIconComponent } from "@mui/icons-material";
 import PersonAdd from "@mui/icons-material/PersonAdd";
 import Settings from "@mui/icons-material/Settings";
 import Logout from "@mui/icons-material/Logout";
+import Person from "@mui/icons-material/Person";
 
-export default function AccountMenu() {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+interface MenuItemData {
+  id: string;
+  label: string;
+  icon?: SvgIconComponent;
+  avatar?: boolean;
+  divider?: boolean;
+}
+
+interface AccountMenuProps {
+  avatarText?: string;
+  avatarBg?: string;
+  avatarHover?: string;
+  menuBg?: string;
+  items?: MenuItemData[];
+  onSelect?: (id: string) => void;
+  tooltip?: string;
+}
+
+const defaultItems: MenuItemData[] = [
+  { id: "profile", label: "Profile", avatar: true },
+  { id: "account", label: "My account", avatar: true, divider: true },
+  { id: "add-account", label: "Add another account", icon: PersonAdd },
+  { id: "settings", label: "Settings", icon: Settings },
+  { id: "logout", label: "Logout", icon: Logout },
+];
+
+const AccountMenu: React.FC<AccountMenuProps> = ({
+  avatarText = "M",
+  avatarBg = "#059669",
+  avatarHover = "#047857",
+  menuBg = "#334155",
+  items = defaultItems,
+  onSelect,
+  textColor = "#DDD",
+  tooltip = "Account settings",
+}) => {
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const open = Boolean(anchorEl);
+
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
-  const handleClose = () => {
-    setAnchorEl(null);
+
+  const handleClose = () => setAnchorEl(null);
+
+  const handleSelect = (id: string) => {
+    handleClose();
+    onSelect?.(id);
   };
+
   return (
-    <React.Fragment>
-      <Tooltip title="Account settings">
+    <>
+      <Tooltip title={tooltip}>
         <IconButton
           onClick={handleClick}
           size="small"
           sx={{
             padding: 0,
-            "&:hover": {
-              backgroundColor: "transparent",
-            },
+            "&:hover": { backgroundColor: "transparent" },
           }}
-          aria-controls={open ? "account-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
         >
           <Avatar
             sx={{
               width: 32,
               height: 32,
-              backgroundColor: "#059669", // emerald-600
-              "&:hover": {
-                backgroundColor: "#047857", // emerald-700
-              },
+              backgroundColor: avatarBg,
+              "&:hover": { backgroundColor: avatarHover },
             }}
           >
-            M
+            {avatarText}
           </Avatar>
         </IconButton>
       </Tooltip>
+
       <Menu
         anchorEl={anchorEl}
-        id="account-menu"
         open={open}
         onClose={handleClose}
-        onClick={handleClose}
+        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+        transformOrigin={{ horizontal: "right", vertical: "top" }}
         slotProps={{
           paper: {
-            elevation: 0,
             sx: {
+              backgroundColor: menuBg,
               overflow: "visible",
               filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
               mt: 1.5,
@@ -76,42 +115,33 @@ export default function AccountMenu() {
                 right: 14,
                 width: 10,
                 height: 10,
-                bgcolor: "background.paper",
+                bgcolor: menuBg || "background.paper",
                 transform: "translateY(-50%) rotate(45deg)",
                 zIndex: 0,
               },
             },
           },
         }}
-        transformOrigin={{ horizontal: "right", vertical: "top" }}
-        anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
       >
-        <MenuItem onClick={handleClose}>
-          <Avatar /> Profile
-        </MenuItem>
-        <MenuItem onClick={handleClose}>
-          <Avatar /> My account
-        </MenuItem>
-        <Divider />
-        <MenuItem onClick={handleClose}>
-          <ListItemIcon>
-            <PersonAdd fontSize="small" />
-          </ListItemIcon>
-          Add another account
-        </MenuItem>
-        <MenuItem onClick={handleClose}>
-          <ListItemIcon>
-            <Settings fontSize="small" />
-          </ListItemIcon>
-          Settings
-        </MenuItem>
-        <MenuItem onClick={handleClose}>
-          <ListItemIcon>
-            <Logout fontSize="small" />
-          </ListItemIcon>
-          Logout
-        </MenuItem>
+        {items.map((item, index) => (
+          <React.Fragment key={item.id}>
+            <MenuItem onClick={() => handleSelect(item.id)}>
+              {item.avatar ? (
+                <Avatar />
+              ) : item.icon ? (
+                <ListItemIcon>
+                  <item.icon fontSize="small" />
+                </ListItemIcon>
+              ) : null}
+              {item.label}
+            </MenuItem>
+            {item.divider && index < items.length - 1 && <Divider />}
+          </React.Fragment>
+        ))}
       </Menu>
-    </React.Fragment>
+    </>
   );
-}
+};
+
+export default AccountMenu;
+export type { MenuItemData, AccountMenuProps };
