@@ -1,0 +1,222 @@
+[
+  {
+    "id": 1,
+    "title": "Request for access - new employee",
+    "description": "Hello team, We have a new employee joining our Creative department next Monday. They need access to Adobe Creative Suite, Figma, and our internal design repository. Please set up their accounts and provide temporary credentials.",
+    "agent": null,
+    "status": "reviewed",
+    "priority": "medium",
+    "creationDate": "May 4, 2024",
+    "resolutionDate": null,
+    "tags": ["Reviewed", "Account Access", "New Employee"]
+  },
+  {
+    "id": 2,
+    "title": "Print job issue - Marketing materials won't print",
+    "description": "Our marketing team is trying to print flyers for tomorrow's conference but the color printer keeps jamming. We've tried clearing the paper path but the issue persists.",
+    "agent": "Sarah Johnson",
+    "status": "in-progress",
+    "priority": "high",
+    "creationDate": "Aug 7, 2024",
+    "resolutionDate": null,
+    "tags": ["In Progress", "Hardware", "Printer"]
+  },
+  {
+    "id": 3,
+    "title": "SSO not working after new security audit",
+    "description": "Our entire team is locked out of our SaaS applications after the security team implemented new authentication policies. This is affecting Salesforce, Slack, and our project management tools. Business operations are severely impacted.",
+    "agent": "Mike Chen",
+    "status": "awaiting-customer",
+    "priority": "critical",
+    "creationDate": "Apr 23, 2024",
+    "resolutionDate": null,
+    "tags": ["Awaiting Customer", "Critical", "SSO", "Security"]
+  },
+  {
+    "id": 4,
+    "title": "I need help with my laptop",
+    "description": "Hi team! For some reason I can't restart my laptop. The screen just goes black and nothing happens when I press the power button. I have an important presentation tomorrow morning.",
+    "agent": "Tom Wilson",
+    "status": "resolved",
+    "priority": "low",
+    "creationDate": "Apr 10, 2024",
+    "resolutionDate": "Apr 15, 2024",
+    "tags": ["Resolved", "Hardware", "Laptop"]
+  },
+  {
+    "id": 5,
+    "title": "Network connectivity issues in Conference Room B",
+    "description": "The WiFi in Conference Room B keeps dropping during video calls. This has happened three times this week during important client meetings. Can someone please investigate?",
+    "agent": null,
+    "status": "new",
+    "priority": "high",
+    "creationDate": "Aug 8, 2024",
+    "resolutionDate": null,
+    "tags": ["New", "High", "Network", "WiFi"]
+  },
+  {
+    "id": 6,
+    "title": "Email server down - cannot send/receive emails",
+    "description": "Our email server appears to be down. No one in the office can send or receive emails. This started about 30 minutes ago and is affecting all departments.",
+    "agent": "Lisa Rodriguez",
+    "status": "in-progress",
+    "priority": "critical",
+    "creationDate": "Aug 8, 2024",
+    "resolutionDate": null,
+    "tags": ["In Progress", "Critical", "Email", "Server"]
+  },
+  {
+    "id": 7,
+    "title": "Software license renewal - Adobe Creative Cloud",
+    "description": "Our Adobe Creative Cloud licenses expire next week. We need to renew them for 15 users in the design team. Please coordinate with procurement.",
+    "agent": null,
+    "status": "reviewed",
+    "priority": "medium",
+    "creationDate": "Jul 28, 2024",
+    "resolutionDate": null,
+    "tags": ["Reviewed", "Software License", "Adobe"]
+  },
+  {
+    "id": 8,
+    "title": "VPN connection keeps timing out",
+    "description": "I'm working from home and my VPN connection keeps dropping every 10-15 minutes. I've tried restarting my router and computer but the issue continues. This is preventing me from accessing company resources.",
+    "agent": "David Park",
+    "status": "awaiting-customer",
+    "priority": "medium",
+    "creationDate": "Aug 6, 2024",
+    "resolutionDate": null,
+    "tags": ["Awaiting Customer", "VPN", "Remote Work"]
+  },
+  {
+    "id": 9,
+    "title": "Monitor display issues - flickering screen",
+    "description": "My external monitor has been flickering for the past few days. Sometimes it goes completely black for a few seconds. I've checked the cables but they seem fine.",
+    "agent": null,
+    "status": "new",
+    "priority": "low",
+    "creationDate": "Aug 7, 2024",
+    "resolutionDate": null,
+    "tags": ["New", "Hardware", "Monitor"]
+  },
+  {
+    "id": 10,
+    "title": "Password reset request - urgent",
+    "description": "I forgot my password and the reset link isn't working. I have a client demo in 2 hours and need access to our CRM system immediately. Please help!",
+    "agent": "Sarah Johnson",
+    "status": "resolved",
+    "priority": "high",
+    "creationDate": "Aug 5, 2024",
+    "resolutionDate": "Aug 5, 2024",
+    "tags": ["Resolved", "Password Reset", "Urgent"]
+  },
+  {
+    "id": 11,
+    "title": "Antivirus software blocking legitimate application",
+    "description": "Our new accounting software is being blocked by McAfee antivirus. The finance team cannot complete month-end closing without access to this application. Can you whitelist it?",
+    "agent": "Mike Chen",
+    "status": "in-progress",
+    "priority": "high",
+    "creationDate": "Aug 1, 2024",
+    "resolutionDate": null,
+    "tags": ["In Progress", "Antivirus", "Software", "Finance"]
+  },
+  {
+    "id": 12,
+    "title": "Backup system failure notification",
+    "description": "Received automated alert that last night's backup failed. This is the third failure this month. Please investigate and ensure our data is protected.",
+    "agent": "Tom Wilson",
+    "status": "reviewed",
+    "priority": "critical",
+    "creationDate": "Aug 8, 2024",
+    "resolutionDate": null,
+    "tags": ["Reviewed", "Critical", "Backup", "Data Protection"]
+  },
+  {
+    "id": 13,
+    "title": "Phone system not routing calls correctly",
+    "description": "Calls to our main number are not being transferred to the correct departments. Customers are complaining about being transferred multiple times.",
+    "agent": null,
+    "status": "new",
+    "priority": "medium",
+    "creationDate": "Aug 6, 2024",
+    "resolutionDate": null,
+    "tags": ["New", "Phone System", "Customer Service"]
+  },
+  {
+    "id": 14,
+    "title": "Shared drive permissions issue",
+    "description": "I can't access the Marketing shared drive even though I was added to the team last week. Getting 'Access Denied' error when trying to open folders.",
+    "agent": "Lisa Rodriguez",
+    "status": "awaiting-customer",
+    "priority": "low",
+    "creationDate": "Jul 30, 2024",
+    "resolutionDate": null,
+    "tags": ["Awaiting Customer", "Permissions", "Shared Drive"]
+  },
+  {
+    "id": 15,
+    "title": "Database connection timeout errors",
+    "description": "Our inventory management system is throwing database timeout errors during peak hours. This is slowing down order processing significantly.",
+    "agent": "David Park",
+    "status": "in-progress",
+    "priority": "high",
+    "creationDate": "Aug 3, 2024",
+    "resolutionDate": null,
+    "tags": ["In Progress", "Database", "Performance", "Inventory"]
+  },
+  {
+    "id": 16,
+    "title": "Keyboard keys sticking - replacement needed",
+    "description": "Several keys on my keyboard are sticking, particularly the spacebar and enter key. This is affecting my productivity. Can I get a replacement?",
+    "agent": null,
+    "status": "resolved",
+    "priority": "low",
+    "creationDate": "Jul 25, 2024",
+    "resolutionDate": "Jul 27, 2024",
+    "tags": ["Resolved", "Hardware", "Keyboard"]
+  },
+  {
+    "id": 17,
+    "title": "Mobile device management setup",
+    "description": "New sales team members need their company phones configured with email, calendar, and access to our CRM mobile app. There are 5 devices that need setup.",
+    "agent": "Sarah Johnson",
+    "status": "reviewed",
+    "priority": "medium",
+    "creationDate": "Aug 2, 2024",
+    "resolutionDate": null,
+    "tags": ["Reviewed", "Mobile", "MDM", "Sales Team"]
+  },
+  {
+    "id": 18,
+    "title": "Website loading very slowly",
+    "description": "Our company website is taking 15-20 seconds to load pages. This is affecting customer experience and potentially losing us business. Please investigate server performance.",
+    "agent": "Mike Chen",
+    "status": "in-progress",
+    "priority": "critical",
+    "creationDate": "Aug 7, 2024",
+    "resolutionDate": null,
+    "tags": ["In Progress", "Critical", "Website", "Performance"]
+  },
+  {
+    "id": 19,
+    "title": "Security certificate expired - internal tools",
+    "description": "Getting SSL certificate warnings when accessing our internal project management tool. The certificate appears to have expired yesterday.",
+    "agent": "Tom Wilson",
+    "status": "new",
+    "priority": "medium",
+    "creationDate": "Aug 8, 2024",
+    "resolutionDate": null,
+    "tags": ["New", "SSL Certificate", "Security", "Internal Tools"]
+  },
+  {
+    "id": 20,
+    "title": "Request for software installation - development tools",
+    "description": "New developer needs Visual Studio Code, Git, Node.js, and Docker installed on their workstation. They start next Monday and need everything ready.",
+    "agent": null,
+    "status": "reviewed",
+    "priority": "medium",
+    "creationDate": "Aug 1, 2024",
+    "resolutionDate": null,
+    "tags": ["Reviewed", "Software Installation", "Development", "New Employee"]
+  }
+]

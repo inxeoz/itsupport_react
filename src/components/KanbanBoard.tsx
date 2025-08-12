@@ -4,66 +4,9 @@ import { KanbanColumn } from "./KanbanColumn";
 import { Toolbar } from "./Toolbar";
 import { DragDropContext, DropResult } from "@hello-pangea/dnd";
 import { useState } from "react";
+import data from "./data/ticket.json";
 
-const initialTicketData = [
-  {
-    id: 1,
-    title: "Request for access - new employee",
-    description: "Hello team, We have a new employee joining our Creative ...",
-    agent: null,
-    status: "reviewed",
-    priority: "medium",
-    creationDate: "May 4, 2024",
-    resolutionDate: null,
-    tags: ["Reviewed"],
-  },
-  {
-    id: 2,
-    title: "job issue",
-    description: "",
-    agent: null,
-    status: "reviewed",
-    priority: "high",
-    creationDate: "Aug 7",
-    resolutionDate: null,
-    tags: ["Reviewed"],
-  },
-  {
-    id: 3,
-    title: "SSO not working after new security audit",
-    description:
-      "Our entire team is locked out of our SaaS applications and thinks ...",
-    agent: null,
-    status: "awaiting-customer",
-    priority: "critical",
-    creationDate: "Apr 23, 2024",
-    resolutionDate: null,
-    tags: ["Awaiting customer", "Critical"],
-  },
-  {
-    id: 4,
-    title: "I need help with my laptop",
-    description:
-      "Hi team! So some reason I can't restart my laptop. The screen just ...",
-    agent: null,
-    status: "resolved",
-    priority: "low",
-    creationDate: "Apr 10, 2024",
-    resolutionDate: "Apr 15, 2024",
-    tags: ["Removed"],
-  },
-  {
-    id: 5,
-    title: "rt",
-    description: "Help me pls",
-    agent: null,
-    status: "new",
-    priority: "high",
-    creationDate: "Critical",
-    resolutionDate: null,
-    tags: ["New", "High"],
-  },
-];
+const initialTicketData = data;
 
 const kanbanColumns = [
   {
