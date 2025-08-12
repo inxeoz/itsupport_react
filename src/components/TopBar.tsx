@@ -1,4 +1,4 @@
-import { Plus, Settings, User } from "lucide-react";
+import { Plus, Settings } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
@@ -58,13 +58,13 @@ export function TopBar({ activeTab, onTabChange }: TopBarProps) {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button
+          {/* <Button
             variant="ghost"
             size="sm"
             className="text-slate-300 hover:text-white"
           >
             <Settings className="w-4 h-4" />
-          </Button>
+          </Button> */}
 
           {/* <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-white" />
