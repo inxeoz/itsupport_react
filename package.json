@@ -59,8 +59,14 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
+    "@types/autoprefixer": "^9.7.2",
+    "@types/eslint": "^9.6.1",
+    "@types/eslint-plugin-react-refresh": "^0.4.0",
+    "@types/react": "^18.3.23",
+    "@types/react-day-picker": "^5.2.1",
+    "@types/react-dom": "^18.3.7",
+    "@types/recharts": "^1.8.29",
+    "@types/tailwindcss": "^3.0.11",
     "@typescript-eslint/eslint-plugin": "^8.15.0",
     "@typescript-eslint/parser": "^8.15.0",
     "@vitejs/plugin-react": "^4.3.4",
