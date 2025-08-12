@@ -1,6 +1,8 @@
-import { Plus, Settings, User } from 'lucide-react';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
+import { Plus, Settings, User } from "lucide-react";
+import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
+
+import AccountMenu from "./AccountMenu";
 
 interface TopBarProps {
   activeTab: string;
@@ -9,9 +11,9 @@ interface TopBarProps {
 
 export function TopBar({ activeTab, onTabChange }: TopBarProps) {
   const tabs = [
-    { id: 'main-table', label: 'Main table', icon: '⋯' },
-    { id: 'form', label: 'Form', icon: null },
-    { id: 'kanban', label: 'Kanban', icon: null },
+    { id: "main-table", label: "Main table", icon: "⋯" },
+    { id: "form", label: "Form", icon: null },
+    { id: "kanban", label: "Kanban", icon: null },
   ];
 
   return (
@@ -24,15 +26,15 @@ export function TopBar({ activeTab, onTabChange }: TopBarProps) {
             onClick={() => onTabChange(tab.id)}
             className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 text-sm ${
               activeTab === tab.id
-                ? 'bg-slate-700 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-700'
+                ? "bg-slate-700 text-white"
+                : "text-slate-400 hover:text-white hover:bg-slate-700"
             }`}
           >
             {tab.icon && <span>{tab.icon}</span>}
             {tab.label}
           </button>
         ))}
-        
+
         <Button
           variant="ghost"
           size="sm"
@@ -47,19 +49,28 @@ export function TopBar({ activeTab, onTabChange }: TopBarProps) {
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-medium text-white">MYTICK</h1>
-          <Badge variant="secondary" className="bg-emerald-600 text-white border-none">
+          <Badge
+            variant="secondary"
+            className="bg-emerald-600 text-white border-none"
+          >
             In Portal
           </Badge>
         </div>
-        
+
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="text-slate-300 hover:text-white">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-slate-300 hover:text-white"
+          >
             <Settings className="w-4 h-4" />
           </Button>
-          
-          <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
+
+          {/* <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-white" />
-          </div>
+          </div> */}
+
+          <AccountMenu />
         </div>
       </div>
     </header>

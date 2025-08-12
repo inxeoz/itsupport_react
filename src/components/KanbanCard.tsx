@@ -1,6 +1,6 @@
-import { MessageSquare, Paperclip, MoreHorizontal } from 'lucide-react';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
+import { MessageSquare, Paperclip, MoreHorizontal } from "lucide-react";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
 
 interface Ticket {
   id: number;
@@ -18,28 +18,18 @@ interface KanbanCardProps {
   ticket: Ticket;
 }
 
-const priorityColors = {
-  low: 'bg-gray-500',
-  medium: 'bg-orange-500',
-  high: 'bg-red-500',
-  critical: 'bg-red-600',
-};
-
 const tagColors = {
-  'Reviewed': 'bg-slate-500',
-  'Awaiting customer': 'bg-purple-500',
-  'Critical': 'bg-red-600',
-  'Removed': 'bg-gray-500',
-  'New': 'bg-indigo-500',
-  'High': 'bg-red-500',
+  Reviewed: "bg-slate-500",
+  "Awaiting customer": "bg-purple-500",
+  Critical: "bg-red-600",
+  Removed: "bg-gray-500",
+  New: "bg-indigo-500",
+  High: "bg-red-500",
 };
 
 export function KanbanCard({ ticket }: KanbanCardProps) {
-  const getPriorityColor = (priority: string) => 
-    priorityColors[priority as keyof typeof priorityColors] || 'bg-gray-500';
-  
   const getTagColor = (tag: string) =>
-    tagColors[tag as keyof typeof tagColors] || 'bg-gray-500';
+    tagColors[tag as keyof typeof tagColors] || "bg-gray-500";
 
   return (
     <div className="bg-slate-700 rounded-lg p-3 border border-slate-600 hover:border-slate-500 transition-colors">
@@ -87,7 +77,7 @@ export function KanbanCard({ ticket }: KanbanCardProps) {
             {ticket.creationDate}
           </Badge>
         </div>
-        
+
         <div className="flex items-center gap-1 text-slate-400">
           <Button
             variant="ghost"

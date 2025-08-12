@@ -1,14 +1,5 @@
-import { useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  Plus,
-  Search,
-  Filter,
-  MoreHorizontal,
-} from "lucide-react";
+import { Plus, Search, Filter, MoreHorizontal } from "lucide-react";
 import { Button } from "./ui/button";
-import { Badge } from "./ui/badge";
 import { TicketGroup } from "./TicketGroup";
 import { Toolbar } from "./Toolbar";
 
