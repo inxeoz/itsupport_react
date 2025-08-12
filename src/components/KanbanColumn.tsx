@@ -1,6 +1,7 @@
-import { Plus } from 'lucide-react';
-import { Button } from './ui/button';
-import { KanbanCard } from './KanbanCard';
+import { Plus } from "lucide-react";
+import { Button } from "./ui/button";
+import { KanbanCard } from "./KanbanCard";
+import { Droppable } from "@hello-pangea/dnd";
 
 interface Ticket {
   id: number;
@@ -39,17 +40,28 @@ export function KanbanColumn({ column, tickets }: KanbanColumnProps) {
       </div>
 
       {/* Column Content */}
-      <div className="bg-slate-850 flex-1 border-l border-r border-slate-700 p-2 space-y-3 min-h-96">
-        {tickets.map((ticket) => (
-          <KanbanCard key={ticket.id} ticket={ticket} />
-        ))}
-        
-        {tickets.length === 0 && (
-          <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
-            No tickets
+      <Droppable droppableId={column.id}>
+        {(provided, snapshot) => (
+          <div
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+            className={`bg-slate-850 flex-1 border-l border-r border-slate-700 p-2 space-y-3 min-h-96 transition-colors ${
+              snapshot.isDraggingOver ? "bg-slate-800" : ""
+            }`}
+          >
+            {tickets.map((ticket, index) => (
+              <KanbanCard key={ticket.id} ticket={ticket} index={index} />
+            ))}
+
+            {tickets.length === 0 && (
+              <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
+                No tickets
+              </div>
+            )}
+            {provided.placeholder}
           </div>
         )}
-      </div>
+      </Droppable>
 
       {/* Column Footer */}
       <div className="bg-slate-850 rounded-b-lg border border-t-0 border-slate-700 p-2">

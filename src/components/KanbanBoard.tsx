@@ -2,8 +2,10 @@ import { Plus, Search, Filter, MoreHorizontal } from "lucide-react";
 import { Button } from "./ui/button";
 import { KanbanColumn } from "./KanbanColumn";
 import { Toolbar } from "./Toolbar";
+import { DragDropContext, DropResult } from "@hello-pangea/dnd";
+import { useState } from "react";
 
-const mockTicketData = [
+const initialTicketData = [
   {
     id: 1,
     title: "Request for access - new employee",
@@ -109,8 +111,36 @@ const kanbanColumns = [
 ];
 
 export function KanbanBoard() {
+  const [tickets, setTickets] = useState(initialTicketData);
+
   const getTicketsForColumn = (columnId: string) => {
-    return mockTicketData.filter((ticket) => ticket.status === columnId);
+    return tickets.filter((ticket) => ticket.status === columnId);
+  };
+
+  const onDragEnd = (result: DropResult) => {
+    const { destination, source, draggableId } = result;
+
+    // If there's no destination, do nothing
+    if (!destination) {
+      return;
+    }
+
+    // If the item is dropped in the same position, do nothing
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    ) {
+      return;
+    }
+
+    // Update the ticket's status
+    setTickets((prevTickets) =>
+      prevTickets.map((ticket) =>
+        ticket.id === parseInt(draggableId)
+          ? { ...ticket, status: destination.droppableId }
+          : ticket,
+      ),
+    );
   };
 
   return (
@@ -173,27 +203,29 @@ export function KanbanBoard() {
       />
 
       {/* Kanban Board */}
-      <div className="flex-1 overflow-auto">
-        <div className="flex gap-4 p-4 min-w-max">
-          {kanbanColumns.map((column) => (
-            <KanbanColumn
-              key={column.id}
-              column={column}
-              tickets={getTicketsForColumn(column.id)}
-            />
-          ))}
+      <DragDropContext onDragEnd={onDragEnd}>
+        <div className="flex-1 overflow-auto">
+          <div className="flex gap-4 p-4 min-w-max">
+            {kanbanColumns.map((column) => (
+              <KanbanColumn
+                key={column.id}
+                column={column}
+                tickets={getTicketsForColumn(column.id)}
+              />
+            ))}
 
-          <div className="min-w-80">
-            <Button
-              variant="ghost"
-              className="w-full h-12 border-2 border-dashed border-slate-600 text-slate-400 hover:text-white hover:border-slate-500"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add folder
-            </Button>
+            <div className="min-w-80">
+              <Button
+                variant="ghost"
+                className="w-full h-12 border-2 border-dashed border-slate-600 text-slate-400 hover:text-white hover:border-slate-500"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add folder
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </DragDropContext>
     </div>
   );
 }
