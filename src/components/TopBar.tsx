@@ -1,8 +1,9 @@
-import { Plus, Settings } from "lucide-react";
+// import { Plus } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
 import AccountMenu from "./AccountMenu";
+import AddTab from "./AddTab";
 
 interface TopBarProps {
   activeTab: string;
@@ -35,14 +36,16 @@ export function TopBar({ activeTab, onTabChange }: TopBarProps) {
           </button>
         ))}
 
-        <Button
+        {/* <Button
           variant="ghost"
           size="sm"
           className="text-slate-400 hover:text-white ml-2"
         >
           <Plus className="w-4 h-4 mr-1" />
           Add View
-        </Button>
+        </Button> */}
+
+        <AddTab />
       </div>
 
       {/* Right side - Branding and controls */}
