@@ -164,6 +164,21 @@ export function KanbanBoard() {
     setTickets(prevTickets => [...prevTickets, newTicket]);
   };
 
+  const addTicketToColumn = (columnId: string) => {
+    const newTicket: Ticket = {
+      id: Math.max(...tickets.map(t => t.id)) + 1,
+      title: 'New Ticket',
+      description: 'Enter ticket description...',
+      agent: null,
+      status: columnId,
+      priority: 'medium',
+      creationDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      resolutionDate: null,
+      tags: []
+    };
+    setTickets(prevTickets => [...prevTickets, newTicket]);
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex flex-col h-full">
@@ -212,6 +227,7 @@ export function KanbanBoard() {
                 onUpdateTicket={updateTicket}
                 onDeleteTicket={deleteTicket}
                 onDuplicateTicket={duplicateTicket}
+                onAddTicket={addTicketToColumn}
               />
             ))}
             

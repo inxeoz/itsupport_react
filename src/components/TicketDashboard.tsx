@@ -338,7 +338,7 @@ export function TicketDashboard() {
       <div className="border-b border-border p-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
-            <Button variant="outline" size="sm" className="bg-primary text-[rgba(255,255,255,1)] hover:bg-primary/90">
+            <Button variant="outline" size="sm" className="bg-primary text-white hover:bg-primary">
               <Plus className="w-4 h-4 mr-1" />
               New Board
             </Button>
@@ -380,7 +380,7 @@ export function TicketDashboard() {
       </div>
 
       {/* Table Header - Responsive */}
-      <div className="bg-muted/50 border-b border-border px-4 py-3 overflow-x-auto">
+      <div className="bg-muted border-b border-border px-4 py-3 overflow-x-auto">
         <div className="flex items-center gap-4 text-sm text-muted-foreground min-w-[1500px]">
           <div className="w-10 flex items-center">
             <Checkbox />
@@ -407,7 +407,7 @@ export function TicketDashboard() {
         {groups.map((group) => (
           <div key={group.id} className="border-b border-border group">
             {/* Group Header */}
-            <div className="flex items-center justify-between p-4 hover:bg-accent/50 bg-card">
+            <div className="flex items-center justify-between p-4 hover:bg-accent bg-card">
               <div 
                 className="flex items-center gap-2 cursor-pointer flex-1"
                 onClick={() => toggleGroup(group.id)}
@@ -459,7 +459,7 @@ export function TicketDashboard() {
                 {group.tickets.map((ticket) => (
                   <div
                     key={ticket.id}
-                    className="px-4 py-3 hover:bg-accent/30 border-l-4 border-l-transparent hover:border-l-primary/20 overflow-x-auto group"
+                    className="px-4 py-3 hover:bg-accent border-l-4 border-l-transparent hover:border-l-primary overflow-x-auto group"
                   >
                     <div className="flex items-center gap-4 text-sm min-w-[1500px]">
                       <div className="w-10 flex items-center">

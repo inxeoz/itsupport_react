@@ -1,4 +1,6 @@
 @custom-variant dark (&:is(.dark *));
+@custom-variant blue-theme (&:is(.blue-theme *));
+@custom-variant orange-theme (&:is(.orange-theme *));
 
 :root {
   --font-size: 14px;
@@ -18,8 +20,8 @@
   --accent-foreground: #030213;
   --destructive: #d4183d;
   --destructive-foreground: #ffffff;
-  --border: rgba(0, 0, 0, 0.1);
-  --input: transparent;
+  --border: #e4e4e7;
+  --input: #ffffff;
   --input-background: #f3f3f5;
   --switch-background: #cbced4;
   --font-weight-medium: 500;
@@ -39,6 +41,10 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Theme accent colors */
+  --theme-accent: #10b981; /* Default emerald */
+  --theme-accent-hover: #059669;
+  --theme-accent-foreground: #ffffff;
 }
 
 .dark {
@@ -76,6 +82,162 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+  /* Dark theme keeps default emerald accent */
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-accent-foreground: #ffffff;
+}
+
+/* ==================== BLUE THEME ==================== */
+
+/* Blue Theme (Light) - Full blue background theme */
+.blue-theme {
+  --background: #eff6ff; /* Blue 50 */
+  --foreground: #1e3a8a; /* Blue 800 */
+  --card: #dbeafe; /* Blue 100 */
+  --card-foreground: #1e3a8a; /* Blue 800 */
+  --popover: #dbeafe; /* Blue 100 */
+  --popover-foreground: #1e3a8a; /* Blue 800 */
+  --primary: #1d4ed8; /* Blue 700 */
+  --primary-foreground: #ffffff;
+  --secondary: #bfdbfe; /* Blue 200 */
+  --secondary-foreground: #1e3a8a; /* Blue 800 */
+  --muted: #bfdbfe; /* Blue 200 */
+  --muted-foreground: #1e40af; /* Blue 700 */
+  --accent: #93c5fd; /* Blue 300 */
+  --accent-foreground: #1e3a8a; /* Blue 800 */
+  --destructive: #dc2626; /* Red 600 */
+  --destructive-foreground: #ffffff;
+  --border: #93c5fd; /* Blue 300 */
+  --input: #dbeafe; /* Blue 100 */
+  --input-background: #bfdbfe; /* Blue 200 */
+  --switch-background: #93c5fd; /* Blue 300 */
+  --ring: #3b82f6; /* Blue 500 */
+  --theme-accent: #2563eb; /* Blue 600 */
+  --theme-accent-hover: #1d4ed8; /* Blue 700 */
+  --theme-accent-foreground: #ffffff;
+  /* Sidebar colors */
+  --sidebar: #dbeafe; /* Blue 100 */
+  --sidebar-foreground: #1e3a8a; /* Blue 800 */
+  --sidebar-primary: #1d4ed8; /* Blue 700 */
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #bfdbfe; /* Blue 200 */
+  --sidebar-accent-foreground: #1e3a8a; /* Blue 800 */
+  --sidebar-border: #93c5fd; /* Blue 300 */
+  --sidebar-ring: #3b82f6; /* Blue 500 */
+}
+
+/* Blue Theme (Dark) - Full dark blue theme */
+.blue-theme.dark {
+  --background: #0f172a; /* Slate 900 */
+  --foreground: #cbd5e1; /* Slate 300 */
+  --card: #1e293b; /* Slate 800 */
+  --card-foreground: #cbd5e1; /* Slate 300 */
+  --popover: #1e293b; /* Slate 800 */
+  --popover-foreground: #cbd5e1; /* Slate 300 */
+  --primary: #60a5fa; /* Blue 400 */
+  --primary-foreground: #0f172a; /* Slate 900 */
+  --secondary: #334155; /* Slate 700 */
+  --secondary-foreground: #cbd5e1; /* Slate 300 */
+  --muted: #334155; /* Slate 700 */
+  --muted-foreground: #94a3b8; /* Slate 400 */
+  --accent: #475569; /* Slate 600 */
+  --accent-foreground: #cbd5e1; /* Slate 300 */
+  --destructive: #ef4444; /* Red 500 */
+  --destructive-foreground: #ffffff;
+  --border: #475569; /* Slate 600 */
+  --input: #334155; /* Slate 700 */
+  --input-background: #1e293b; /* Slate 800 */
+  --switch-background: #475569; /* Slate 600 */
+  --ring: #60a5fa; /* Blue 400 */
+  --theme-accent: #3b82f6; /* Blue 500 */
+  --theme-accent-hover: #2563eb; /* Blue 600 */
+  --theme-accent-foreground: #ffffff;
+  /* Sidebar colors */
+  --sidebar: #1e293b; /* Slate 800 */
+  --sidebar-foreground: #cbd5e1; /* Slate 300 */
+  --sidebar-primary: #60a5fa; /* Blue 400 */
+  --sidebar-primary-foreground: #0f172a; /* Slate 900 */
+  --sidebar-accent: #334155; /* Slate 700 */
+  --sidebar-accent-foreground: #cbd5e1; /* Slate 300 */
+  --sidebar-border: #475569; /* Slate 600 */
+  --sidebar-ring: #60a5fa; /* Blue 400 */
+}
+
+/* ==================== ORANGE THEME ==================== */
+
+/* Orange Theme (Light) - Full orange background theme */
+.orange-theme {
+  --background: #fff7ed; /* Orange 50 */
+  --foreground: #9a3412; /* Orange 800 */
+  --card: #fed7aa; /* Orange 200 */
+  --card-foreground: #9a3412; /* Orange 800 */
+  --popover: #fed7aa; /* Orange 200 */
+  --popover-foreground: #9a3412; /* Orange 800 */
+  --primary: #ea580c; /* Orange 600 */
+  --primary-foreground: #ffffff;
+  --secondary: #fdba74; /* Orange 300 */
+  --secondary-foreground: #9a3412; /* Orange 800 */
+  --muted: #fdba74; /* Orange 300 */
+  --muted-foreground: #c2410c; /* Orange 700 */
+  --accent: #fb923c; /* Orange 400 */
+  --accent-foreground: #9a3412; /* Orange 800 */
+  --destructive: #dc2626; /* Red 600 */
+  --destructive-foreground: #ffffff;
+  --border: #fb923c; /* Orange 400 */
+  --input: #fed7aa; /* Orange 200 */
+  --input-background: #fdba74; /* Orange 300 */
+  --switch-background: #fb923c; /* Orange 400 */
+  --ring: #f97316; /* Orange 500 */
+  --theme-accent: #ea580c; /* Orange 600 */
+  --theme-accent-hover: #c2410c; /* Orange 700 */
+  --theme-accent-foreground: #ffffff;
+  /* Sidebar colors */
+  --sidebar: #fed7aa; /* Orange 200 */
+  --sidebar-foreground: #9a3412; /* Orange 800 */
+  --sidebar-primary: #ea580c; /* Orange 600 */
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fdba74; /* Orange 300 */
+  --sidebar-accent-foreground: #9a3412; /* Orange 800 */
+  --sidebar-border: #fb923c; /* Orange 400 */
+  --sidebar-ring: #f97316; /* Orange 500 */
+}
+
+/* Orange Theme (Dark) - Full dark orange theme */
+.orange-theme.dark {
+  --background: #1c1917; /* Stone 900 */
+  --foreground: #d6d3d1; /* Stone 300 */
+  --card: #292524; /* Stone 800 */
+  --card-foreground: #d6d3d1; /* Stone 300 */
+  --popover: #292524; /* Stone 800 */
+  --popover-foreground: #d6d3d1; /* Stone 300 */
+  --primary: #fb923c; /* Orange 400 */
+  --primary-foreground: #1c1917; /* Stone 900 */
+  --secondary: #44403c; /* Stone 700 */
+  --secondary-foreground: #d6d3d1; /* Stone 300 */
+  --muted: #44403c; /* Stone 700 */
+  --muted-foreground: #a8a29e; /* Stone 400 */
+  --accent: #57534e; /* Stone 600 */
+  --accent-foreground: #d6d3d1; /* Stone 300 */
+  --destructive: #ef4444; /* Red 500 */
+  --destructive-foreground: #ffffff;
+  --border: #57534e; /* Stone 600 */
+  --input: #44403c; /* Stone 700 */
+  --input-background: #292524; /* Stone 800 */
+  --switch-background: #57534e; /* Stone 600 */
+  --ring: #fb923c; /* Orange 400 */
+  --theme-accent: #f97316; /* Orange 500 */
+  --theme-accent-hover: #ea580c; /* Orange 600 */
+  --theme-accent-foreground: #ffffff;
+  /* Sidebar colors */
+  --sidebar: #292524; /* Stone 800 */
+  --sidebar-foreground: #d6d3d1; /* Stone 300 */
+  --sidebar-primary: #fb923c; /* Orange 400 */
+  --sidebar-primary-foreground: #1c1917; /* Stone 900 */
+  --sidebar-accent: #44403c; /* Stone 700 */
+  --sidebar-accent-foreground: #d6d3d1; /* Stone 300 */
+  --sidebar-border: #57534e; /* Stone 600 */
+  --sidebar-ring: #fb923c; /* Orange 400 */
 }
 
 @theme inline {
@@ -117,6 +279,10 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  /* Theme accent utilities */
+  --color-theme-accent: var(--theme-accent);
+  --color-theme-accent-hover: var(--theme-accent-hover);
+  --color-theme-accent-foreground: var(--theme-accent-foreground);
 }
 
 @layer base {
@@ -186,4 +352,27 @@
 
 html {
   font-size: var(--font-size);
+}
+
+/* Theme accent utilities */
+@layer utilities {
+  .bg-theme-accent {
+    background-color: var(--theme-accent);
+  }
+  
+  .hover\:bg-theme-accent-hover:hover {
+    background-color: var(--theme-accent-hover);
+  }
+  
+  .text-theme-accent-foreground {
+    color: var(--theme-accent-foreground);
+  }
+  
+  .border-theme-accent {
+    border-color: var(--theme-accent);
+  }
+  
+  .text-theme-accent {
+    color: var(--theme-accent);
+  }
 }

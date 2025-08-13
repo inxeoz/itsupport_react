@@ -9,13 +9,17 @@ import { cn } from "./utils";
 const Dialog = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>
->(({ ...props }, _ref) => <DialogPrimitive.Root {...props} />);
+>(({ ...props }, ref) => (
+  <DialogPrimitive.Root {...props} />
+));
 Dialog.displayName = "Dialog";
 
 const DialogTrigger = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Trigger>
->(({ ...props }, ref) => <DialogPrimitive.Trigger ref={ref} {...props} />);
+>(({ ...props }, ref) => (
+  <DialogPrimitive.Trigger ref={ref} {...props} />
+));
 DialogTrigger.displayName = "DialogTrigger";
 
 const DialogPortal = DialogPrimitive.Portal;
@@ -23,7 +27,9 @@ const DialogPortal = DialogPrimitive.Portal;
 const DialogClose = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Close>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Close>
->(({ ...props }, ref) => <DialogPrimitive.Close ref={ref} {...props} />);
+>(({ ...props }, ref) => (
+  <DialogPrimitive.Close ref={ref} {...props} />
+));
 DialogClose.displayName = "DialogClose";
 
 const DialogOverlay = React.forwardRef<

@@ -17,6 +17,8 @@ import {
   UserIcon,
   Palette,
   Filter,
+  Check,
+  X,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -29,26 +31,74 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from "./ui/dropdown-menu";
+import { useEffect } from "react";
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { DraggableTab } from './DraggableTab';
+
+export type Theme = {
+  mode: 'light' | 'dark';
+  accent: 'default' | 'blue' | 'orange';
+};
 
 interface TopBarProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
-  isDarkMode: boolean;
-  onToggleTheme: () => void;
+  theme: Theme;
+  onThemeChange: (theme: Theme) => void;
+  tabs: Array<{ id: string; label: string; icon?: string }>;
+  onAddTab: (tabId: string, label: string) => void;
+  onRemoveTab: (tabId: string) => void;
+  onMoveTab: (dragIndex: number, hoverIndex: number) => void;
 }
 
 export function TopBar({
   activeTab,
   onTabChange,
-  isDarkMode,
-  onToggleTheme,
+  theme,
+  onThemeChange,
+  tabs,
+  onAddTab,
+  onRemoveTab,
+  onMoveTab,
 }: TopBarProps) {
-  const tabs = [
-    { id: "main-table", label: "Main table", icon: "⋯" },
-    { id: "form", label: "Form", icon: null },
-    { id: "kanban", label: "Kanban", icon: null },
-    { id: "add-ticket", label: "Add Ticket", icon: null },
-  ];
+  // Helper function to get theme classes for portals
+  const getThemeClasses = () => {
+    let classes = '';
+    
+    if (theme.mode === 'dark') {
+      classes += ' dark';
+    }
+    
+    if (theme.accent === 'blue') {
+      classes += ' blue-theme';
+    } else if (theme.accent === 'orange') {
+      classes += ' orange-theme';
+    }
+    
+    return classes.trim();
+  };
+
+  // Update portal container theme classes when theme changes
+  useEffect(() => {
+    const themeClasses = getThemeClasses();
+    
+    // Find all portal containers and apply theme classes
+    setTimeout(() => {
+      const portals = document.querySelectorAll('[data-radix-portal]');
+      portals.forEach(portal => {
+        // Remove existing theme classes
+        portal.classList.remove('dark', 'blue-theme', 'orange-theme');
+        
+        // Add current theme classes
+        if (themeClasses) {
+          themeClasses.split(' ').forEach(cls => {
+            if (cls) portal.classList.add(cls);
+          });
+        }
+      });
+    }, 0);
+  }, [theme]);
 
   const boardViews = [
     { id: "table", label: "Table", icon: Table },
@@ -70,6 +120,57 @@ export function TopBar({
     },
   ];
 
+  const themeOptions = [
+    { 
+      id: 'light-default', 
+      label: 'Light Theme', 
+      icon: Sun, 
+      mode: 'light' as const, 
+      accent: 'default' as const,
+      description: 'Clean white background with emerald accents'
+    },
+    { 
+      id: 'dark-default', 
+      label: 'Dark Theme', 
+      icon: Moon, 
+      mode: 'dark' as const, 
+      accent: 'default' as const,
+      description: 'Dark background with emerald accents'
+    },
+    { 
+      id: 'light-blue', 
+      label: 'Blue Theme', 
+      icon: Palette, 
+      mode: 'light' as const, 
+      accent: 'blue' as const,
+      description: 'Full blue background theme (light mode)'
+    },
+    { 
+      id: 'dark-blue', 
+      label: 'Dark Blue', 
+      icon: Palette, 
+      mode: 'dark' as const, 
+      accent: 'blue' as const,
+      description: 'Full blue background theme (dark mode)'
+    },
+    { 
+      id: 'light-orange', 
+      label: 'Orange Theme', 
+      icon: Palette, 
+      mode: 'light' as const, 
+      accent: 'orange' as const,
+      description: 'Full orange background theme (light mode)'
+    },
+    { 
+      id: 'dark-orange', 
+      label: 'Dark Orange', 
+      icon: Palette, 
+      mode: 'dark' as const, 
+      accent: 'orange' as const,
+      description: 'Full orange background theme (dark mode)'
+    },
+  ];
+
   const handleViewSelect = (viewId: string) => {
     // Map view IDs to existing tab IDs where applicable
     const viewToTabMap: { [key: string]: string } = {
@@ -78,110 +179,113 @@ export function TopBar({
       form: "form",
     };
 
-    const tabId = viewToTabMap[viewId] || viewId;
-    onTabChange(tabId);
+    // Labels for mapped tabs (in case they need to be recreated)
+    const mappedTabLabels: { [key: string]: string } = {
+      "main-table": "Main table",
+      kanban: "Kanban",
+      form: "Form",
+    };
+
+    // Special handling for views that should create new tabs
+    const viewLabels: { [key: string]: string } = {
+      chart: "Charts",
+      calendar: "Calendar",
+      gantt: "Gantt",
+      doc: "Documents",
+      "file-gallery": "File Gallery",
+      customizable: "Custom View",
+    };
+
+    if (viewToTabMap[viewId]) {
+      // Check if the mapped tab exists, if not create it
+      const mappedTabId = viewToTabMap[viewId];
+      const existingTab = tabs.find(tab => tab.id === mappedTabId);
+      
+      if (!existingTab) {
+        // Create the tab if it doesn't exist
+        const tabLabel = mappedTabLabels[mappedTabId] || viewId;
+        onAddTab(mappedTabId, tabLabel);
+      }
+      
+      // Switch to the tab
+      onTabChange(mappedTabId);
+    } else if (viewLabels[viewId]) {
+      // Create new tab for special views
+      const existingTab = tabs.find(tab => tab.id === viewId);
+      if (!existingTab) {
+        onAddTab(viewId, viewLabels[viewId]);
+      }
+      onTabChange(viewId);
+    } else {
+      // Default behavior
+      onTabChange(viewId);
+    }
   };
+
+  const handleThemeSelect = (themeOption: typeof themeOptions[0]) => {
+    onThemeChange({
+      mode: themeOption.mode,
+      accent: themeOption.accent
+    });
+  };
+
+  const getCurrentThemeIcon = () => {
+    if (theme.accent === 'blue' || theme.accent === 'orange') {
+      return <Palette className="w-4 h-4" />;
+    } else if (theme.mode === 'dark') {
+      return <Moon className="w-4 h-4" />;
+    } else {
+      return <Sun className="w-4 h-4" />;
+    }
+  };
+
+  const isCurrentTheme = (themeOption: typeof themeOptions[0]) => {
+    return theme.mode === themeOption.mode && theme.accent === themeOption.accent;
+  };
+
+  const getAccentColorClass = () => {
+    switch (theme.accent) {
+      case 'blue':
+        return 'bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground';
+      case 'orange':
+        return 'bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground';
+      default:
+        return 'bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground';
+    }
+  };
+
+  const getBadgeAccentClass = () => {
+    return 'bg-theme-accent text-theme-accent-foreground border-none';
+  };
+
+  const canRemoveTab = tabs.length > 1;
 
   return (
     <header className="bg-card border-b border-border px-6 py-3 flex items-center justify-between">
       {/* Left side - Navigation tabs */}
       <div className="flex items-center gap-1">
-        {tabs.map((tab) => (
-          <div key={tab.id} className="flex items-center">
-            {activeTab === tab.id ? (
-              /* Active tab with dropdown menu */
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 text-sm bg-accent text-accent-foreground hover:bg-accent/80`}
-                  >
-                    {tab.label}
-                    <MoreHorizontal className="w-4 h-4 ml-1" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-48">
-                  <DropdownMenuLabel className="text-muted-foreground">
-                    {tab.label} Options
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    {tab.id === "main-table" && (
-                      <>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <Settings className="w-4 h-4" />
-                          <span>Table Settings</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <Filter className="w-4 h-4" />
-                          <span>Configure Filters</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <FormInput className="w-4 h-4" />
-                          <span>Customize Columns</span>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {tab.id === "kanban" && (
-                      <>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <Layers className="w-4 h-4" />
-                          <span>Board Settings</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <Plus className="w-4 h-4" />
-                          <span>Add Column</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <Palette className="w-4 h-4" />
-                          <span>Customize Colors</span>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {tab.id === "form" && (
-                      <>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <FormInput className="w-4 h-4" />
-                          <span>Form Builder</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <Settings className="w-4 h-4" />
-                          <span>Form Settings</span>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                    {tab.id === "add-ticket" && (
-                      <>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <Settings className="w-4 h-4" />
-                          <span>Form Preferences</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                          <FileText className="w-4 h-4" />
-                          <span>Template Settings</span>
-                        </DropdownMenuItem>
-                      </>
-                    )}
-                  </DropdownMenuGroup>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              /* Inactive tab - regular button */
-              <button
-                onClick={() => onTabChange(tab.id)}
-                className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent`}
-              >
-                {tab.label}
-              </button>
-            )}
-          </div>
-        ))}
+        <DndProvider backend={HTML5Backend}>
+          {tabs.map((tab, index) => (
+            <DraggableTab
+              key={tab.id}
+              tab={tab}
+              index={index}
+              isActive={activeTab === tab.id}
+              onTabChange={onTabChange}
+              onRemoveTab={onRemoveTab}
+              onMoveTab={onMoveTab}
+              canRemoveTab={canRemoveTab}
+              getThemeClasses={getThemeClasses}
+            />
+          ))}
+        </DndProvider>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
               size="sm"
-              className="bg-accent text-accent-foreground hover:bg-accent/80 text-muted-foreground hover:text-foreground ml-2"
+              className="text-muted-foreground hover:text-foreground ml-2"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add View
@@ -189,19 +293,19 @@ export function TopBar({
           </DropdownMenuTrigger>
           <DropdownMenuContent
             align="start"
-            className="w-64 bg-accent text-accent-foreground bg-accent text-accent-foreground"
+            className={`w-64 ${getThemeClasses()}`}
           >
-            <DropdownMenuLabel className="text-muted-foreground bg-accent text-accent-foreground">
+            <DropdownMenuLabel className="text-muted-foreground">
               Board views
             </DropdownMenuLabel>
             <DropdownMenuGroup>
-              {boardViews.map((view) => {
+              {boardViews.map((view, index) => {
                 const IconComponent = view.icon;
                 return (
                   <DropdownMenuItem
                     key={view.id}
                     onClick={() => handleViewSelect(view.id)}
-                    className="accent-foreground text-accent-foreground flex items-center gap-3 px-3 py-2 cursor-pointer"
+                    className="flex items-center gap-3 px-3 py-2 cursor-pointer"
                   >
                     <IconComponent className="w-4 h-4 text-muted-foreground" />
                     <span className="flex-1">{view.label}</span>
@@ -240,10 +344,12 @@ export function TopBar({
       {/* Right side - Branding and controls */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-medium text-foreground">MYTICK</h1>
+          <h1 className="text-xl font-medium text-foreground">
+            MYTICK
+          </h1>
           <Badge
             variant="secondary"
-            className="bg-emerald-600 text-white border-none dark:bg-emerald-700"
+            className={getBadgeAccentClass()}
           >
             In Portal
           </Badge>
@@ -258,24 +364,73 @@ export function TopBar({
             <Settings className="w-4 h-4" />
           </Button>
 
+          {/* Advanced Theme Dropdown Menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+                title="Change Theme"
+              >
+                {getCurrentThemeIcon()}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className={`w-64 ${getThemeClasses()}`}>
+              <DropdownMenuLabel className="text-muted-foreground">
+                Choose Theme
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                {themeOptions.map((themeOption) => {
+                  const IconComponent = themeOption.icon;
+                  const isActive = isCurrentTheme(themeOption);
+                  
+                  return (
+                    <DropdownMenuItem
+                      key={themeOption.id}
+                      onClick={() => handleThemeSelect(themeOption)}
+                      className="flex items-center gap-3 px-3 py-3 cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3 flex-1">
+                        <IconComponent className="w-4 h-4" />
+                        <div className="flex-1">
+                          <div className="font-medium">{themeOption.label}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {themeOption.description}
+                          </div>
+                        </div>
+                      </div>
+                      {isActive && (
+                        <Check className="w-4 h-4 text-theme-accent" />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           {/* Profile Menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="sm"
-                className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600"
+                className={`w-8 h-8 rounded-full flex items-center justify-center ${getAccentColorClass()}`}
               >
-                <User className="w-4 h-4 text-white" />
+                <User className="w-4 h-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuContent align="end" className={`w-56 ${getThemeClasses()}`}>
               <DropdownMenuLabel className="flex items-center gap-3 px-3 py-2">
-                <div className="w-8 h-8 bg-emerald-600 rounded-full flex items-center justify-center dark:bg-emerald-700">
-                  <User className="w-4 h-4 text-white" />
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${getAccentColorClass()}`}>
+                  <User className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">John Doe</p>
+                  <p className="text-sm font-medium">
+                    John Doe
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     john.doe@company.com
                   </p>
@@ -295,21 +450,10 @@ export function TopBar({
                   <span>Settings</span>
                 </DropdownMenuItem>
 
-                <DropdownMenuItem
-                  onClick={onToggleTheme}
-                  className="flex items-center gap-3 px-3 py-2 cursor-pointer"
-                >
-                  {isDarkMode ? (
-                    <>
-                      <Sun className="w-4 h-4" />
-                      <span>Switch to Light Mode</span>
-                    </>
-                  ) : (
-                    <>
-                      <Moon className="w-4 h-4" />
-                      <span>Switch to Dark Mode</span>
-                    </>
-                  )}
+                {/* Theme submenu in profile */}
+                <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                  <Palette className="w-4 h-4" />
+                  <span>Appearance</span>
                 </DropdownMenuItem>
               </DropdownMenuGroup>
 

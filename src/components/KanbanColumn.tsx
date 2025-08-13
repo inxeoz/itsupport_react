@@ -1,7 +1,7 @@
-import { useDrop } from "react-dnd";
-import { Plus } from "lucide-react";
-import { Button } from "./ui/button";
-import { KanbanCard } from "./KanbanCard";
+import { useDrop } from 'react-dnd';
+import { Plus } from 'lucide-react';
+import { Button } from './ui/button';
+import { KanbanCard } from './KanbanCard';
 
 interface Ticket {
   id: number;
@@ -29,6 +29,7 @@ interface KanbanColumnProps {
   onUpdateTicket?: (ticketId: number, updates: Partial<Ticket>) => void;
   onDeleteTicket?: (ticketId: number) => void;
   onDuplicateTicket?: (ticket: Ticket) => void;
+  onAddTicket?: (columnId: string) => void;
 }
 
 interface DragItem {
@@ -37,22 +38,15 @@ interface DragItem {
   status: string;
 }
 
-export function KanbanColumn({
-  column,
-  tickets,
-  onMoveTicket,
-  onUpdateTicket,
-  onDeleteTicket,
-  onDuplicateTicket,
-}: KanbanColumnProps) {
+export function KanbanColumn({ column, tickets, onMoveTicket, onUpdateTicket, onDeleteTicket, onDuplicateTicket, onAddTicket }: KanbanColumnProps) {
   const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>({
-    accept: "TICKET",
-    drop: (item: DragItem) => {
+    accept: 'TICKET',
+    drop: (item) => {
       if (item.status !== column.id) {
         onMoveTicket(item.id, column.id);
       }
     },
-    collect: (monitor: any) => ({
+    collect: (monitor) => ({
       isOver: monitor.isOver(),
     }),
   });
@@ -64,32 +58,30 @@ export function KanbanColumn({
         <div className="flex items-center gap-3">
           <div className={`w-3 h-6 rounded-sm ${column.color}`}></div>
           <span className="font-medium text-foreground">{column.title}</span>
-          <span className="text-muted-foreground text-sm">
-            {tickets.length}
-          </span>
+          <span className="text-muted-foreground text-sm">{tickets.length}</span>
         </div>
       </div>
 
       {/* Column Content */}
-      <div
+      <div 
         ref={drop}
         className={`bg-muted flex-1 border-l border-r border-border p-2 space-y-3 min-h-96 transition-colors ${
-          isOver ? "bg-accent border-accent-foreground/20" : ""
+          isOver ? 'bg-accent border-accent-foreground' : ''
         }`}
       >
         {tickets.map((ticket) => (
-          <KanbanCard
-            key={ticket.id}
+          <KanbanCard 
+            key={ticket.id} 
             ticket={ticket}
             onUpdateTicket={onUpdateTicket}
             onDeleteTicket={onDeleteTicket}
             onDuplicateTicket={onDuplicateTicket}
           />
         ))}
-
+        
         {tickets.length === 0 && (
           <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
-            {isOver ? "Drop here" : "No tickets"}
+            {isOver ? 'Drop here' : 'No tickets'}
           </div>
         )}
       </div>
@@ -100,6 +92,7 @@ export function KanbanColumn({
           variant="ghost"
           size="sm"
           className="w-full text-muted-foreground hover:text-foreground hover:bg-accent"
+          onClick={() => onAddTicket?.(column.id)}
         >
           <Plus className="w-4 h-4 mr-1" />
           Add ticket
