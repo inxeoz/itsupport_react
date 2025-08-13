@@ -1,152 +1,206 @@
-import { Plus, Search, Filter, MoreHorizontal } from "lucide-react";
-import { Button } from "./ui/button";
-import { KanbanColumn } from "./KanbanColumn";
-import { Toolbar } from "./Toolbar";
-import { DragDropContext, DropResult } from "@hello-pangea/dnd";
-import { useState } from "react";
-import data from "./data/ticket.json";
+import { useState } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { Plus, Search, Filter, MoreHorizontal } from 'lucide-react';
+import { Button } from './ui/button';
+import { KanbanColumn } from './KanbanColumn';
 
-const initialTicketData = data;
+interface Ticket {
+  id: number;
+  title: string;
+  description: string;
+  agent: string | null;
+  status: string;
+  priority: string;
+  creationDate: string;
+  resolutionDate: string | null;
+  tags: string[];
+}
+
+const initialTicketData: Ticket[] = [
+  {
+    id: 1,
+    title: 'Request for access - new employee',
+    description: 'Hello team, We have a new employee joining our Creative ...',
+    agent: null,
+    status: 'reviewed',
+    priority: 'medium',
+    creationDate: 'May 4, 2024',
+    resolutionDate: null,
+    tags: ['Reviewed']
+  },
+  {
+    id: 2,
+    title: 'job issue',
+    description: '',
+    agent: null,
+    status: 'reviewed',
+    priority: 'high',
+    creationDate: 'Aug 7',
+    resolutionDate: null,
+    tags: ['Reviewed']
+  },
+  {
+    id: 3,
+    title: 'SSO not working after new security audit',
+    description: 'Our entire team is locked out of our SaaS applications and thinks ...',
+    agent: null,
+    status: 'awaiting-customer',
+    priority: 'critical',
+    creationDate: 'Apr 23, 2024',
+    resolutionDate: null,
+    tags: ['Awaiting customer', 'Critical']
+  },
+  {
+    id: 4,
+    title: 'I need help with my laptop',
+    description: 'Hi team! So some reason I can\'t restart my laptop. The screen just ...',
+    agent: null,
+    status: 'resolved',
+    priority: 'low',
+    creationDate: 'Apr 10, 2024',
+    resolutionDate: 'Apr 15, 2024',
+    tags: ['Removed']
+  },
+  {
+    id: 5,
+    title: 'rt',
+    description: 'Help me pls',
+    agent: null,
+    status: 'new',
+    priority: 'high',
+    creationDate: 'Critical',
+    resolutionDate: null,
+    tags: ['New', 'High']
+  }
+];
 
 const kanbanColumns = [
   {
-    id: "reviewed",
-    title: "Reviewed",
-    color: "bg-slate-500",
-    count: 2,
+    id: 'reviewed',
+    title: 'Reviewed',
+    color: 'bg-slate-500',
+    count: 2
   },
   {
-    id: "awaiting-customer",
-    title: "Awaiting customer",
-    color: "bg-purple-500",
-    count: 1,
+    id: 'awaiting-customer',
+    title: 'Awaiting customer',
+    color: 'bg-purple-500',
+    count: 1
   },
   {
-    id: "need-reply",
-    title: "Need reply",
-    color: "bg-blue-500",
-    count: 0,
+    id: 'need-reply',
+    title: 'Need reply',
+    color: 'bg-blue-500',
+    count: 0
   },
   {
-    id: "resolved",
-    title: "Resolved",
-    color: "bg-green-500",
-    count: 1,
+    id: 'resolved',
+    title: 'Resolved',
+    color: 'bg-green-500',
+    count: 1
   },
   {
-    id: "self-resolved",
-    title: "Self resolved",
-    color: "bg-yellow-500",
-    count: 0,
+    id: 'self-resolved',
+    title: 'Self resolved',
+    color: 'bg-yellow-500',
+    count: 0
   },
   {
-    id: "returned",
-    title: "Returned",
-    color: "bg-cyan-500",
-    count: 0,
+    id: 'returned',
+    title: 'Returned',
+    color: 'bg-cyan-500',
+    count: 0
   },
   {
-    id: "new",
-    title: "New",
-    color: "bg-indigo-500",
-    count: 1,
-  },
+    id: 'new',
+    title: 'New',
+    color: 'bg-indigo-500',
+    count: 1
+  }
 ];
 
 export function KanbanBoard() {
-  const [tickets, setTickets] = useState(initialTicketData);
+  const [tickets, setTickets] = useState<Ticket[]>(initialTicketData);
 
   const getTicketsForColumn = (columnId: string) => {
-    return tickets.filter((ticket) => ticket.status === columnId);
+    return tickets.filter(ticket => ticket.status === columnId);
   };
 
-  const onDragEnd = (result: DropResult) => {
-    const { destination, source, draggableId } = result;
-
-    // If there's no destination, do nothing
-    if (!destination) {
-      return;
-    }
-
-    // If the item is dropped in the same position, do nothing
-    if (
-      destination.droppableId === source.droppableId &&
-      destination.index === source.index
-    ) {
-      return;
-    }
-
-    // Update the ticket's status
-    setTickets((prevTickets) =>
-      prevTickets.map((ticket) =>
-        ticket.id === parseInt(draggableId)
-          ? { ...ticket, status: destination.droppableId }
-          : ticket,
-      ),
+  const moveTicket = (ticketId: number, newStatus: string) => {
+    setTickets(prevTickets =>
+      prevTickets.map(ticket =>
+        ticket.id === ticketId
+          ? { ...ticket, status: newStatus }
+          : ticket
+      )
     );
   };
 
+  const updateTicket = (ticketId: number, updates: Partial<Ticket>) => {
+    setTickets(prevTickets =>
+      prevTickets.map(ticket =>
+        ticket.id === ticketId
+          ? { ...ticket, ...updates }
+          : ticket
+      )
+    );
+  };
+
+  const deleteTicket = (ticketId: number) => {
+    setTickets(prevTickets =>
+      prevTickets.filter(ticket => ticket.id !== ticketId)
+    );
+  };
+
+  const duplicateTicket = (ticketToDuplicate: Ticket) => {
+    const newTicket: Ticket = {
+      ...ticketToDuplicate,
+      id: Math.max(...tickets.map(t => t.id)) + 1,
+      title: `${ticketToDuplicate.title} (Copy)`,
+      creationDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      resolutionDate: null,
+    };
+    setTickets(prevTickets => [...prevTickets, newTicket]);
+  };
+
   return (
-    <div className="flex flex-col h-full">
-      <Toolbar
-        leftActions={
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-white"
-            >
-              <Search className="w-4 h-4 mr-1" />
-              Search
-            </Button>
+    <DndProvider backend={HTML5Backend}>
+      <div className="flex flex-col h-full">
+        {/* Toolbar */}
+        <div className="bg-card border-b border-border p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Search className="w-4 h-4 mr-1" />
+                Search
+              </Button>
+              
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <Filter className="w-4 h-4 mr-1" />
+                Filter
+              </Button>
+              
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                <MoreHorizontal className="w-4 h-4" />
+              </Button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                📊
+              </Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                👁️
+              </Button>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
+                ⬆
+              </Button>
+            </div>
+          </div>
+        </div>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-white"
-            >
-              <Filter className="w-4 h-4 mr-1" />
-              Filter
-            </Button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-white"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </>
-        }
-        rightActions={
-          <>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-white"
-            >
-              📊
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-white"
-            >
-              👁️
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-slate-300 hover:text-white"
-            >
-              ⬆
-            </Button>
-          </>
-        }
-      />
-
-      {/* Kanban Board */}
-      <DragDropContext onDragEnd={onDragEnd}>
+        {/* Kanban Board */}
         <div className="flex-1 overflow-auto">
           <div className="flex gap-4 p-4 min-w-max">
             {kanbanColumns.map((column) => (
@@ -154,13 +208,17 @@ export function KanbanBoard() {
                 key={column.id}
                 column={column}
                 tickets={getTicketsForColumn(column.id)}
+                onMoveTicket={moveTicket}
+                onUpdateTicket={updateTicket}
+                onDeleteTicket={deleteTicket}
+                onDuplicateTicket={duplicateTicket}
               />
             ))}
-
+            
             <div className="min-w-80">
               <Button
                 variant="ghost"
-                className="w-full h-12 border-2 border-dashed border-slate-600 text-slate-400 hover:text-white hover:border-slate-500"
+                className="w-full h-12 border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
               >
                 <Plus className="w-4 h-4 mr-2" />
                 Add folder
@@ -168,7 +226,7 @@ export function KanbanBoard() {
             </div>
           </div>
         </div>
-      </DragDropContext>
-    </div>
+      </div>
+    </DndProvider>
   );
 }

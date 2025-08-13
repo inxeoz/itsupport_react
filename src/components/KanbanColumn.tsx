@@ -1,7 +1,7 @@
-import { Plus } from "lucide-react";
-import { Button } from "./ui/button";
-import { KanbanCard } from "./KanbanCard";
-import { Droppable } from "@hello-pangea/dnd";
+import { useDrop } from 'react-dnd';
+import { Plus } from 'lucide-react';
+import { Button } from './ui/button';
+import { KanbanCard } from './KanbanCard';
 
 interface Ticket {
   id: number;
@@ -25,50 +25,72 @@ interface Column {
 interface KanbanColumnProps {
   column: Column;
   tickets: Ticket[];
+  onMoveTicket: (ticketId: number, newStatus: string) => void;
+  onUpdateTicket?: (ticketId: number, updates: Partial<Ticket>) => void;
+  onDeleteTicket?: (ticketId: number) => void;
+  onDuplicateTicket?: (ticket: Ticket) => void;
 }
 
-export function KanbanColumn({ column, tickets }: KanbanColumnProps) {
+interface DragItem {
+  id: number;
+  type: string;
+  status: string;
+}
+
+export function KanbanColumn({ column, tickets, onMoveTicket, onUpdateTicket, onDeleteTicket, onDuplicateTicket }: KanbanColumnProps) {
+  const [{ isOver }, drop] = useDrop<DragItem, void, { isOver: boolean }>({
+    accept: 'TICKET',
+    drop: (item) => {
+      if (item.status !== column.id) {
+        onMoveTicket(item.id, column.id);
+      }
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+    }),
+  });
+
   return (
     <div className="min-w-80 flex flex-col">
       {/* Column Header */}
-      <div className="bg-slate-800 rounded-t-lg p-3 border border-slate-700">
+      <div className="bg-card rounded-t-lg p-3 border border-border">
         <div className="flex items-center gap-3">
           <div className={`w-3 h-6 rounded-sm ${column.color}`}></div>
-          <span className="font-medium text-white">{column.title}</span>
-          <span className="text-slate-400 text-sm">{tickets.length}</span>
+          <span className="font-medium text-foreground">{column.title}</span>
+          <span className="text-muted-foreground text-sm">{tickets.length}</span>
         </div>
       </div>
 
       {/* Column Content */}
-      <Droppable droppableId={column.id}>
-        {(provided, snapshot) => (
-          <div
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-            className={`bg-slate-850 flex-1 border-l border-r border-slate-700 p-2 space-y-3 min-h-96 transition-colors ${
-              snapshot.isDraggingOver ? "bg-slate-800" : ""
-            }`}
-          >
-            {tickets.map((ticket, index) => (
-              <KanbanCard key={ticket.id} ticket={ticket} index={index} />
-            ))}
-
-            {tickets.length === 0 && (
-              <div className="flex items-center justify-center h-32 text-slate-500 text-sm">
-                No tickets
-              </div>
-            )}
-            {provided.placeholder}
+      <div 
+        ref={drop}
+        className={`bg-muted flex-1 border-l border-r border-border p-2 space-y-3 min-h-96 transition-colors ${
+          isOver ? 'bg-accent border-accent-foreground/20' : ''
+        }`}
+      >
+        {tickets.map((ticket) => (
+          <KanbanCard 
+            key={ticket.id} 
+            ticket={ticket}
+            onUpdateTicket={onUpdateTicket}
+            onDeleteTicket={onDeleteTicket}
+            onDuplicateTicket={onDuplicateTicket}
+          />
+        ))}
+        
+        {tickets.length === 0 && (
+          <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">
+            {isOver ? 'Drop here' : 'No tickets'}
           </div>
         )}
-      </Droppable>
+      </div>
 
       {/* Column Footer */}
-      <div className="bg-slate-850 rounded-b-lg border border-t-0 border-slate-700 p-2">
+      <div className="bg-muted rounded-b-lg border border-t-0 border-border p-2">
         <Button
           variant="ghost"
           size="sm"
-          className="w-full text-slate-400 hover:text-white hover:bg-slate-700"
+          className="w-full text-muted-foreground hover:text-foreground hover:bg-accent"
         >
           <Plus className="w-4 h-4 mr-1" />
           Add ticket

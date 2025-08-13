@@ -46,21 +46,21 @@ export function TicketGroup({ group }: TicketGroupProps) {
   const getPriorityColor = (priority: string) => priorityColors[priority as keyof typeof priorityColors] || 'bg-gray-500';
 
   return (
-    <div className="border-b border-slate-700">
+    <div className="border-b border-border">
       {/* Group Header */}
       <div
-        className="flex items-center gap-3 p-4 hover:bg-slate-800 cursor-pointer"
+        className="flex items-center gap-3 p-4 hover:bg-accent cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-4 h-4 text-muted-foreground" />
           ) : (
-            <ChevronRight className="w-4 h-4 text-slate-400" />
+            <ChevronRight className="w-4 h-4 text-muted-foreground" />
           )}
           <div className={`w-3 h-8 rounded-sm ${group.color}`}></div>
-          <span className="font-medium">{group.name}</span>
-          <span className="text-slate-400 text-sm">{group.count} Tickets</span>
+          <span className="font-medium text-foreground">{group.name}</span>
+          <span className="text-muted-foreground text-sm">{group.count} Tickets</span>
         </div>
       </div>
 
@@ -70,7 +70,7 @@ export function TicketGroup({ group }: TicketGroupProps) {
           {group.tickets.map((ticket) => (
             <div
               key={ticket.id}
-              className="grid grid-cols-6 gap-4 px-6 py-3 hover:bg-slate-800 border-l-4 border-l-transparent hover:border-l-slate-600"
+              className="grid grid-cols-6 gap-4 px-6 py-3 hover:bg-accent border-l-4 border-l-transparent hover:border-l-border"
             >
               <div></div>
               
@@ -79,15 +79,15 @@ export function TicketGroup({ group }: TicketGroupProps) {
                 {ticket.agent ? (
                   <div className="flex items-center gap-2">
                     <Avatar className="w-6 h-6">
-                      <AvatarFallback className="text-xs bg-slate-600">
+                      <AvatarFallback className="text-xs bg-muted text-muted-foreground">
                         {ticket.agent.split(' ').map(n => n[0]).join('')}
                       </AvatarFallback>
                     </Avatar>
-                    <span className="text-sm">{ticket.agent}</span>
+                    <span className="text-sm text-foreground">{ticket.agent}</span>
                   </div>
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center">
-                    <User className="w-3 h-3 text-slate-400" />
+                  <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
+                    <User className="w-3 h-3 text-muted-foreground" />
                   </div>
                 )}
               </div>
@@ -132,7 +132,7 @@ export function TicketGroup({ group }: TicketGroupProps) {
                     {ticket.resolutionDate}
                   </Badge>
                 ) : (
-                  <div className="w-20 h-6 bg-slate-700 rounded"></div>
+                  <div className="w-20 h-6 bg-muted rounded"></div>
                 )}
               </div>
             </div>

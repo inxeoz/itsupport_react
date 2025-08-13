@@ -2,22 +2,89 @@ import { useState } from 'react';
 import { TopBar } from './components/TopBar';
 import { TicketDashboard } from './components/TicketDashboard';
 import { KanbanBoard } from './components/KanbanBoard';
+import { AddTicket } from './components/AddTicket';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('main-table');
+  const [isDarkMode, setIsDarkMode] = useState(true);
 
-  return (
-    <div className="h-screen bg-slate-900 text-white flex flex-col">
-      <TopBar activeTab={activeTab} onTabChange={setActiveTab} />
-      <main className="flex-1 overflow-auto m-5">
-        {activeTab === 'main-table' && <TicketDashboard />}
-        {activeTab === 'form' && (
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const renderActiveView = () => {
+    switch (activeTab) {
+      case 'main-table':
+      case 'table':
+        return <TicketDashboard />;
+      case 'kanban':
+        return <KanbanBoard />;
+      case 'add-ticket':
+        return <AddTicket />;
+      case 'form':
+        return (
           <div className="p-6">
             <h2 className="text-xl mb-4">Form View</h2>
-            <p className="text-slate-400">Form view coming soon...</p>
+            <p className="text-muted-foreground">Form view coming soon...</p>
           </div>
-        )}
-        {activeTab === 'kanban' && <KanbanBoard />}
+        );
+      case 'gantt':
+        return (
+          <div className="p-6">
+            <h2 className="text-xl mb-4">Gantt View</h2>
+            <p className="text-muted-foreground">Gantt chart view coming soon...</p>
+          </div>
+        );
+      case 'chart':
+        return (
+          <div className="p-6">
+            <h2 className="text-xl mb-4">Chart View</h2>
+            <p className="text-muted-foreground">Chart view coming soon...</p>
+          </div>
+        );
+      case 'calendar':
+        return (
+          <div className="p-6">
+            <h2 className="text-xl mb-4">Calendar View</h2>
+            <p className="text-muted-foreground">Calendar view coming soon...</p>
+          </div>
+        );
+      case 'doc':
+        return (
+          <div className="p-6">
+            <h2 className="text-xl mb-4">Document View</h2>
+            <p className="text-muted-foreground">Document view coming soon...</p>
+          </div>
+        );
+      case 'file-gallery':
+        return (
+          <div className="p-6">
+            <h2 className="text-xl mb-4">File Gallery View</h2>
+            <p className="text-muted-foreground">File gallery view coming soon...</p>
+          </div>
+        );
+      case 'customizable':
+        return (
+          <div className="p-6">
+            <h2 className="text-xl mb-4">Customizable View</h2>
+            <p className="text-muted-foreground">Customizable view coming soon...</p>
+          </div>
+        );
+      default:
+        return <TicketDashboard />;
+    }
+  };
+
+  return (
+    <div className={`h-screen bg-background text-foreground flex flex-col ${isDarkMode ? 'dark' : ''}`}>
+      <TopBar 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        isDarkMode={isDarkMode}
+        onToggleTheme={toggleTheme}
+      />
+      <main className="flex-1 overflow-auto m-5">
+        {renderActiveView()}
       </main>
     </div>
   );

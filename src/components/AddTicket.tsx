@@ -1,31 +1,19 @@
-import { useState } from "react";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "./ui/card";
-import { Badge } from "./ui/badge";
-import { Separator } from "./ui/separator";
-import { Clock, User, AlertCircle, Save, X } from "lucide-react";
+import { useState } from 'react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { Separator } from './ui/separator';
+import { Calendar, Clock, User, AlertCircle, Save, X } from 'lucide-react';
 
 interface TicketFormData {
   title: string;
   description: string;
-  priority: "Low" | "Medium" | "High" | "Critical" | "";
-  status: "Open" | "In Progress" | "Pending" | "Resolved" | "Closed" | "";
+  priority: 'Low' | 'Medium' | 'High' | 'Critical' | '';
+  status: 'Open' | 'In Progress' | 'Pending' | 'Resolved' | 'Closed' | '';
   assignee: string;
   department: string;
   category: string;
@@ -35,94 +23,83 @@ interface TicketFormData {
 
 export function AddTicket() {
   const [formData, setFormData] = useState<TicketFormData>({
-    title: "",
-    description: "",
-    priority: "",
-    status: "Open",
-    assignee: "",
-    department: "",
-    category: "",
-    dueDate: "",
-    tags: "",
+    title: '',
+    description: '',
+    priority: '',
+    status: 'Open',
+    assignee: '',
+    department: '',
+    category: '',
+    dueDate: '',
+    tags: ''
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (field: keyof TicketFormData, value: string) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
-      [field]: value,
+      [field]: value
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-
+    
     // Simulate API call
     setTimeout(() => {
-      console.log("Ticket created:", formData);
+      console.log('Ticket created:', formData);
       setIsSubmitting(false);
       // Reset form
       setFormData({
-        title: "",
-        description: "",
-        priority: "",
-        status: "Open",
-        assignee: "",
-        department: "",
-        category: "",
-        dueDate: "",
-        tags: "",
+        title: '',
+        description: '',
+        priority: '',
+        status: 'Open',
+        assignee: '',
+        department: '',
+        category: '',
+        dueDate: '',
+        tags: ''
       });
       // Show success message (you can add a toast here)
-      alert("Ticket created successfully!");
+      alert('Ticket created successfully!');
     }, 1000);
   };
 
   const handleReset = () => {
     setFormData({
-      title: "",
-      description: "",
-      priority: "",
-      status: "Open",
-      assignee: "",
-      department: "",
-      category: "",
-      dueDate: "",
-      tags: "",
+      title: '',
+      description: '',
+      priority: '',
+      status: 'Open',
+      assignee: '',
+      department: '',
+      category: '',
+      dueDate: '',
+      tags: ''
     });
   };
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case "Critical":
-        return "bg-red-600 text-white";
-      case "High":
-        return "bg-orange-600 text-white";
-      case "Medium":
-        return "bg-yellow-600 text-white";
-      case "Low":
-        return "bg-green-600 text-white";
-      default:
-        return "bg-muted text-muted-foreground";
+      case 'Critical': return 'bg-red-600 text-white';
+      case 'High': return 'bg-orange-600 text-white';
+      case 'Medium': return 'bg-yellow-600 text-white';
+      case 'Low': return 'bg-green-600 text-white';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Open":
-        return "bg-blue-600 text-white";
-      case "In Progress":
-        return "bg-purple-600 text-white";
-      case "Pending":
-        return "bg-yellow-600 text-white";
-      case "Resolved":
-        return "bg-green-600 text-white";
-      case "Closed":
-        return "bg-gray-600 text-white";
-      default:
-        return "bg-muted text-muted-foreground";
+      case 'Open': return 'bg-blue-600 text-white';
+      case 'In Progress': return 'bg-purple-600 text-white';
+      case 'Pending': return 'bg-yellow-600 text-white';
+      case 'Resolved': return 'bg-green-600 text-white';
+      case 'Closed': return 'bg-gray-600 text-white';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -131,8 +108,7 @@ export function AddTicket() {
       <div className="mb-6">
         <h1 className="mb-2">Create New Support Ticket</h1>
         <p className="text-muted-foreground">
-          Fill out the form below to create a new support ticket. All fields
-          marked with * are required.
+          Fill out the form below to create a new support ticket. All fields marked with * are required.
         </p>
       </div>
 
@@ -156,7 +132,7 @@ export function AddTicket() {
                   id="title"
                   placeholder="Enter a clear, descriptive title for the ticket"
                   value={formData.title}
-                  onChange={(e) => handleInputChange("title", e.target.value)}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
                   required
                   className="mt-1"
                 />
@@ -168,9 +144,7 @@ export function AddTicket() {
                   id="description"
                   placeholder="Provide a detailed description of the issue, including steps to reproduce, expected behavior, and any error messages"
                   value={formData.description}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
+                  onChange={(e) => handleInputChange('description', e.target.value)}
                   required
                   rows={4}
                   className="mt-1"
@@ -184,12 +158,7 @@ export function AddTicket() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="priority">Priority *</Label>
-                <Select
-                  value={formData.priority}
-                  onValueChange={(value) =>
-                    handleInputChange("priority", value)
-                  }
-                >
+                <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
@@ -201,9 +170,7 @@ export function AddTicket() {
                   </SelectContent>
                 </Select>
                 {formData.priority && (
-                  <Badge
-                    className={`mt-2 ${getPriorityColor(formData.priority)}`}
-                  >
+                  <Badge className={`mt-2 ${getPriorityColor(formData.priority)}`}>
                     {formData.priority}
                   </Badge>
                 )}
@@ -211,10 +178,7 @@ export function AddTicket() {
 
               <div>
                 <Label htmlFor="status">Status</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) => handleInputChange("status", value)}
-                >
+                <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -235,12 +199,7 @@ export function AddTicket() {
 
               <div>
                 <Label htmlFor="category">Category</Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(value) =>
-                    handleInputChange("category", value)
-                  }
-                >
+                <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -266,12 +225,7 @@ export function AddTicket() {
                   <User className="w-4 h-4" />
                   Assignee
                 </Label>
-                <Select
-                  value={formData.assignee}
-                  onValueChange={(value) =>
-                    handleInputChange("assignee", value)
-                  }
-                >
+                <Select value={formData.assignee} onValueChange={(value) => handleInputChange('assignee', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select assignee" />
                   </SelectTrigger>
@@ -287,21 +241,14 @@ export function AddTicket() {
 
               <div>
                 <Label htmlFor="department">Department</Label>
-                <Select
-                  value={formData.department}
-                  onValueChange={(value) =>
-                    handleInputChange("department", value)
-                  }
-                >
+                <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="IT Support">IT Support</SelectItem>
                     <SelectItem value="Development">Development</SelectItem>
-                    <SelectItem value="Infrastructure">
-                      Infrastructure
-                    </SelectItem>
+                    <SelectItem value="Infrastructure">Infrastructure</SelectItem>
                     <SelectItem value="Security">Security</SelectItem>
                     <SelectItem value="Operations">Operations</SelectItem>
                   </SelectContent>
@@ -317,7 +264,7 @@ export function AddTicket() {
                   id="dueDate"
                   type="date"
                   value={formData.dueDate}
-                  onChange={(e) => handleInputChange("dueDate", e.target.value)}
+                  onChange={(e) => handleInputChange('dueDate', e.target.value)}
                   className="mt-1"
                 />
               </div>
@@ -332,7 +279,7 @@ export function AddTicket() {
                 id="tags"
                 placeholder="Enter tags separated by commas (e.g., urgent, printer, network)"
                 value={formData.tags}
-                onChange={(e) => handleInputChange("tags", e.target.value)}
+                onChange={(e) => handleInputChange('tags', e.target.value)}
                 className="mt-1"
               />
               <p className="text-sm text-muted-foreground mt-1">
@@ -342,23 +289,18 @@ export function AddTicket() {
 
             {/* Form Actions */}
             <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-border">
-              <Button
-                type="submit"
-                disabled={
-                  isSubmitting ||
-                  !formData.title ||
-                  !formData.description ||
-                  !formData.priority
-                }
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || !formData.title || !formData.description || !formData.priority}
                 className="flex items-center gap-2"
               >
                 <Save className="w-4 h-4" />
-                {isSubmitting ? "Creating Ticket..." : "Create Ticket"}
+                {isSubmitting ? 'Creating Ticket...' : 'Create Ticket'}
               </Button>
-
-              <Button
-                type="button"
-                variant="outline"
+              
+              <Button 
+                type="button" 
+                variant="outline" 
                 onClick={handleReset}
                 className="flex items-center gap-2"
               >
@@ -377,18 +319,9 @@ export function AddTicket() {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           <ul className="space-y-1">
-            <li>
-              • <strong>Priority:</strong> Critical for system outages, High for
-              business impact, Medium for general issues, Low for minor requests
-            </li>
-            <li>
-              • <strong>Category:</strong> Choose the most relevant category to
-              help route your ticket to the right team
-            </li>
-            <li>
-              • <strong>Description:</strong> Include as much detail as possible
-              - screenshots, error messages, and steps taken
-            </li>
+            <li>• <strong>Priority:</strong> Critical for system outages, High for business impact, Medium for general issues, Low for minor requests</li>
+            <li>• <strong>Category:</strong> Choose the most relevant category to help route your ticket to the right team</li>
+            <li>• <strong>Description:</strong> Include as much detail as possible - screenshots, error messages, and steps taken</li>
           </ul>
         </CardContent>
       </Card>
