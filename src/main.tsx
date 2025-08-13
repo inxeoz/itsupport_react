@@ -4,15 +4,15 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Controlled mount
-// export function mountReact(el: HTMLElement) {
-//   ReactDOM.createRoot(el).render(
-//     <React.StrictMode>
-//       <App />
-//     </React.StrictMode>,
-//   );
-// }
+export function mountReact(el: HTMLElement) {
+  ReactDOM.createRoot(document.getElementById("root_itsupport")!).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>,
+  );
+}
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+ReactDOM.createRoot(document.getElementById("root_itsupport")!).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,
