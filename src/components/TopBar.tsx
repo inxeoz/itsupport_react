@@ -99,10 +99,7 @@ export function TopBar({
                     <MoreHorizontal className="w-4 h-4 ml-1" />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  align="start"
-                  className="w-48"
-                >
+                <DropdownMenuContent align="start" className="w-48">
                   <DropdownMenuLabel className="text-muted-foreground">
                     {tab.label} Options
                   </DropdownMenuLabel>
@@ -179,7 +176,7 @@ export function TopBar({
           </div>
         ))}
 
-        <DropdownMenu className="bg-accent text-accent-foreground hover:bg-accent/80 ">
+        <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
@@ -198,7 +195,7 @@ export function TopBar({
               Board views
             </DropdownMenuLabel>
             <DropdownMenuGroup>
-              {boardViews.map((view, index) => {
+              {boardViews.map((view) => {
                 const IconComponent = view.icon;
                 return (
                   <DropdownMenuItem
@@ -243,9 +240,7 @@ export function TopBar({
       {/* Right side - Branding and controls */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-4">
-          <h1 className="text-xl font-medium text-foreground">
-            MYTICK
-          </h1>
+          <h1 className="text-xl font-medium text-foreground">MYTICK</h1>
           <Badge
             variant="secondary"
             className="bg-emerald-600 text-white border-none dark:bg-emerald-700"
@@ -280,9 +275,7 @@ export function TopBar({
                   <User className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">
-                    John Doe
-                  </p>
+                  <p className="text-sm font-medium">John Doe</p>
                   <p className="text-xs text-muted-foreground">
                     john.doe@company.com
                   </p>

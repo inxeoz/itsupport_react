@@ -1,30 +1,19 @@
-// import { defineConfig } from 'vite'
-// import react from '@vitejs/plugin-react'
-// import path from 'path'
-
-// // https://vitejs.dev/config/
-// export default defineConfig({
-//   plugins: [react()],
-//   resolve: {
-//     alias: {
-//       "@": path.resolve(__dirname, "./src"),
-//     },
-//   },
-// })
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
+import { resolve } from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": resolve(__dirname, "./src"),
     },
   },
   define: {
-    "process.env": {}, // Prevent "process is not defined"
+    "process.env": {},
   },
   build: {
     outDir: "../public/static_ui",
@@ -32,13 +21,13 @@ export default defineConfig({
     lib: {
       entry: "./src/main.tsx",
       formats: ["es"],
-      fileName: () => `main.js`, // no hashing
+      fileName: () => `main.js`,
     },
     rollupOptions: {
       external: [],
       output: {
-        entryFileNames: `main.js`, // no hash
-        assetFileNames: `main.css`, // no hash
+        entryFileNames: `main.js`,
+        assetFileNames: `main.css`,
       },
     },
   },

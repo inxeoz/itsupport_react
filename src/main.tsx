@@ -4,7 +4,7 @@ import App from "./App.tsx";
 import "./index.css";
 
 // Controlled mount
-export function mountReact(el: HTMLElement) {
+export function mountReact(_el: HTMLElement) {
   ReactDOM.createRoot(document.getElementById("root_itsupport")!).render(
     <React.StrictMode>
       <App />

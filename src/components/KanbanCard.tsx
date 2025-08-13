@@ -1,11 +1,27 @@
-import { useState } from 'react';
-import { useDrag } from 'react-dnd';
-import { MessageSquare, Paperclip, MoreHorizontal, GripVertical, Edit, Copy, Trash2, Check, X } from 'lucide-react';
-import { Badge } from './ui/badge';
-import { Button } from './ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
-import { Input } from './ui/input';
-import { Textarea } from './ui/textarea';
+import { useState } from "react";
+import { useDrag } from "react-dnd";
+import {
+  MessageSquare,
+  Paperclip,
+  MoreHorizontal,
+  GripVertical,
+  Edit,
+  Copy,
+  Trash2,
+  Check,
+  X,
+} from "lucide-react";
+import { Badge } from "./ui/badge";
+import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "./ui/dropdown-menu";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 
 interface Ticket {
   id: number;
@@ -26,42 +42,40 @@ interface KanbanCardProps {
   onDuplicateTicket?: (ticket: Ticket) => void;
 }
 
-const priorityColors = {
-  low: 'bg-gray-500',
-  medium: 'bg-orange-500',
-  high: 'bg-red-500',
-  critical: 'bg-red-600',
-};
-
 const tagColors = {
-  'Reviewed': 'bg-slate-500',
-  'Awaiting customer': 'bg-purple-500',
-  'Critical': 'bg-red-600',
-  'Removed': 'bg-gray-500',
-  'New': 'bg-indigo-500',
-  'High': 'bg-red-500',
+  Reviewed: "bg-slate-500",
+  "Awaiting customer": "bg-purple-500",
+  Critical: "bg-red-600",
+  Removed: "bg-gray-500",
+  New: "bg-indigo-500",
+  High: "bg-red-500",
 };
 
-export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicateTicket }: KanbanCardProps) {
+export function KanbanCard({
+  ticket,
+  onUpdateTicket,
+  onDeleteTicket,
+  onDuplicateTicket,
+}: KanbanCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(ticket.title);
   const [editDescription, setEditDescription] = useState(ticket.description);
   const [{ isDragging }, drag, dragPreview] = useDrag({
-    type: 'TICKET',
-    item: { id: ticket.id, type: 'TICKET', status: ticket.status },
-    collect: (monitor) => ({
+    type: "TICKET",
+    item: { id: ticket.id, type: "TICKET", status: ticket.status },
+    collect: (monitor: any) => ({
       isDragging: monitor.isDragging(),
     }),
   });
 
-  const getPriorityColor = (priority: string) => 
-    priorityColors[priority as keyof typeof priorityColors] || 'bg-gray-500';
-  
   const getTagColor = (tag: string) =>
-    tagColors[tag as keyof typeof tagColors] || 'bg-gray-500';
+    tagColors[tag as keyof typeof tagColors] || "bg-gray-500";
 
   const handleSaveEdit = () => {
-    if (onUpdateTicket && (editTitle !== ticket.title || editDescription !== ticket.description)) {
+    if (
+      onUpdateTicket &&
+      (editTitle !== ticket.title || editDescription !== ticket.description)
+    ) {
       onUpdateTicket(ticket.id, {
         title: editTitle.trim() || ticket.title,
         description: editDescription.trim(),
@@ -96,14 +110,11 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
     <div
       ref={dragPreview}
       className={`bg-card rounded-lg border border-border hover:border-muted-foreground transition-all group cursor-move ${
-        isDragging ? 'opacity-50 rotate-2 shadow-lg' : 'hover:shadow-md'
+        isDragging ? "opacity-50 rotate-2 shadow-lg" : "hover:shadow-md"
       }`}
     >
       {/* Drag Handle */}
-      <div 
-        ref={drag}
-        className="flex items-center justify-between p-3 pb-2"
-      >
+      <div ref={drag} className="flex items-center justify-between p-3 pb-2">
         <div className="flex items-center gap-2">
           <GripVertical className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing" />
           {isEditing ? (
@@ -114,9 +125,9 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
               placeholder="Enter ticket title..."
               autoFocus
               onKeyDown={(e) => {
-                if (e.key === 'Enter') {
+                if (e.key === "Enter") {
                   handleSaveEdit();
-                } else if (e.key === 'Escape') {
+                } else if (e.key === "Escape") {
                   handleCancelEdit();
                 }
               }}
@@ -167,8 +178,8 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
                 Duplicate
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem 
-                onClick={handleDelete} 
+              <DropdownMenuItem
+                onClick={handleDelete}
                 className="text-xs text-destructive focus:text-destructive"
               >
                 <Trash2 className="w-3 h-3 mr-2" />
@@ -188,9 +199,9 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
             className="text-xs min-h-16 mb-3 px-2 py-1 border-none bg-accent focus:bg-background resize-none"
             placeholder="Enter ticket description..."
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && e.ctrlKey) {
+              if (e.key === "Enter" && e.ctrlKey) {
                 handleSaveEdit();
-              } else if (e.key === 'Escape') {
+              } else if (e.key === "Escape") {
                 handleCancelEdit();
               }
             }}
@@ -226,7 +237,7 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
               {ticket.creationDate}
             </Badge>
           </div>
-          
+
           <div className="flex items-center gap-1 text-muted-foreground">
             <Button
               variant="ghost"
