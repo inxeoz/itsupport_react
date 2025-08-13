@@ -1,0 +1,200 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Variants - scoped inside root for each theme */
+@custom-variant dark (&:is(.dark *));
+@custom-variant blue-theme (&:is(.blue-theme *));
+@custom-variant orange-theme (&:is(.orange-theme *));
+
+@layer base {
+    /* ===== DEFAULT (Light / Emerald) ===== */
+    #root_itsupport {
+        --font-size: 14px;
+
+        /* Base Colors (HSL) */
+        --background: 0 0% 100%;
+        --foreground: 240 5% 10%;
+        --card: 0 0% 100%;
+        --card-foreground: 240 5% 10%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 5% 10%;
+
+        --primary: 240 100% 5%;
+        --primary-foreground: 0 0% 100%;
+
+        --secondary: 240 12% 95%;
+        --secondary-foreground: 240 100% 5%;
+
+        --muted: 240 10% 93%;
+        --muted-foreground: 240 8% 50%;
+
+        --accent: 240 8% 92%;
+        --accent-foreground: 240 100% 5%;
+
+        --destructive: 350 75% 45%;
+        --destructive-foreground: 0 0% 100%;
+
+        --border: 240 5% 89%;
+        --input: 0 0% 100%;
+        --input-background: 240 8% 95%;
+        --switch-background: 240 8% 80%;
+
+        /* Feedback / charts */
+        --ring: 240 8% 70%;
+
+        /* Theme accent (emerald) */
+        --theme-accent: 160 84% 39%;
+        --theme-accent-hover: 160 94% 30%;
+        --theme-accent-foreground: 0 0% 100%;
+
+        /* Sidebar */
+        --sidebar-background: 0 0% 98%;
+        --sidebar-foreground: 240 5% 10%;
+        --sidebar-primary: 240 100% 5%;
+        --sidebar-primary-foreground: 0 0% 98%;
+        --sidebar-accent: 0 0% 95%;
+        --sidebar-accent-foreground: 240 10% 20%;
+        --sidebar-border: 240 5% 93%;
+        --sidebar-ring: 240 8% 70%;
+
+        --radius: 0.625rem;
+    }
+
+    /* ===== DARK THEME ===== */
+    #root_itsupport.dark {
+        --background: 222.2 84% 4.9%;
+        --foreground: 210 40% 98%;
+        --card: 222.2 84% 4.9%;
+        --card-foreground: 210 40% 98%;
+        --popover: 222.2 84% 4.9%;
+        --popover-foreground: 210 40% 98%;
+        --primary: 210 40% 98%;
+        --primary-foreground: 222.2 84% 4.9%;
+        --secondary: 217.2 32.6% 17.5%;
+        --secondary-foreground: 210 40% 98%;
+        --muted: 217.2 32.6% 17.5%;
+        --muted-foreground: 215 20.2% 65.1%;
+        --accent: 217.2 32.6% 17.5%;
+        --accent-foreground: 210 40% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 210 40% 98%;
+        --border: 217.2 32.6% 17.5%;
+        --input: 217.2 32.6% 17.5%;
+        --input-background: 217.2 32.6% 17.5%;
+        --switch-background: 217.2 32.6% 17.5%;
+        --ring: 212.7 26.8% 83.9%;
+        --sidebar-background: 222.2 84% 4.9%;
+        --sidebar-foreground: 210 40% 98%;
+        --sidebar-primary: 210 40% 98%;
+        --sidebar-primary-foreground: 222.2 84% 4.9%;
+        --sidebar-accent: 217.2 32.6% 17.5%;
+        --sidebar-accent-foreground: 210 40% 98%;
+        --sidebar-border: 217.2 32.6% 17.5%;
+        --sidebar-ring: 212.7 26.8% 83.9%;
+
+        /* Keep emerald accent */
+        --theme-accent: 160 84% 39%;
+        --theme-accent-hover: 160 94% 30%;
+        --theme-accent-foreground: 0 0% 100%;
+    }
+
+    /* ===== BLUE THEME (Light) ===== */
+    #root_itsupport.blue-theme {
+        --background: 213 100% 97%;
+        --foreground: 226 56% 26%;
+        --card: 213 100% 92%;
+        --card-foreground: 226 56% 26%;
+        --popover: 213 100% 92%;
+        --popover-foreground: 226 56% 26%;
+        --primary: 221 83% 53%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 213 93% 86%;
+        --secondary-foreground: 226 56% 26%;
+        --muted: 213 93% 86%;
+        --muted-foreground: 221 83% 40%;
+        --accent: 213 100% 80%;
+        --accent-foreground: 226 56% 26%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 213 100% 80%;
+        --input: 213 100% 92%;
+        --input-background: 213 93% 86%;
+        --switch-background: 213 100% 80%;
+        --ring: 217 91% 60%;
+        --theme-accent: 221 83% 53%;
+        --theme-accent-hover: 224 76% 48%;
+        --theme-accent-foreground: 0 0% 100%;
+        --sidebar-background: 213 100% 92%;
+        --sidebar-foreground: 226 56% 26%;
+        --sidebar-primary: 224 76% 48%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 213 93% 86%;
+        --sidebar-accent-foreground: 226 56% 26%;
+        --sidebar-border: 213 100% 80%;
+        --sidebar-ring: 217 91% 60%;
+    }
+
+    /* ===== ORANGE THEME (Light) ===== */
+    #root_itsupport.orange-theme {
+        --background: 33 100% 97%;
+        --foreground: 20 78% 34%;
+        --card: 28 96% 86%;
+        --card-foreground: 20 78% 34%;
+        --popover: 28 96% 86%;
+        --popover-foreground: 20 78% 34%;
+        --primary: 20 84% 50%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 29 94% 77%;
+        --secondary-foreground: 20 78% 34%;
+        --muted: 29 94% 77%;
+        --muted-foreground: 20 80% 43%;
+        --accent: 27 96% 68%;
+        --accent-foreground: 20 78% 34%;
+        --destructive: 0 72% 51%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 27 96% 68%;
+        --input: 28 96% 86%;
+        --input-background: 29 94% 77%;
+        --switch-background: 27 96% 68%;
+        --ring: 27 96% 54%;
+        --theme-accent: 20 84% 50%;
+        --theme-accent-hover: 20 84% 40%;
+        --theme-accent-foreground: 0 0% 100%;
+        --sidebar-background: 28 96% 86%;
+        --sidebar-foreground: 20 78% 34%;
+        --sidebar-primary: 20 84% 50%;
+        --sidebar-primary-foreground: 0 0% 100%;
+        --sidebar-accent: 29 94% 77%;
+        --sidebar-accent-foreground: 20 78% 34%;
+        --sidebar-border: 27 96% 68%;
+        --sidebar-ring: 27 96% 54%;
+    }
+
+    /* ===== Base Styles ===== */
+    #root_itsupport {
+        @apply bg-background text-foreground;
+    }
+    #root_itsupport * {
+        @apply border-border;
+    }
+}
+
+/* ===== Utilities ===== */
+@layer utilities {
+    .bg-theme-accent {
+        background-color: hsl(var(--theme-accent));
+    }
+    .hover\:bg-theme-accent-hover:hover {
+        background-color: hsl(var(--theme-accent-hover));
+    }
+    .text-theme-accent-foreground {
+        color: hsl(var(--theme-accent-foreground));
+    }
+    .border-theme-accent {
+        border-color: hsl(var(--theme-accent));
+    }
+    .text-theme-accent {
+        color: hsl(var(--theme-accent));
+    }
+}

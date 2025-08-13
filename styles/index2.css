@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------- Theme Variables -------------------- */
+#root_itsupport {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --input-background: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --switch-background: 217.2 32.6% 17.5%;
+    --radius: 0.5rem;
+
+    /* Sidebar variables */
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 210 40% 98%;
+    --sidebar-primary-foreground: 222.2 84% 4.9%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 212.7 26.8% 83.9%;
+
+    /* Theme accent placeholders */
+    --theme-accent: 210 100% 50%;
+    --theme-accent-hover: 210 90% 40%;
+    --theme-accent-foreground: 0 0% 100%;
+}
+
+/* -------------------- Theme Modifiers -------------------- */
+#root_itsupport.dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 84% 4.9%;
+}
+
+#root_itsupport.blue-theme {
+    --theme-accent: 210 100% 50%;
+    --theme-accent-hover: 210 90% 40%;
+    --theme-accent-foreground: 0 0% 100%;
+}
+
+#root_itsupport.orange-theme {
+    --theme-accent: 25 100% 50%;
+    --theme-accent-hover: 25 90% 40%;
+    --theme-accent-foreground: 0 0% 100%;
+}
+
+/* -------------------- Base Styles -------------------- */
+@layer base {
+    #root_itsupport {
+        @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
+    }
+
+    #root_itsupport * {
+        @apply border-[hsl(var(--border))] outline-[hsl(var(--ring))/50];
+    }
+
+    /* Typography */
+    #root_itsupport h1 {
+        font-size: 1.5rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+    #root_itsupport h2 {
+        font-size: 1.25rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+    #root_itsupport h3 {
+        font-size: 1.125rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+    #root_itsupport h4 {
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+    #root_itsupport p,
+    #root_itsupport input {
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+    }
+    #root_itsupport label,
+    #root_itsupport button {
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.5;
+    }
+}
+
+/* -------------------- Utilities -------------------- */
+@layer utilities {
+    #root_itsupport .bg-theme-accent {
+        background-color: hsl(var(--theme-accent));
+    }
+    #root_itsupport .hover\:bg-theme-accent-hover:hover {
+        background-color: hsl(var(--theme-accent-hover));
+    }
+    #root_itsupport .text-theme-accent-foreground {
+        color: hsl(var(--theme-accent-foreground));
+    }
+    #root_itsupport .border-theme-accent {
+        border-color: hsl(var(--theme-accent));
+    }
+    #root_itsupport .text-theme-accent {
+        color: hsl(var(--theme-accent));
+    }
+
+    /* Line clamp */
+    #root_itsupport .line-clamp-1 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 1;
+    }
+    #root_itsupport .line-clamp-2 {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    /* Scrollbar */
+    #root_itsupport ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    #root_itsupport ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    #root_itsupport ::-webkit-scrollbar-thumb {
+        background: hsl(var(--border));
+        border-radius: 3px;
+    }
+    #root_itsupport ::-webkit-scrollbar-thumb:hover {
+        background: hsl(var(--muted-foreground));
+    }
+}
