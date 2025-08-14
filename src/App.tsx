@@ -1,24 +1,24 @@
-import { useState, useCallback } from 'react';
-import { TopBar } from './components/TopBar';
-import { TicketDashboard } from './components/TicketDashboard';
-import { KanbanBoard } from './components/KanbanBoard';
-import { AddTicket } from './components/AddTicket';
-import { AnalyticsDashboard } from './components/AnalyticsDashboard';
-import { FormView } from './components/FormView';
-import { GanttView } from './components/GanttView';
-import { CalendarView } from './components/CalendarView';
-import { DocumentView } from './components/DocumentView';
-import { FileGalleryView } from './components/FileGalleryView';
-import { CustomizableDashboard } from './components/CustomizableDashboard';
+import { useState, useCallback } from "react";
+import { TopBar } from "./components/TopBar";
+import { TicketDashboard } from "./components/TicketDashboard";
+import { KanbanBoard } from "./components/KanbanBoard";
+import { AddTicket } from "./components/AddTicket";
+import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
+import { FormView } from "./components/FormView";
+import { GanttView } from "./components/GanttView";
+import { CalendarView } from "./components/CalendarView";
+import { DocumentView } from "./components/DocumentView";
+import { FileGalleryView } from "./components/FileGalleryView";
+import { CustomizableDashboard } from "./components/CustomizableDashboard";
 
 export type Theme = {
-  mode: 'light' | 'dark';
-  accent: 'default' | 'blue' | 'orange';
+  mode: "light" | "dark";
+  accent: "default" | "blue" | "orange";
 };
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('main-table');
-  const [theme, setTheme] = useState<Theme>({ mode: 'dark', accent: 'default' });
+  const [activeTab, setActiveTab] = useState("main-table");
+  const [theme, setTheme] = useState<Theme>({ mode: "dark", accent: "blue" });
   const [tabs, setTabs] = useState([
     { id: "main-table", label: "Main table", icon: "⋯" },
     { id: "form", label: "Form", icon: null },
@@ -31,9 +31,9 @@ export default function App() {
   };
 
   const handleAddTab = (tabId: string, label: string) => {
-    const existingTab = tabs.find(tab => tab.id === tabId);
+    const existingTab = tabs.find((tab) => tab.id === tabId);
     if (!existingTab) {
-      setTabs(prevTabs => [...prevTabs, { id: tabId, label, icon: null }]);
+      setTabs((prevTabs) => [...prevTabs, { id: tabId, label, icon: null }]);
     }
   };
 
@@ -44,11 +44,11 @@ export default function App() {
     }
 
     // Remove the tab from the list
-    setTabs(prevTabs => prevTabs.filter(tab => tab.id !== tabId));
+    setTabs((prevTabs) => prevTabs.filter((tab) => tab.id !== tabId));
 
     // If the removed tab was the active tab, switch to another tab
     if (activeTab === tabId) {
-      const remainingTabs = tabs.filter(tab => tab.id !== tabId);
+      const remainingTabs = tabs.filter((tab) => tab.id !== tabId);
       if (remainingTabs.length > 0) {
         // Switch to the first remaining tab
         setActiveTab(remainingTabs[0].id);
@@ -60,39 +60,39 @@ export default function App() {
     setTabs((prevTabs) => {
       const newTabs = [...prevTabs];
       const draggedTab = newTabs[dragIndex];
-      
+
       // Remove the dragged tab
       newTabs.splice(dragIndex, 1);
-      
+
       // Insert it at the new position
       newTabs.splice(hoverIndex, 0, draggedTab);
-      
+
       return newTabs;
     });
   }, []);
 
   const renderActiveView = () => {
     switch (activeTab) {
-      case 'main-table':
-      case 'table':
+      case "main-table":
+      case "table":
         return <TicketDashboard />;
-      case 'kanban':
+      case "kanban":
         return <KanbanBoard />;
-      case 'add-ticket':
+      case "add-ticket":
         return <AddTicket />;
-      case 'chart':
+      case "chart":
         return <AnalyticsDashboard />;
-      case 'form':
+      case "form":
         return <FormView />;
-      case 'gantt':
+      case "gantt":
         return <GanttView />;
-      case 'calendar':
+      case "calendar":
         return <CalendarView />;
-      case 'doc':
+      case "doc":
         return <DocumentView />;
-      case 'file-gallery':
+      case "file-gallery":
         return <FileGalleryView />;
-      case 'customizable':
+      case "customizable":
         return <CustomizableDashboard />;
       default:
         return <TicketDashboard />;
@@ -101,27 +101,28 @@ export default function App() {
 
   // Generate CSS classes for theme
   const getThemeClasses = () => {
-    let classes = 'h-screen bg-background text-foreground flex flex-col transition-colors duration-300';
-    
+    let classes =
+      "h-screen bg-background text-foreground flex flex-col transition-colors duration-300";
+
     // Add dark mode class
-    if (theme.mode === 'dark') {
-      classes += ' dark';
+    if (theme.mode === "dark") {
+      classes += " dark";
     }
-    
+
     // Add theme background classes
-    if (theme.accent === 'blue') {
-      classes += ' blue-theme';
-    } else if (theme.accent === 'orange') {
-      classes += ' orange-theme';
+    if (theme.accent === "blue") {
+      classes += " blue-theme";
+    } else if (theme.accent === "orange") {
+      classes += " orange-theme";
     }
-    
+
     return classes;
   };
 
   return (
     <div className={getThemeClasses()}>
-      <TopBar 
-        activeTab={activeTab} 
+      <TopBar
+        activeTab={activeTab}
         onTabChange={setActiveTab}
         theme={theme}
         onThemeChange={handleThemeChange}
@@ -130,9 +131,7 @@ export default function App() {
         onRemoveTab={handleRemoveTab}
         onMoveTab={handleMoveTab}
       />
-      <main className="flex-1 overflow-auto m-5">
-        {renderActiveView()}
-      </main>
+      <main className="flex-1 overflow-auto m-5">{renderActiveView()}</main>
     </div>
   );
 }
