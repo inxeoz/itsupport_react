@@ -10,6 +10,8 @@ import { CalendarView } from "./components/CalendarView";
 import { DocumentView } from "./components/DocumentView";
 import { FileGalleryView } from "./components/FileGalleryView";
 import { CustomizableDashboard } from "./components/CustomizableDashboard";
+import { DeveloperDashboard } from "./components/DeveloperDashboard";
+import { Toaster } from "./components/ui/sonner";
 
 export type Theme = {
   mode: "light" | "dark";
@@ -18,7 +20,7 @@ export type Theme = {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("main-table");
-  const [theme, setTheme] = useState<Theme>({ mode: "dark", accent: "blue" });
+  const [theme, setTheme] = useState<Theme>({ mode: "light", accent: "blue" });
   const [tabs, setTabs] = useState([
     { id: "main-table", label: "Main table", icon: "⋯" },
     { id: "form", label: "Form", icon: null },
@@ -94,6 +96,8 @@ export default function App() {
         return <FileGalleryView />;
       case "customizable":
         return <CustomizableDashboard />;
+      case "developer":
+        return <DeveloperDashboard />;
       default:
         return <TicketDashboard />;
     }
@@ -132,6 +136,17 @@ export default function App() {
         onMoveTab={handleMoveTab}
       />
       <main className="flex-1 overflow-auto m-5">{renderActiveView()}</main>
+
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-right"
+        expand={true}
+        richColors
+        closeButton
+        toastOptions={{
+          className: "bg-card border-border text-card-foreground",
+        }}
+      />
     </div>
   );
 }

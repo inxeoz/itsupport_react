@@ -291,7 +291,9 @@
 
 @layer base {
     * {
-        @apply border-border;
+        /*@apply border-border outline-ring/50;*/
+
+        @apply border-border; /* Remove the invalid outline class */
     }
 
     body {

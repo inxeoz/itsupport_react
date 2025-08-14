@@ -19,6 +19,8 @@ import {
   Filter,
   Check,
   X,
+  Terminal,
+  Code,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -120,6 +122,16 @@ export function TopBar({
     },
   ];
 
+  const developerTools = [
+    { 
+      id: "developer", 
+      label: "Developer Dashboard", 
+      icon: Terminal, 
+      badge: "Dev",
+      description: "CSRF tokens, session info, and debug tools"
+    },
+  ];
+
   const themeOptions = [
     { 
       id: 'light-default', 
@@ -194,6 +206,7 @@ export function TopBar({
       doc: "Documents",
       "file-gallery": "File Gallery",
       customizable: "Custom View",
+      developer: "Developer Dashboard",
     };
 
     if (viewToTabMap[viewId]) {
@@ -317,6 +330,40 @@ export function TopBar({
                         className="bg-primary text-primary-foreground border-none text-xs px-2 py-0.5"
                       >
                         {view.badge}
+                      </Badge>
+                    )}
+                  </DropdownMenuItem>
+                );
+              })}
+            </DropdownMenuGroup>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuLabel className="text-muted-foreground">
+              Developer Tools
+            </DropdownMenuLabel>
+            <DropdownMenuGroup>
+              {developerTools.map((tool) => {
+                const IconComponent = tool.icon;
+                return (
+                  <DropdownMenuItem
+                    key={tool.id}
+                    onClick={() => handleViewSelect(tool.id)}
+                    className="flex items-center gap-3 px-3 py-2 cursor-pointer"
+                  >
+                    <IconComponent className="w-4 h-4 text-orange-600 dark:text-orange-400" />
+                    <div className="flex-1">
+                      <div className="font-medium">{tool.label}</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {tool.description}
+                      </div>
+                    </div>
+                    {tool.badge && (
+                      <Badge
+                        variant="secondary"
+                        className="bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-200 border-none text-xs px-2 py-0.5"
+                      >
+                        {tool.badge}
                       </Badge>
                     )}
                   </DropdownMenuItem>
