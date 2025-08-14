@@ -115,131 +115,132 @@ export function DraggableTab({
     }),
   });
 
-  const opacity = isDragging ? 0.4 : 1;
+  const opacity = isDragging ? 0.6 : 1;
+  const transform = isDragging ? 'scale(1.02)' : 'scale(1)';
+  
+  // Apply drag and drop to the entire container
   drag(drop(ref));
 
   return (
     <div 
       ref={ref} 
-      style={{ opacity }}
+      style={{ opacity, transform }}
       data-handler-id={handlerId}
-      className="flex items-center cursor-move"
+      className="flex items-center transition-all duration-200"
     >
       {isActive ? (
-        /* Active tab with dropdown menu */
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button
-              className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 text-sm bg-accent text-accent-foreground hover:bg-accent relative`}
-            >
-              {tab.label}
-              <MoreHorizontal className="w-4 h-4 ml-1" />
-              {/* Drag indicator */}
-              <div className="absolute left-1 top-1/2 transform -translate-y-1/2 w-1 h-4 bg-muted-foreground/20 rounded-full flex flex-col justify-center gap-0.5">
-                <div className="w-0.5 h-0.5 bg-muted-foreground rounded-full"></div>
-                <div className="w-0.5 h-0.5 bg-muted-foreground rounded-full"></div>
-                <div className="w-0.5 h-0.5 bg-muted-foreground rounded-full"></div>
-              </div>
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="start"
-            className={`w-48 ${getThemeClasses()}`}
+        /* Active tab - separate button and dropdown */
+        <div className="flex items-center">
+          <button
+            className={`px-4 py-2 rounded-l-md transition-all duration-200 flex items-center gap-2 text-sm bg-accent text-accent-foreground hover:bg-accent cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg' : ''}`}
           >
-            <DropdownMenuLabel className="text-muted-foreground">
-              {tab.label} Options
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
-              {tab.id === "main-table" && (
+            {tab.label}
+          </button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className={`px-2 py-2 rounded-r-md transition-all duration-200 text-sm bg-accent text-accent-foreground hover:bg-accent/80 border-l border-accent-foreground/10 cursor-pointer ${isDragging ? 'shadow-lg' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent event bubbling
+                }}
+              >
+                <MoreHorizontal className="w-4 h-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="start"
+              className={`w-48 ${getThemeClasses()}`}
+            >
+              <DropdownMenuLabel className="text-muted-foreground">
+                {tab.label} Options
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                {tab.id === "main-table" && (
+                  <>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Table Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Configure Filters</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Customize Columns</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {tab.id === "kanban" && (
+                  <>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Board Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Add Column</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Customize Colors</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {tab.id === "form" && (
+                  <>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Form Builder</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Form Settings</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {tab.id === "add-ticket" && (
+                  <>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Form Preferences</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Template Settings</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {tab.id === "chart" && (
+                  <>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Chart Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Data Filters</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
+                      <span>Export Options</span>
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuGroup>
+              
+              {/* Remove Tab option - only show if more than one tab exists */}
+              {canRemoveTab && (
                 <>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Table Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Configure Filters</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Customize Columns</span>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => onRemoveTab(tab.id)}
+                    className="flex items-center gap-3 px-3 py-2 cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <X className="w-4 h-4" />
+                    <span>Remove Tab</span>
                   </DropdownMenuItem>
                 </>
               )}
-              {tab.id === "kanban" && (
-                <>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Board Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Add Column</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Customize Colors</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-              {tab.id === "form" && (
-                <>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Form Builder</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Form Settings</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-              {tab.id === "add-ticket" && (
-                <>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Form Preferences</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Template Settings</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-              {tab.id === "chart" && (
-                <>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Chart Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Data Filters</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                    <span>Export Options</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuGroup>
-            
-            {/* Remove Tab option - only show if more than one tab exists */}
-            {canRemoveTab && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => onRemoveTab(tab.id)}
-                  className="flex items-center gap-3 px-3 py-2 cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <X className="w-4 h-4" />
-                  <span>Remove Tab</span>
-                </DropdownMenuItem>
-              </>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       ) : (
         /* Inactive tab - regular button */
         <button
           onClick={() => onTabChange(tab.id)}
-          className={`px-4 py-2 rounded-md transition-colors flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent relative`}
+          className={`px-4 py-2 rounded-md transition-all duration-200 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg' : ''}`}
         >
           {tab.label}
-          {/* Drag indicator */}
-          <div className="absolute left-1 top-1/2 transform -translate-y-1/2 w-1 h-4 bg-muted-foreground/20 rounded-full flex flex-col justify-center gap-0.5">
-            <div className="w-0.5 h-0.5 bg-muted-foreground rounded-full"></div>
-            <div className="w-0.5 h-0.5 bg-muted-foreground rounded-full"></div>
-            <div className="w-0.5 h-0.5 bg-muted-foreground rounded-full"></div>
-          </div>
         </button>
       )}
     </div>

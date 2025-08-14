@@ -263,21 +263,23 @@ export function TopBar({
   return (
     <header className="bg-card border-b border-border px-6 py-3 flex items-center justify-between">
       {/* Left side - Navigation tabs */}
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 overflow-hidden">
         <DndProvider backend={HTML5Backend}>
-          {tabs.map((tab, index) => (
-            <DraggableTab
-              key={tab.id}
-              tab={tab}
-              index={index}
-              isActive={activeTab === tab.id}
-              onTabChange={onTabChange}
-              onRemoveTab={onRemoveTab}
-              onMoveTab={onMoveTab}
-              canRemoveTab={canRemoveTab}
-              getThemeClasses={getThemeClasses}
-            />
-          ))}
+          <div className="flex items-center gap-1 min-w-0">
+            {tabs.map((tab, index) => (
+              <DraggableTab
+                key={tab.id}
+                tab={tab}
+                index={index}
+                isActive={activeTab === tab.id}
+                onTabChange={onTabChange}
+                onRemoveTab={onRemoveTab}
+                onMoveTab={onMoveTab}
+                canRemoveTab={canRemoveTab}
+                getThemeClasses={getThemeClasses}
+              />
+            ))}
+          </div>
         </DndProvider>
 
         <DropdownMenu>
@@ -285,7 +287,7 @@ export function TopBar({
             <Button
               variant="ghost"
               size="sm"
-              className="text-muted-foreground hover:text-foreground ml-2"
+              className="text-muted-foreground hover:text-foreground ml-2 flex-shrink-0"
             >
               <Plus className="w-4 h-4 mr-1" />
               Add View
@@ -342,7 +344,7 @@ export function TopBar({
       </div>
 
       {/* Right side - Branding and controls */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 flex-shrink-0">
         <div className="flex items-center gap-4">
           <h1 className="text-xl font-medium text-foreground">
             MYTICK
