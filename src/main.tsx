@@ -16,14 +16,14 @@ export function mountReact(el: HTMLElement) {
 
 //uncomment this only when this project intend to run by project (self)
 //
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-);
-
-// ReactDOM.createRoot(document.getElementById("root_itsupport")!).render(
+// ReactDOM.createRoot(document.getElementById("root")!).render(
 //   <React.StrictMode>
 //     <App />
 //   </React.StrictMode>,
 // );
+
+ReactDOM.createRoot(document.getElementById("root_itsupport")!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>,
+);
