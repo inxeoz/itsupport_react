@@ -4,7 +4,9 @@ import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
-import { Loader2, Plus, User, FileText, MessageSquare, AlertTriangle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Loader2, Plus, User, FileText, MessageSquare, AlertTriangle, Building, Mail, Phone, Tag, Calendar, UserCheck } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import { toast } from "sonner";
 import { frappeApi, type FrappeTicket } from '../services/frappeApi';
@@ -18,14 +20,41 @@ interface NewTicketDialogProps {
 interface TicketFormData {
   title: string;
   user_name: string;
+  department: string;
+  contact_email: string;
+  contact_phone: string;
   description: string;
+  category: string;
+  subcategory: string;
+  priority: string;
+  impact: string;
+  status: string;
+  assignee: string;
+  due_datetime: string;
+  tags: string;
 }
+
+const CATEGORIES = ['Hardware', 'Software', 'Network', 'Access Request', 'Other'];
+const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
+const IMPACTS = ['Single User', 'Multiple Users', 'Entire Department', 'Organization-wide'];
+const STATUSES = ['New', 'In Progress', 'Waiting for Info', 'Resolved', 'Closed'];
 
 export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTicketDialogProps) {
   const [formData, setFormData] = useState<TicketFormData>({
     title: '',
     user_name: '',
+    department: '',
+    contact_email: '',
+    contact_phone: '',
     description: '',
+    category: 'Software',
+    subcategory: '',
+    priority: 'Medium',
+    impact: 'Single User',
+    status: 'New',
+    assignee: '',
+    due_datetime: '',
+    tags: '',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<TicketFormData>>({});
@@ -51,6 +80,18 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
     } else if (formData.description.trim().length < 10) {
       newErrors.description = 'Description must be at least 10 characters';
     }
+
+    if (formData.contact_email && !formData.contact_email.includes('@')) {
+      newErrors.contact_email = 'Please enter a valid email address';
+    }
+
+    if (formData.due_datetime) {
+      const dueDate = new Date(formData.due_datetime);
+      const now = new Date();
+      if (dueDate <= now) {
+        newErrors.due_datetime = 'Due date must be in the future';
+      }
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -74,13 +115,24 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
       const newTicket = await frappeApi.createTicket({
         title: formData.title.trim(),
         user_name: formData.user_name.trim(),
+        department: formData.department.trim() || null,
+        contact_email: formData.contact_email.trim() || null,
+        contact_phone: formData.contact_phone.trim() || null,
         description: formData.description.trim(),
+        category: formData.category,
+        subcategory: formData.subcategory.trim() || null,
+        priority: formData.priority,
+        impact: formData.impact,
+        status: formData.status,
+        assignee: formData.assignee.trim() || null,
+        due_datetime: formData.due_datetime || null,
+        tags: formData.tags.trim() || null,
         docstatus: 0, // Draft status
       });
 
       // Show success toast with ticket details
       toast.success("Ticket created successfully!", {
-        description: `Ticket "${newTicket.name}" has been created and saved as draft.`,
+        description: `Ticket "${newTicket.ticket_id || newTicket.name}" has been created with ${formData.priority} priority.`,
         duration: 5000,
       });
 
@@ -88,7 +140,18 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
       setFormData({
         title: '',
         user_name: '',
+        department: '',
+        contact_email: '',
+        contact_phone: '',
         description: '',
+        category: 'Software',
+        subcategory: '',
+        priority: 'Medium',
+        impact: 'Single User',
+        status: 'New',
+        assignee: '',
+        due_datetime: '',
+        tags: '',
       });
       setErrors({});
       setApiError(null);
@@ -159,7 +222,18 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
       setFormData({
         title: '',
         user_name: '',
+        department: '',
+        contact_email: '',
+        contact_phone: '',
         description: '',
+        category: 'Software',
+        subcategory: '',
+        priority: 'Medium',
+        impact: 'Single User',
+        status: 'New',
+        assignee: '',
+        due_datetime: '',
+        tags: '',
       });
       setErrors({});
       setApiError(null);
@@ -167,16 +241,34 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
     }
   };
 
+  // Format datetime for input field
+  const formatDatetimeForInput = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  // Set default due date to 3 days from now
+  const getDefaultDueDate = (): string => {
+    const date = new Date();
+    date.setDate(date.getDate() + 3);
+    date.setHours(17, 0, 0, 0); // 5 PM
+    return formatDatetimeForInput(date);
+  };
+
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-popover border-border">
+        <DialogHeader className="bg-popover">
+          <DialogTitle className="flex items-center gap-2 text-popover-foreground">
             <Plus className="w-5 h-5 text-theme-accent" />
-            Create New Ticket
+            <span className="text-popover-foreground">Create New Ticket</span>
           </DialogTitle>
-          <DialogDescription>
-            Fill in the details below to create a new support ticket in your Frappe system.
+          <DialogDescription className="text-muted-foreground">
+            Fill in the ticket details. Required fields are marked with *.
           </DialogDescription>
         </DialogHeader>
 
@@ -190,85 +282,329 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
           </Alert>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Title Field */}
-          <div className="space-y-2">
-            <Label htmlFor="title" className="flex items-center gap-2">
-              <FileText className="w-4 h-4" />
-              Title <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => handleInputChange('title', e.target.value)}
-              placeholder="Enter a clear, descriptive title..."
-              className={errors.title ? 'border-destructive focus-visible:ring-destructive' : ''}
-              disabled={loading}
-              maxLength={100}
-            />
-            {errors.title && (
-              <p className="text-sm text-destructive">{errors.title}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {formData.title.length}/100 characters
-            </p>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-6 bg-popover">
+          <Tabs defaultValue="basic" className="w-full bg-popover">
+            <TabsList className="grid w-full grid-cols-3 bg-muted border-border">
+              <TabsTrigger value="basic" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Basic Info</TabsTrigger>
+              <TabsTrigger value="details" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Details</TabsTrigger>
+              <TabsTrigger value="assignment" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Assignment</TabsTrigger>
+            </TabsList>
 
-          {/* User Name Field */}
-          <div className="space-y-2">
-            <Label htmlFor="user_name" className="flex items-center gap-2">
-              <User className="w-4 h-4" />
-              User Name <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="user_name"
-              value={formData.user_name}
-              onChange={(e) => handleInputChange('user_name', e.target.value)}
-              placeholder="Enter the user's name..."
-              className={errors.user_name ? 'border-destructive focus-visible:ring-destructive' : ''}
-              disabled={loading}
-              maxLength={50}
-            />
-            {errors.user_name && (
-              <p className="text-sm text-destructive">{errors.user_name}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              The person this ticket is for
-            </p>
-          </div>
+            {/* Basic Information Tab */}
+            <TabsContent value="basic" className="space-y-4 bg-popover">
+              {/* Title Field */}
+              <div className="space-y-2">
+                <Label htmlFor="title" className="flex items-center gap-2">
+                  <FileText className="w-4 h-4" />
+                  Title <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => handleInputChange('title', e.target.value)}
+                  placeholder="Enter a clear, descriptive title..."
+                  className={errors.title ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  disabled={loading}
+                  maxLength={200}
+                />
+                {errors.title && (
+                  <p className="text-sm text-destructive">{errors.title}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {formData.title.length}/200 characters
+                </p>
+              </div>
 
-          {/* Description Field */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="flex items-center gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Description <span className="text-destructive">*</span>
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder="Provide detailed information about the issue or request..."
-              className={`min-h-[120px] resize-none ${errors.description ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-              disabled={loading}
-              maxLength={500}
-            />
-            {errors.description && (
-              <p className="text-sm text-destructive">{errors.description}</p>
-            )}
-            <p className="text-xs text-muted-foreground">
-              {formData.description.length}/500 characters • Be specific about the problem
-            </p>
-          </div>
+              {/* User Name Field */}
+              <div className="space-y-2">
+                <Label htmlFor="user_name" className="flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  User Name <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="user_name"
+                  value={formData.user_name}
+                  onChange={(e) => handleInputChange('user_name', e.target.value)}
+                  placeholder="Enter the user's name..."
+                  className={errors.user_name ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  disabled={loading}
+                  maxLength={100}
+                />
+                {errors.user_name && (
+                  <p className="text-sm text-destructive">{errors.user_name}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  The person this ticket is for
+                </p>
+              </div>
+
+              {/* Department and Contact Info */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="department" className="flex items-center gap-2">
+                    <Building className="w-4 h-4" />
+                    Department
+                  </Label>
+                  <Input
+                    id="department"
+                    value={formData.department}
+                    onChange={(e) => handleInputChange('department', e.target.value)}
+                    placeholder="e.g., IT, Sales, Marketing..."
+                    disabled={loading}
+                    maxLength={100}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="contact_email" className="flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Contact Email
+                  </Label>
+                  <Input
+                    id="contact_email"
+                    type="email"
+                    value={formData.contact_email}
+                    onChange={(e) => handleInputChange('contact_email', e.target.value)}
+                    placeholder="user@company.com"
+                    className={errors.contact_email ? 'border-destructive focus-visible:ring-destructive' : ''}
+                    disabled={loading}
+                    maxLength={100}
+                  />
+                  {errors.contact_email && (
+                    <p className="text-sm text-destructive">{errors.contact_email}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="contact_phone" className="flex items-center gap-2">
+                  <Phone className="w-4 h-4" />
+                  Contact Phone
+                </Label>
+                <Input
+                  id="contact_phone"
+                  value={formData.contact_phone}
+                  onChange={(e) => handleInputChange('contact_phone', e.target.value)}
+                  placeholder="+1-555-0123"
+                  disabled={loading}
+                  maxLength={50}
+                />
+              </div>
+
+              {/* Description Field */}
+              <div className="space-y-2">
+                <Label htmlFor="description" className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  Description <span className="text-destructive">*</span>
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) => handleInputChange('description', e.target.value)}
+                  placeholder="Provide detailed information about the issue or request..."
+                  className={`min-h-[120px] resize-none ${errors.description ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                  disabled={loading}
+                  maxLength={1000}
+                />
+                {errors.description && (
+                  <p className="text-sm text-destructive">{errors.description}</p>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {formData.description.length}/1000 characters • Be specific about the problem
+                </p>
+              </div>
+            </TabsContent>
+
+            {/* Details Tab */}
+            <TabsContent value="details" className="space-y-4 bg-popover">
+              {/* Category and Subcategory */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="subcategory">Subcategory</Label>
+                  <Input
+                    id="subcategory"
+                    value={formData.subcategory}
+                    onChange={(e) => handleInputChange('subcategory', e.target.value)}
+                    placeholder="e.g., Authentication, Database, etc."
+                    disabled={loading}
+                    maxLength={100}
+                  />
+                </div>
+              </div>
+
+              {/* Priority and Impact */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PRIORITIES.map((priority) => (
+                        <SelectItem key={priority} value={priority}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${
+                              priority === 'Critical' ? 'bg-destructive' :
+                              priority === 'High' ? 'bg-theme-accent' :
+                              priority === 'Medium' ? 'bg-muted-foreground' : 'bg-theme-accent'
+                            }`} />
+                            <span className="text-foreground">{priority}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="impact">Impact</Label>
+                  <Select value={formData.impact} onValueChange={(value) => handleInputChange('impact', value)}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {IMPACTS.map((impact) => (
+                        <SelectItem key={impact} value={impact}>
+                          {impact}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="space-y-2">
+                <Label htmlFor="status">Status</Label>
+                <Select value={formData.status} onValueChange={(value) => handleInputChange('status', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-2">
+                <Label htmlFor="tags" className="flex items-center gap-2">
+                  <Tag className="w-4 h-4" />
+                  Tags
+                </Label>
+                <Input
+                  id="tags"
+                  value={formData.tags}
+                  onChange={(e) => handleInputChange('tags', e.target.value)}
+                  placeholder="e.g., urgent, authentication, mobile"
+                  disabled={loading}
+                  maxLength={200}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Separate multiple tags with commas
+                </p>
+              </div>
+            </TabsContent>
+
+            {/* Assignment Tab */}
+            <TabsContent value="assignment" className="space-y-4 bg-popover">
+              {/* Assignee */}
+              <div className="space-y-2">
+                <Label htmlFor="assignee" className="flex items-center gap-2">
+                  <UserCheck className="w-4 h-4" />
+                  Assignee
+                </Label>
+                <Input
+                  id="assignee"
+                  value={formData.assignee}
+                  onChange={(e) => handleInputChange('assignee', e.target.value)}
+                  placeholder="e.g., tech.support@company.com"
+                  disabled={loading}
+                  maxLength={100}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Email or username of the person assigned to handle this ticket
+                </p>
+              </div>
+
+              {/* Due Date */}
+              <div className="space-y-2">
+                <Label htmlFor="due_datetime" className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  Due Date & Time
+                </Label>
+                <Input
+                  id="due_datetime"
+                  type="datetime-local"
+                  value={formData.due_datetime}
+                  onChange={(e) => handleInputChange('due_datetime', e.target.value)}
+                  className={errors.due_datetime ? 'border-destructive focus-visible:ring-destructive' : ''}
+                  disabled={loading}
+                  min={formatDatetimeForInput(new Date())}
+                />
+                {errors.due_datetime && (
+                  <p className="text-sm text-destructive">{errors.due_datetime}</p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleInputChange('due_datetime', getDefaultDueDate())}
+                    disabled={loading}
+                  >
+                    Set to 3 days
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const date = new Date();
+                      date.setDate(date.getDate() + 7);
+                      date.setHours(17, 0, 0, 0);
+                      handleInputChange('due_datetime', formatDatetimeForInput(date));
+                    }}
+                    disabled={loading}
+                  >
+                    Set to 1 week
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           {/* Form Actions */}
-          <DialogFooter className="flex justify-between pt-4">
+          <DialogFooter className="flex justify-between pt-4 bg-popover border-t border-border">
             <Button 
               type="button" 
               variant="outline" 
               onClick={handleClose}
               disabled={loading}
+              className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
             >
-              Cancel
+              <span className="text-foreground">Cancel</span>
             </Button>
             <Button 
               type="submit" 
@@ -291,8 +627,9 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
         </form>
 
         {/* Help Text */}
-        <div className="text-xs text-muted-foreground border-t pt-3 mt-2">
-          <p><strong>Note:</strong> The ticket will be created as a draft and can be submitted later.</p>
+        <div className="text-xs text-muted-foreground border-t border-border pt-3 mt-2 bg-popover">
+          <p className="text-muted-foreground"><strong className="text-foreground">Note:</strong> The ticket will be created as a draft and can be submitted later.</p>
+          <p className="text-muted-foreground"><strong className="text-foreground">Tip:</strong> Provide as much detail as possible to help with faster resolution.</p>
         </div>
       </DialogContent>
     </Dialog>

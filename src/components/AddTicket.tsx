@@ -29,77 +29,77 @@ export function AddTicket() {
   };
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <div className="p-6 max-w-4xl mx-auto bg-background">
       <div className="mb-6">
-        <h1 className="text-2xl font-semibold mb-2">Create New Ticket</h1>
+        <h1 className="text-2xl font-semibold mb-2 text-foreground">Create New Ticket</h1>
         <p className="text-muted-foreground">Fill out the form below to create a new support ticket</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Form */}
         <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Plus className="h-5 w-5" />
-                Ticket Details
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <Plus className="h-5 w-5 text-theme-accent" />
+                <span className="text-card-foreground">Ticket Details</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
+                  <Label htmlFor="title" className="text-foreground">Title *</Label>
                   <Input
                     id="title"
                     value={formData.title}
                     onChange={(e) => handleInputChange('title', e.target.value)}
                     placeholder="Brief description of the issue"
-                    className="w-full"
+                    className="w-full bg-input border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="description">Description *</Label>
+                  <Label htmlFor="description" className="text-foreground">Description *</Label>
                   <Textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => handleInputChange('description', e.target.value)}
                     placeholder="Detailed description of the issue"
                     rows={4}
-                    className="w-full resize-none"
+                    className="w-full resize-none bg-input border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="priority">Priority *</Label>
+                    <Label htmlFor="priority" className="text-foreground">Priority *</Label>
                     <Select value={formData.priority} onValueChange={(value) => handleInputChange('priority', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
+                      <SelectTrigger className="bg-input border-border text-foreground">
+                        <SelectValue placeholder="Select priority" className="text-foreground" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="critical">
+                      <SelectContent className="bg-popover border-border">
+                        <SelectItem value="critical" className="text-foreground hover:bg-accent hover:text-accent-foreground">
                           <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-red-600"></div>
-                            Critical
+                            <div className="w-2 h-2 rounded-full bg-destructive"></div>
+                            <span className="text-foreground">Critical</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="high">
+                        <SelectItem value="high" className="text-foreground hover:bg-accent hover:text-accent-foreground">
                           <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-orange-600"></div>
-                            High
+                            <div className="w-2 h-2 rounded-full bg-theme-accent"></div>
+                            <span className="text-foreground">High</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="medium">
+                        <SelectItem value="medium" className="text-foreground hover:bg-accent hover:text-accent-foreground">
                           <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-yellow-600"></div>
-                            Medium
+                            <div className="w-2 h-2 rounded-full bg-muted-foreground"></div>
+                            <span className="text-foreground">Medium</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="low">
+                        <SelectItem value="low" className="text-foreground hover:bg-accent hover:text-accent-foreground">
                           <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full bg-green-600"></div>
-                            Low
+                            <div className="w-2 h-2 rounded-full bg-theme-accent"></div>
+                            <span className="text-foreground">Low</span>
                           </div>
                         </SelectItem>
                       </SelectContent>
@@ -107,16 +107,16 @@ export function AddTicket() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="assignee">Assignee</Label>
+                    <Label htmlFor="assignee" className="text-foreground">Assignee</Label>
                     <Select value={formData.assignee} onValueChange={(value) => handleInputChange('assignee', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Assign to..." />
+                      <SelectTrigger className="bg-input border-border text-foreground">
+                        <SelectValue placeholder="Assign to..." className="text-foreground" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="john-doe">John Doe</SelectItem>
-                        <SelectItem value="jane-smith">Jane Smith</SelectItem>
-                        <SelectItem value="mike-johnson">Mike Johnson</SelectItem>
-                        <SelectItem value="sarah-wilson">Sarah Wilson</SelectItem>
+                      <SelectContent className="bg-popover border-border">
+                        <SelectItem value="john-doe" className="text-foreground hover:bg-accent hover:text-accent-foreground">John Doe</SelectItem>
+                        <SelectItem value="jane-smith" className="text-foreground hover:bg-accent hover:text-accent-foreground">Jane Smith</SelectItem>
+                        <SelectItem value="mike-johnson" className="text-foreground hover:bg-accent hover:text-accent-foreground">Mike Johnson</SelectItem>
+                        <SelectItem value="sarah-wilson" className="text-foreground hover:bg-accent hover:text-accent-foreground">Sarah Wilson</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -124,42 +124,42 @@ export function AddTicket() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="category">Category</Label>
+                    <Label htmlFor="category" className="text-foreground">Category</Label>
                     <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
+                      <SelectTrigger className="bg-input border-border text-foreground">
+                        <SelectValue placeholder="Select category" className="text-foreground" />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hardware">Hardware</SelectItem>
-                        <SelectItem value="software">Software</SelectItem>
-                        <SelectItem value="network">Network</SelectItem>
-                        <SelectItem value="security">Security</SelectItem>
-                        <SelectItem value="access">Access Request</SelectItem>
+                      <SelectContent className="bg-popover border-border">
+                        <SelectItem value="hardware" className="text-foreground hover:bg-accent hover:text-accent-foreground">Hardware</SelectItem>
+                        <SelectItem value="software" className="text-foreground hover:bg-accent hover:text-accent-foreground">Software</SelectItem>
+                        <SelectItem value="network" className="text-foreground hover:bg-accent hover:text-accent-foreground">Network</SelectItem>
+                        <SelectItem value="security" className="text-foreground hover:bg-accent hover:text-accent-foreground">Security</SelectItem>
+                        <SelectItem value="access" className="text-foreground hover:bg-accent hover:text-accent-foreground">Access Request</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="dueDate">Due Date</Label>
+                    <Label htmlFor="dueDate" className="text-foreground">Due Date</Label>
                     <Input
                       id="dueDate"
                       type="date"
                       value={formData.dueDate}
                       onChange={(e) => handleInputChange('dueDate', e.target.value)}
-                      className="w-full"
+                      className="w-full bg-input border-border text-foreground"
                     />
                   </div>
                 </div>
 
                 <div className="flex gap-3 pt-4">
                   <Button type="submit" className="bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground">
-                    Create Ticket
+                    <span>Create Ticket</span>
                   </Button>
-                  <Button type="button" variant="outline">
-                    Save Draft
+                  <Button type="button" variant="outline" className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                    <span>Save Draft</span>
                   </Button>
-                  <Button type="button" variant="ghost">
-                    Reset
+                  <Button type="button" variant="ghost" className="text-foreground hover:bg-accent hover:text-accent-foreground">
+                    <span>Reset</span>
                   </Button>
                 </div>
               </form>
@@ -170,70 +170,70 @@ export function AddTicket() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Quick Templates */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Tag className="h-5 w-5" />
-                Quick Templates
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <Tag className="h-5 w-5 text-theme-accent" />
+                <span className="text-card-foreground">Quick Templates</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <div className="space-y-2">
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  Hardware Issue
+                <Button variant="outline" size="sm" className="w-full justify-start border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <span>Hardware Issue</span>
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  Software Installation
+                <Button variant="outline" size="sm" className="w-full justify-start border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <span>Software Installation</span>
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  Access Request
+                <Button variant="outline" size="sm" className="w-full justify-start border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <span>Access Request</span>
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
-                  Network Problem
+                <Button variant="outline" size="sm" className="w-full justify-start border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <span>Network Problem</span>
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Recent Tickets */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Recent Tickets
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <Calendar className="h-5 w-5 text-theme-accent" />
+                <span className="text-card-foreground">Recent Tickets</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <div className="space-y-3">
                 {[
                   { id: 'TK-2089', title: 'Server maintenance required', status: 'In Progress', priority: 'High' },
                   { id: 'TK-2088', title: 'Software installation request', status: 'Resolved', priority: 'Medium' },
                   { id: 'TK-2087', title: 'Network connectivity issue', status: 'Pending', priority: 'Critical' }
                 ].map((ticket) => (
-                  <div key={ticket.id} className="p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                  <div key={ticket.id} className="p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors">
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1 min-w-0 flex-1">
-                        <div className="text-sm font-medium truncate">{ticket.title}</div>
+                        <div className="text-sm font-medium truncate text-foreground">{ticket.title}</div>
                         <div className="text-xs text-muted-foreground">{ticket.id}</div>
                       </div>
                       <div className="flex flex-col gap-1 items-end">
                         <Badge 
-                          className={`text-white text-xs ${
-                            ticket.status === 'In Progress' ? 'bg-purple-600' :
-                            ticket.status === 'Resolved' ? 'bg-green-600' :
-                            ticket.status === 'Pending' ? 'bg-yellow-600' : 'bg-blue-600'
+                          className={`text-xs border ${
+                            ticket.status === 'In Progress' ? 'bg-muted text-muted-foreground border-border' :
+                            ticket.status === 'Resolved' ? 'bg-theme-accent/10 text-theme-accent border-theme-accent/10' :
+                            ticket.status === 'Pending' ? 'bg-secondary text-secondary-foreground border-border' : 'bg-theme-accent/20 text-theme-accent border-theme-accent/20'
                           }`}
                         >
-                          {ticket.status}
+                          <span>{ticket.status}</span>
                         </Badge>
                         <Badge 
-                          className={`text-white text-xs ${
-                            ticket.priority === 'Critical' ? 'bg-red-600' :
-                            ticket.priority === 'High' ? 'bg-orange-600' :
-                            ticket.priority === 'Medium' ? 'bg-yellow-600' : 'bg-green-600'
+                          className={`text-xs border ${
+                            ticket.priority === 'Critical' ? 'bg-destructive/20 text-destructive border-destructive/20' :
+                            ticket.priority === 'High' ? 'bg-theme-accent/20 text-theme-accent border-theme-accent/20' :
+                            ticket.priority === 'Medium' ? 'bg-muted text-muted-foreground border-border' : 'bg-theme-accent/10 text-theme-accent border-theme-accent/10'
                           }`}
                         >
-                          {ticket.priority}
+                          <span>{ticket.priority}</span>
                         </Badge>
                       </div>
                     </div>
@@ -244,30 +244,30 @@ export function AddTicket() {
           </Card>
 
           {/* Quick Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5" />
-                Quick Stats
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <AlertTriangle className="h-5 w-5 text-theme-accent" />
+                <span className="text-card-foreground">Quick Stats</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Open Tickets</span>
-                  <span className="font-medium">24</span>
+                  <span className="font-medium text-foreground">24</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">My Tickets</span>
-                  <span className="font-medium">8</span>
+                  <span className="font-medium text-foreground">8</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Overdue</span>
-                  <span className="font-medium text-red-600">3</span>
+                  <span className="font-medium text-destructive">3</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Avg. Response</span>
-                  <span className="font-medium">2.4h</span>
+                  <span className="font-medium text-foreground">2.4h</span>
                 </div>
               </div>
             </CardContent>

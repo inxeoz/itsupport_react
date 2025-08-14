@@ -134,7 +134,7 @@ export function DraggableTab({
           <button
             className={`px-4 py-2 rounded-l-md transition-all duration-200 flex items-center gap-2 text-sm bg-accent text-accent-foreground hover:bg-accent cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg' : ''}`}
           >
-            {tab.label}
+            <span className="text-accent-foreground">{tab.label}</span>
           </button>
           
           <DropdownMenu>
@@ -145,74 +145,74 @@ export function DraggableTab({
                   e.stopPropagation(); // Prevent event bubbling
                 }}
               >
-                <MoreHorizontal className="w-4 h-4" />
+                <MoreHorizontal className="w-4 h-4 text-accent-foreground" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="start"
-              className={`w-48 ${getThemeClasses()}`}
+              className={`w-48 bg-popover border-border ${getThemeClasses()}`}
             >
               <DropdownMenuLabel className="text-muted-foreground">
                 {tab.label} Options
               </DropdownMenuLabel>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuGroup>
                 {tab.id === "main-table" && (
                   <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Table Settings</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Table Settings</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Configure Filters</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Configure Filters</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Customize Columns</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Customize Columns</span>
                     </DropdownMenuItem>
                   </>
                 )}
                 {tab.id === "kanban" && (
                   <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Board Settings</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Board Settings</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Add Column</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Add Column</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Customize Colors</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Customize Colors</span>
                     </DropdownMenuItem>
                   </>
                 )}
                 {tab.id === "form" && (
                   <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Form Builder</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Form Builder</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Form Settings</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Form Settings</span>
                     </DropdownMenuItem>
                   </>
                 )}
                 {tab.id === "add-ticket" && (
                   <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Form Preferences</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Form Preferences</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Template Settings</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Template Settings</span>
                     </DropdownMenuItem>
                   </>
                 )}
                 {tab.id === "chart" && (
                   <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Chart Settings</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Chart Settings</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Data Filters</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Data Filters</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer">
-                      <span>Export Options</span>
+                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
+                      <span className="text-foreground">Export Options</span>
                     </DropdownMenuItem>
                   </>
                 )}
@@ -221,10 +221,10 @@ export function DraggableTab({
               {/* Remove Tab option - only show if more than one tab exists */}
               {canRemoveTab && (
                 <>
-                  <DropdownMenuSeparator />
+                  <DropdownMenuSeparator className="bg-border" />
                   <DropdownMenuItem 
                     onClick={() => onRemoveTab(tab.id)}
-                    className="flex items-center gap-3 px-3 py-2 cursor-pointer text-destructive focus:text-destructive"
+                    className="flex items-center gap-3 px-3 py-2 cursor-pointer text-destructive hover:bg-destructive hover:text-destructive-foreground focus:text-destructive"
                   >
                     <X className="w-4 h-4" />
                     <span>Remove Tab</span>
@@ -238,9 +238,9 @@ export function DraggableTab({
         /* Inactive tab - regular button */
         <button
           onClick={() => onTabChange(tab.id)}
-          className={`px-4 py-2 rounded-md transition-all duration-200 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg' : ''}`}
+          className={`px-4 py-2 rounded-md transition-all duration-200 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg' : ''}`}
         >
-          {tab.label}
+          <span>{tab.label}</span>
         </button>
       )}
     </div>

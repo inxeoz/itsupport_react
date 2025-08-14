@@ -4,7 +4,7 @@ import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Calendar, Clock, TrendingUp, TrendingDown, Users, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 
-// Mock data for analytics
+// Mock data for analytics with theme-based colors
 const ticketVolumeData = [
   { month: 'Jan', tickets: 120, resolved: 115 },
   { month: 'Feb', tickets: 135, resolved: 128 },
@@ -15,18 +15,18 @@ const ticketVolumeData = [
 ];
 
 const priorityDistribution = [
-  { name: 'Critical', value: 15, color: '#dc2626' },
-  { name: 'High', value: 35, color: '#ea580c' },
-  { name: 'Medium', value: 45, color: '#ca8a04' },
-  { name: 'Low', value: 25, color: '#16a34a' },
+  { name: 'Critical', value: 15, color: 'hsl(var(--destructive))' },
+  { name: 'High', value: 35, color: 'hsl(var(--theme-accent))' },
+  { name: 'Medium', value: 45, color: 'hsl(var(--muted-foreground))' },
+  { name: 'Low', value: 25, color: 'hsl(var(--theme-accent))' },
 ];
 
 const statusDistribution = [
-  { name: 'New', value: 28, color: '#3b82f6' },
-  { name: 'In Progress', value: 45, color: '#8b5cf6' },
-  { name: 'Pending', value: 22, color: '#eab308' },
-  { name: 'Resolved', value: 185, color: '#10b981' },
-  { name: 'Closed', value: 98, color: '#6b7280' },
+  { name: 'New', value: 28, color: 'hsl(var(--theme-accent))' },
+  { name: 'In Progress', value: 45, color: 'hsl(var(--muted-foreground))' },
+  { name: 'Pending', value: 22, color: 'hsl(var(--secondary-foreground))' },
+  { name: 'Resolved', value: 185, color: 'hsl(var(--theme-accent))' },
+  { name: 'Closed', value: 98, color: 'hsl(var(--muted))' },
 ];
 
 const resolutionTimeData = [
@@ -71,77 +71,77 @@ export function AnalyticsDashboard() {
           <p className="text-muted-foreground mt-1">IT Support Performance Metrics & Insights</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Calendar className="w-4 h-4 mr-2" />
-            Last 30 Days
+          <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+            <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
+            <span className="text-foreground">Last 30 Days</span>
           </Button>
-          <Button variant="outline" size="sm">
-            Export Report
+          <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+            <span className="text-foreground">Export Report</span>
           </Button>
         </div>
       </div>
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Tickets</CardTitle>
+        <Card className="border-border bg-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-card">
+            <CardTitle className="text-sm font-medium text-card-foreground">Total Tickets</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-medium">{totalTickets}</div>
+          <CardContent className="bg-card">
+            <div className="text-2xl font-medium text-foreground">{totalTickets}</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600 flex items-center">
+              <span className="text-theme-accent flex items-center">
                 <TrendingUp className="w-3 h-3 mr-1" />
-                +12% from last month
+                <span>+12% from last month</span>
               </span>
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Resolution Rate</CardTitle>
+        <Card className="border-border bg-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-card">
+            <CardTitle className="text-sm font-medium text-card-foreground">Resolution Rate</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-medium">{resolutionRate}%</div>
+          <CardContent className="bg-card">
+            <div className="text-2xl font-medium text-foreground">{resolutionRate}%</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600 flex items-center">
+              <span className="text-theme-accent flex items-center">
                 <TrendingUp className="w-3 h-3 mr-1" />
-                +2.3% from last month
+                <span>+2.3% from last month</span>
               </span>
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg Resolution Time</CardTitle>
+        <Card className="border-border bg-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-card">
+            <CardTitle className="text-sm font-medium text-card-foreground">Avg Resolution Time</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-medium">{avgResolutionTime.toFixed(1)}h</div>
+          <CardContent className="bg-card">
+            <div className="text-2xl font-medium text-foreground">{avgResolutionTime.toFixed(1)}h</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-red-600 flex items-center">
+              <span className="text-destructive flex items-center">
                 <TrendingDown className="w-3 h-3 mr-1" />
-                -15% from last month
+                <span>-15% from last month</span>
               </span>
             </p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Customer Satisfaction</CardTitle>
+        <Card className="border-border bg-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-card">
+            <CardTitle className="text-sm font-medium text-card-foreground">Customer Satisfaction</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-medium">{avgSatisfaction.toFixed(1)}/5</div>
+          <CardContent className="bg-card">
+            <div className="text-2xl font-medium text-foreground">{avgSatisfaction.toFixed(1)}/5</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-green-600 flex items-center">
+              <span className="text-theme-accent flex items-center">
                 <TrendingUp className="w-3 h-3 mr-1" />
-                +0.2 from last month
+                <span>+0.2 from last month</span>
               </span>
             </p>
           </CardContent>
@@ -151,12 +151,12 @@ export function AnalyticsDashboard() {
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ticket Volume Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ticket Volume Trends</CardTitle>
-            <CardDescription>Monthly ticket creation vs resolution</CardDescription>
+        <Card className="border-border bg-card">
+          <CardHeader className="bg-card border-b border-border">
+            <CardTitle className="text-card-foreground">Ticket Volume Trends</CardTitle>
+            <CardDescription className="text-muted-foreground">Monthly ticket creation vs resolution</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-card">
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={ticketVolumeData}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -166,23 +166,24 @@ export function AnalyticsDashboard() {
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    color: 'hsl(var(--card-foreground))'
                   }} 
                 />
-                <Area type="monotone" dataKey="tickets" stackId="1" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="resolved" stackId="2" stroke="#10b981" fill="#10b981" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="tickets" stackId="1" stroke="hsl(var(--theme-accent))" fill="hsl(var(--theme-accent))" fillOpacity={0.6} />
+                <Area type="monotone" dataKey="resolved" stackId="2" stroke="hsl(var(--theme-accent))" fill="hsl(var(--theme-accent))" fillOpacity={0.3} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         {/* Priority Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Priority Distribution</CardTitle>
-            <CardDescription>Breakdown of tickets by priority level</CardDescription>
+        <Card className="border-border bg-card">
+          <CardHeader className="bg-card border-b border-border">
+            <CardTitle className="text-card-foreground">Priority Distribution</CardTitle>
+            <CardDescription className="text-muted-foreground">Breakdown of tickets by priority level</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-card">
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
@@ -193,12 +194,20 @@ export function AnalyticsDashboard() {
                   outerRadius={120}
                   dataKey="value"
                   label={({name, value}) => `${name}: ${value}`}
+                  labelStyle={{ fill: 'hsl(var(--foreground))' }}
                 >
                   {priorityDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    color: 'hsl(var(--card-foreground))'
+                  }} 
+                />
               </PieChart>
             </ResponsiveContainer>
           </CardContent>
@@ -208,12 +217,12 @@ export function AnalyticsDashboard() {
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Weekly Trends */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Weekly Activity</CardTitle>
-            <CardDescription>Daily ticket volume and resolution</CardDescription>
+        <Card className="border-border bg-card">
+          <CardHeader className="bg-card border-b border-border">
+            <CardTitle className="text-card-foreground">Weekly Activity</CardTitle>
+            <CardDescription className="text-muted-foreground">Daily ticket volume and resolution</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-card">
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={weeklyTrends}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -223,23 +232,24 @@ export function AnalyticsDashboard() {
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    color: 'hsl(var(--card-foreground))'
                   }} 
                 />
-                <Line type="monotone" dataKey="tickets" stroke="#3b82f6" strokeWidth={2} />
-                <Line type="monotone" dataKey="resolved" stroke="#10b981" strokeWidth={2} />
+                <Line type="monotone" dataKey="tickets" stroke="hsl(var(--theme-accent))" strokeWidth={2} />
+                <Line type="monotone" dataKey="resolved" stroke="hsl(var(--muted-foreground))" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
 
         {/* Status Distribution */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Ticket Status Overview</CardTitle>
-            <CardDescription>Current status breakdown</CardDescription>
+        <Card className="border-border bg-card">
+          <CardHeader className="bg-card border-b border-border">
+            <CardTitle className="text-card-foreground">Ticket Status Overview</CardTitle>
+            <CardDescription className="text-muted-foreground">Current status breakdown</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="bg-card">
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={statusDistribution}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -249,10 +259,11 @@ export function AnalyticsDashboard() {
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     border: '1px solid hsl(var(--border))',
-                    borderRadius: '8px'
+                    borderRadius: '8px',
+                    color: 'hsl(var(--card-foreground))'
                   }} 
                 />
-                <Bar dataKey="value" fill="#8884d8">
+                <Bar dataKey="value" fill="hsl(var(--theme-accent))">
                   {statusDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
@@ -264,12 +275,12 @@ export function AnalyticsDashboard() {
       </div>
 
       {/* Resolution Time Performance */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Resolution Time Performance</CardTitle>
-          <CardDescription>Average resolution time vs targets by priority</CardDescription>
+      <Card className="border-border bg-card">
+        <CardHeader className="bg-card border-b border-border">
+          <CardTitle className="text-card-foreground">Resolution Time Performance</CardTitle>
+          <CardDescription className="text-muted-foreground">Average resolution time vs targets by priority</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-card">
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={resolutionTimeData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
@@ -279,23 +290,24 @@ export function AnalyticsDashboard() {
                 contentStyle={{ 
                   backgroundColor: 'hsl(var(--card))', 
                   border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px'
+                  borderRadius: '8px',
+                  color: 'hsl(var(--card-foreground))'
                 }} 
               />
-              <Bar dataKey="avgHours" fill="#3b82f6" name="Actual (hours)" />
-              <Bar dataKey="target" fill="#10b981" name="Target (hours)" />
+              <Bar dataKey="avgHours" fill="hsl(var(--theme-accent))" name="Actual (hours)" />
+              <Bar dataKey="target" fill="hsl(var(--muted-foreground))" name="Target (hours)" />
             </BarChart>
           </ResponsiveContainer>
         </CardContent>
       </Card>
 
       {/* Agent Performance Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Agent Performance</CardTitle>
-          <CardDescription>Individual agent metrics and performance indicators</CardDescription>
+      <Card className="border-border bg-card">
+        <CardHeader className="bg-card border-b border-border">
+          <CardTitle className="text-card-foreground">Agent Performance</CardTitle>
+          <CardDescription className="text-muted-foreground">Individual agent metrics and performance indicators</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="bg-card">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
@@ -318,7 +330,7 @@ export function AnalyticsDashboard() {
                         <span className="text-foreground">{agent.satisfaction}/5</span>
                         <div className="flex">
                           {[...Array(5)].map((_, i) => (
-                            <span key={i} className={i < Math.floor(agent.satisfaction) ? 'text-yellow-400' : 'text-muted'}>
+                            <span key={i} className={i < Math.floor(agent.satisfaction) ? 'text-theme-accent' : 'text-muted'}>
                               ★
                             </span>
                           ))}
@@ -328,14 +340,16 @@ export function AnalyticsDashboard() {
                     <td className="p-3">
                       <Badge 
                         variant="secondary" 
-                        className={`${
-                          agent.satisfaction >= 4.8 ? 'bg-green-600 text-white' :
-                          agent.satisfaction >= 4.5 ? 'bg-yellow-600 text-white' :
-                          'bg-red-600 text-white'
+                        className={`border ${
+                          agent.satisfaction >= 4.8 ? 'bg-theme-accent/20 text-theme-accent border-theme-accent/20' :
+                          agent.satisfaction >= 4.5 ? 'bg-muted text-muted-foreground border-border' :
+                          'bg-destructive/20 text-destructive border-destructive/20'
                         }`}
                       >
-                        {agent.satisfaction >= 4.8 ? 'Excellent' :
-                         agent.satisfaction >= 4.5 ? 'Good' : 'Needs Improvement'}
+                        <span>
+                          {agent.satisfaction >= 4.8 ? 'Excellent' :
+                           agent.satisfaction >= 4.5 ? 'Good' : 'Needs Improvement'}
+                        </span>
                       </Badge>
                     </td>
                   </tr>

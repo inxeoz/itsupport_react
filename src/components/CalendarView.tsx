@@ -23,20 +23,20 @@ export function CalendarView() {
   ];
 
   const priorityColors = {
-    'Critical': 'bg-red-600',
-    'High': 'bg-orange-600',
-    'Medium': 'bg-yellow-600',
-    'Low': 'bg-green-600'
+    'Critical': 'bg-destructive/20 text-destructive border-destructive/20',
+    'High': 'bg-theme-accent/20 text-theme-accent border-theme-accent/20',
+    'Medium': 'bg-muted text-muted-foreground border-border',
+    'Low': 'bg-theme-accent/10 text-theme-accent border-theme-accent/10'
   };
 
   const typeColors = {
-    'maintenance': 'bg-blue-600',
-    'installation': 'bg-purple-600',
-    'investigation': 'bg-red-600',
-    'training': 'bg-green-600',
-    'security': 'bg-orange-600',
-    'hardware': 'bg-gray-600',
-    'meeting': 'bg-emerald-600'
+    'maintenance': 'bg-theme-accent text-theme-accent-foreground',
+    'installation': 'bg-muted text-muted-foreground',
+    'investigation': 'bg-destructive text-destructive-foreground',
+    'training': 'bg-theme-accent text-theme-accent-foreground',
+    'security': 'bg-theme-accent text-theme-accent-foreground',
+    'hardware': 'bg-muted text-muted-foreground',
+    'meeting': 'bg-theme-accent text-theme-accent-foreground'
   };
 
   // Generate calendar days
@@ -88,42 +88,42 @@ export function CalendarView() {
   const upcomingEvents = ticketEvents.filter(event => event.date > 13 && event.date <= 16);
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-background">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold mb-2">Ticket Calendar</h1>
+          <h1 className="text-2xl font-semibold mb-2 text-foreground">Ticket Calendar</h1>
           <p className="text-muted-foreground">Schedule and track ticket activities</p>
         </div>
         <div className="flex items-center gap-3">
           <Select value={view} onValueChange={setView}>
-            <SelectTrigger className="w-32">
-              <SelectValue />
+            <SelectTrigger className="w-32 bg-input border-border text-foreground">
+              <SelectValue className="text-foreground" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="month">Month</SelectItem>
-              <SelectItem value="week">Week</SelectItem>
-              <SelectItem value="day">Day</SelectItem>
+            <SelectContent className="bg-popover border-border">
+              <SelectItem value="month" className="text-foreground hover:bg-accent hover:text-accent-foreground">Month</SelectItem>
+              <SelectItem value="week" className="text-foreground hover:bg-accent hover:text-accent-foreground">Week</SelectItem>
+              <SelectItem value="day" className="text-foreground hover:bg-accent hover:text-accent-foreground">Day</SelectItem>
             </SelectContent>
           </Select>
           <Select value={selectedFilter} onValueChange={setSelectedFilter}>
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by..." />
+            <SelectTrigger className="w-40 bg-input border-border text-foreground">
+              <SelectValue placeholder="Filter by..." className="text-foreground" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Tickets</SelectItem>
-              <SelectItem value="maintenance">Maintenance</SelectItem>
-              <SelectItem value="installation">Installation</SelectItem>
-              <SelectItem value="security">Security</SelectItem>
-              <SelectItem value="training">Training</SelectItem>
+            <SelectContent className="bg-popover border-border">
+              <SelectItem value="all" className="text-foreground hover:bg-accent hover:text-accent-foreground">All Tickets</SelectItem>
+              <SelectItem value="maintenance" className="text-foreground hover:bg-accent hover:text-accent-foreground">Maintenance</SelectItem>
+              <SelectItem value="installation" className="text-foreground hover:bg-accent hover:text-accent-foreground">Installation</SelectItem>
+              <SelectItem value="security" className="text-foreground hover:bg-accent hover:text-accent-foreground">Security</SelectItem>
+              <SelectItem value="training" className="text-foreground hover:bg-accent hover:text-accent-foreground">Training</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filter
+          <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+            <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+            <span className="text-foreground">Filter</span>
           </Button>
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+          <Button size="sm" className="bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground">
             <Plus className="h-4 w-4 mr-2" />
-            Add Event
+            <span>Add Event</span>
           </Button>
         </div>
       </div>
@@ -131,27 +131,27 @@ export function CalendarView() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Calendar */}
         <div className="lg:col-span-3">
-          <Card>
-            <CardHeader>
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
               <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" />
-                  {monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}
+                <CardTitle className="flex items-center gap-2 text-card-foreground">
+                  <Calendar className="h-5 w-5 text-theme-accent" />
+                  <span className="text-card-foreground">{monthNames[currentDate.getMonth()]} {currentDate.getFullYear()}</span>
                 </CardTitle>
                 <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')}>
+                  <Button variant="outline" size="sm" onClick={() => navigateMonth('prev')} className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
-                    Today
+                  <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())} className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                    <span>Today</span>
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => navigateMonth('next')}>
+                  <Button variant="outline" size="sm" onClick={() => navigateMonth('next')} className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               {/* Calendar Grid */}
               <div className="grid grid-cols-7 gap-1">
                 {/* Day headers */}
@@ -167,23 +167,23 @@ export function CalendarView() {
                     key={index}
                     className={`min-h-24 p-2 border border-border/50 ${
                       day.isCurrentMonth ? 'bg-card' : 'bg-muted/30'
-                    } ${day.isToday ? 'bg-emerald-50 dark:bg-emerald-950 border-emerald-600' : ''}`}
+                    } ${day.isToday ? 'bg-theme-accent/10 border-theme-accent' : ''}`}
                   >
                     <div className={`text-sm font-medium mb-1 ${
                       day.isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'
-                    } ${day.isToday ? 'text-emerald-600' : ''}`}>
+                    } ${day.isToday ? 'text-theme-accent' : ''}`}>
                       {day.date}
                     </div>
                     <div className="space-y-1">
                       {day.events.slice(0, 2).map(event => (
                         <div
                           key={event.id}
-                          className={`text-xs p-1 rounded text-white truncate ${
+                          className={`text-xs p-1 rounded truncate ${
                             typeColors[event.type as keyof typeof typeColors]
                           }`}
                           title={`${event.title} - ${event.time}`}
                         >
-                          {event.title}
+                          <span>{event.title}</span>
                         </div>
                       ))}
                       {day.events.length > 2 && (
@@ -202,35 +202,35 @@ export function CalendarView() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Today's Events */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                Today's Events
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <Clock className="h-5 w-5 text-theme-accent" />
+                <span className="text-card-foreground">Today's Events</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <div className="space-y-3">
                 {todayEvents.length > 0 ? (
                   todayEvents.map(event => (
-                    <div key={event.id} className="p-3 rounded-lg border bg-card space-y-2">
+                    <div key={event.id} className="p-3 rounded-lg border border-border bg-card space-y-2">
                       <div className="flex items-start justify-between gap-2">
                         <div className="space-y-1 min-w-0 flex-1">
-                          <div className="font-medium text-sm truncate">{event.title}</div>
+                          <div className="font-medium text-sm truncate text-foreground">{event.title}</div>
                           <div className="text-xs text-muted-foreground">{event.id}</div>
                         </div>
-                        <Badge className={`text-white text-xs ${priorityColors[event.priority as keyof typeof priorityColors]}`}>
-                          {event.priority}
+                        <Badge className={`text-xs border ${priorityColors[event.priority as keyof typeof priorityColors]}`}>
+                          <span>{event.priority}</span>
                         </Badge>
                       </div>
                       <div className="flex items-center justify-between text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
-                          <User className="h-3 w-3" />
-                          {event.assignee}
+                          <User className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-muted-foreground">{event.assignee}</span>
                         </div>
                         <div className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {event.time}
+                          <Clock className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-muted-foreground">{event.time}</span>
                         </div>
                       </div>
                     </div>
@@ -243,31 +243,31 @@ export function CalendarView() {
           </Card>
 
           {/* Upcoming Events */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Upcoming This Week</CardTitle>
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="text-card-foreground">Upcoming This Week</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <div className="space-y-3">
                 {upcomingEvents.map(event => (
-                  <div key={event.id} className="p-3 rounded-lg border bg-card space-y-2">
+                  <div key={event.id} className="p-3 rounded-lg border border-border bg-card space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div className="space-y-1 min-w-0 flex-1">
-                        <div className="font-medium text-sm truncate">{event.title}</div>
+                        <div className="font-medium text-sm truncate text-foreground">{event.title}</div>
                         <div className="text-xs text-muted-foreground">Aug {event.date}</div>
                       </div>
-                      <Badge className={`text-white text-xs ${priorityColors[event.priority as keyof typeof priorityColors]}`}>
-                        {event.priority}
+                      <Badge className={`text-xs border ${priorityColors[event.priority as keyof typeof priorityColors]}`}>
+                        <span>{event.priority}</span>
                       </Badge>
                     </div>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
                       <div className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        {event.assignee}
+                        <User className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{event.assignee}</span>
                       </div>
                       <div className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {event.time}
+                        <Clock className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{event.time}</span>
                       </div>
                     </div>
                   </div>
@@ -277,27 +277,27 @@ export function CalendarView() {
           </Card>
 
           {/* Calendar Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle>This Month</CardTitle>
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="text-card-foreground">This Month</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Total Events</span>
-                  <span className="font-medium">{ticketEvents.length}</span>
+                  <span className="font-medium text-foreground">{ticketEvents.length}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Maintenance</span>
-                  <span className="font-medium">2</span>
+                  <span className="font-medium text-foreground">2</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Critical Issues</span>
-                  <span className="font-medium text-red-600">1</span>
+                  <span className="font-medium text-destructive">1</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Completed</span>
-                  <span className="font-medium text-green-600">12</span>
+                  <span className="font-medium text-theme-accent">12</span>
                 </div>
               </div>
             </CardContent>

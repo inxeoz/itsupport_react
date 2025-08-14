@@ -12,15 +12,14 @@ import { FileGalleryView } from "./components/FileGalleryView";
 import { CustomizableDashboard } from "./components/CustomizableDashboard";
 import { DeveloperDashboard } from "./components/DeveloperDashboard";
 import { Toaster } from "./components/ui/sonner";
-
-export type Theme = {
-  mode: "light" | "dark";
-  accent: "default" | "blue" | "orange";
-};
+import { ThemeProvider, type Theme } from "./components/ThemeProvider";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("main-table");
-  const [theme, setTheme] = useState<Theme>({ mode: "light", accent: "blue" });
+  const [theme, setTheme] = useState<Theme>({
+    mode: "dark",
+    accent: "blue",
+  });
   const [tabs, setTabs] = useState([
     { id: "main-table", label: "Main table", icon: "⋯" },
     { id: "form", label: "Form", icon: null },
@@ -35,7 +34,10 @@ export default function App() {
   const handleAddTab = (tabId: string, label: string) => {
     const existingTab = tabs.find((tab) => tab.id === tabId);
     if (!existingTab) {
-      setTabs((prevTabs) => [...prevTabs, { id: tabId, label, icon: null }]);
+      setTabs((prevTabs) => [
+        ...prevTabs,
+        { id: tabId, label, icon: null },
+      ]);
     }
   };
 
@@ -46,11 +48,15 @@ export default function App() {
     }
 
     // Remove the tab from the list
-    setTabs((prevTabs) => prevTabs.filter((tab) => tab.id !== tabId));
+    setTabs((prevTabs) =>
+      prevTabs.filter((tab) => tab.id !== tabId),
+    );
 
     // If the removed tab was the active tab, switch to another tab
     if (activeTab === tabId) {
-      const remainingTabs = tabs.filter((tab) => tab.id !== tabId);
+      const remainingTabs = tabs.filter(
+        (tab) => tab.id !== tabId,
+      );
       if (remainingTabs.length > 0) {
         // Switch to the first remaining tab
         setActiveTab(remainingTabs[0].id);
@@ -58,20 +64,23 @@ export default function App() {
     }
   };
 
-  const handleMoveTab = useCallback((dragIndex: number, hoverIndex: number) => {
-    setTabs((prevTabs) => {
-      const newTabs = [...prevTabs];
-      const draggedTab = newTabs[dragIndex];
+  const handleMoveTab = useCallback(
+    (dragIndex: number, hoverIndex: number) => {
+      setTabs((prevTabs) => {
+        const newTabs = [...prevTabs];
+        const draggedTab = newTabs[dragIndex];
 
-      // Remove the dragged tab
-      newTabs.splice(dragIndex, 1);
+        // Remove the dragged tab
+        newTabs.splice(dragIndex, 1);
 
-      // Insert it at the new position
-      newTabs.splice(hoverIndex, 0, draggedTab);
+        // Insert it at the new position
+        newTabs.splice(hoverIndex, 0, draggedTab);
 
-      return newTabs;
-    });
-  }, []);
+        return newTabs;
+      });
+    },
+    [],
+  );
 
   const renderActiveView = () => {
     switch (activeTab) {
@@ -118,35 +127,42 @@ export default function App() {
       classes += " blue-theme";
     } else if (theme.accent === "orange") {
       classes += " orange-theme";
+    } else if (theme.accent === "green") {
+      classes += " green-theme";
     }
 
     return classes;
   };
 
   return (
-    <div className={getThemeClasses()}>
-      <TopBar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        theme={theme}
-        onThemeChange={handleThemeChange}
-        tabs={tabs}
-        onAddTab={handleAddTab}
-        onRemoveTab={handleRemoveTab}
-        onMoveTab={handleMoveTab}
-      />
-      <main className="flex-1 overflow-auto m-5">{renderActiveView()}</main>
+    <ThemeProvider theme={theme}>
+      <div className={getThemeClasses()}>
+        <TopBar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          theme={theme}
+          onThemeChange={handleThemeChange}
+          tabs={tabs}
+          onAddTab={handleAddTab}
+          onRemoveTab={handleRemoveTab}
+          onMoveTab={handleMoveTab}
+        />
+        <main className="flex-1 overflow-auto m-5">
+          {renderActiveView()}
+        </main>
 
-      {/* Toast Notifications */}
-      <Toaster
-        position="top-right"
-        expand={true}
-        richColors
-        closeButton
-        toastOptions={{
-          className: "bg-card border-border text-card-foreground",
-        }}
-      />
-    </div>
+        {/* Toast Notifications */}
+        <Toaster
+          position="top-right"
+          expand={true}
+          richColors
+          closeButton
+          toastOptions={{
+            className:
+              "bg-card border-border text-card-foreground",
+          }}
+        />
+      </div>
+    </ThemeProvider>
   );
 }

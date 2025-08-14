@@ -212,113 +212,114 @@ export function DeveloperDashboard() {
   const primaryToken = csrfTokens.find(token => token.found && token.value) || null;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-background">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Developer Dashboard</h1>
+          <h1 className="text-2xl font-semibold text-foreground">Developer Dashboard</h1>
           <p className="text-muted-foreground">
             Debug tools and session information for Frappe integration
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={refreshData} variant="outline" disabled={isRefreshing}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-            {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          <Button onClick={refreshData} variant="outline" disabled={isRefreshing} className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+            <RefreshCw className={`w-4 h-4 mr-2 text-muted-foreground ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span className="text-foreground">{isRefreshing ? 'Refreshing...' : 'Refresh'}</span>
           </Button>
           <Button
             onClick={() => setShowTokenValues(!showTokenValues)}
             variant="outline"
+            className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
           >
-            {showTokenValues ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
-            {showTokenValues ? 'Hide' : 'Show'} Tokens
+            {showTokenValues ? <EyeOff className="w-4 h-4 mr-2 text-muted-foreground" /> : <Eye className="w-4 h-4 mr-2 text-muted-foreground" />}
+            <span className="text-foreground">{showTokenValues ? 'Hide' : 'Show'} Tokens</span>
           </Button>
         </div>
       </div>
 
       {/* Primary CSRF Token Alert */}
       {primaryToken ? (
-        <Alert className="border-green-200 bg-green-50 dark:border-green-900/50 dark:bg-green-900/10">
-          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
+        <Alert className="border-theme-accent/20 bg-theme-accent/10">
+          <CheckCircle className="h-4 w-4 text-theme-accent" />
+          <AlertDescription className="text-foreground">
             <div className="flex items-center justify-between">
               <div>
-                <strong>Active CSRF Token Found!</strong>
+                <strong className="text-foreground">Active CSRF Token Found!</strong>
                 <br />
-                <span className="text-sm">
-                  Primary token from: <code className="bg-green-100 dark:bg-green-800 px-1 rounded">{primaryToken.source}</code>
+                <span className="text-sm text-muted-foreground">
+                  Primary token from: <code className="bg-theme-accent/20 text-theme-accent px-1 rounded">{primaryToken.source}</code>
                 </span>
               </div>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={() => copyToClipboard(primaryToken.value!, 'CSRF Token')}
-                className="border-green-300 text-green-700 hover:bg-green-100 dark:border-green-700 dark:text-green-300"
+                className="border-theme-accent/30 text-theme-accent hover:bg-theme-accent/20"
               >
                 <Copy className="w-4 h-4 mr-1" />
-                Copy
+                <span>Copy</span>
               </Button>
             </div>
           </AlertDescription>
         </Alert>
       ) : (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>No CSRF Token Found!</strong>
+        <Alert className="border-destructive/20 bg-destructive/10">
+          <AlertTriangle className="h-4 w-4 text-destructive" />
+          <AlertDescription className="text-foreground">
+            <strong className="text-foreground">No CSRF Token Found!</strong>
             <br />
-            This may indicate that the app is not properly integrated with Frappe or is running in standalone mode.
+            <span className="text-muted-foreground">This may indicate that the app is not properly integrated with Frappe or is running in standalone mode.</span>
           </AlertDescription>
         </Alert>
       )}
 
-      <Tabs defaultValue="csrf" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="csrf" className="flex items-center gap-2">
+      <Tabs defaultValue="csrf" className="space-y-6 bg-background">
+        <TabsList className="grid w-full grid-cols-4 bg-muted border-border">
+          <TabsTrigger value="csrf" className="flex items-center gap-2 text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">
             <Shield className="w-4 h-4" />
-            CSRF Tokens
+            <span>CSRF Tokens</span>
           </TabsTrigger>
-          <TabsTrigger value="session" className="flex items-center gap-2">
+          <TabsTrigger value="session" className="flex items-center gap-2 text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">
             <User className="w-4 h-4" />
-            Session Info
+            <span>Session Info</span>
           </TabsTrigger>
-          <TabsTrigger value="globals" className="flex items-center gap-2">
+          <TabsTrigger value="globals" className="flex items-center gap-2 text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">
             <Globe className="w-4 h-4" />
-            Frappe Globals
+            <span>Frappe Globals</span>
           </TabsTrigger>
-          <TabsTrigger value="tools" className="flex items-center gap-2">
+          <TabsTrigger value="tools" className="flex items-center gap-2 text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">
             <Terminal className="w-4 h-4" />
-            Debug Tools
+            <span>Debug Tools</span>
           </TabsTrigger>
         </TabsList>
 
         {/* CSRF Tokens Tab */}
-        <TabsContent value="csrf" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+        <TabsContent value="csrf" className="space-y-4 bg-background">
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
                 <Key className="w-5 h-5 text-theme-accent" />
-                CSRF Token Sources
+                <span className="text-card-foreground">CSRF Token Sources</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 All possible sources where CSRF tokens can be found in a Frappe environment
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 bg-card">
               {csrfTokens.map((token, index) => (
                 <div
                   key={index}
-                  className="flex items-center justify-between p-4 border rounded-lg"
+                  className="flex items-center justify-between p-4 border border-border rounded-lg bg-card"
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <Badge variant={token.found ? "default" : "secondary"}>
-                        {token.source}
+                      <Badge variant={token.found ? "default" : "secondary"} className={token.found ? "bg-theme-accent text-theme-accent-foreground" : "bg-secondary text-secondary-foreground"}>
+                        <span>{token.source}</span>
                       </Badge>
                       {token.found ? (
-                        <CheckCircle className="w-4 h-4 text-green-600" />
+                        <CheckCircle className="w-4 h-4 text-theme-accent" />
                       ) : (
-                        <AlertTriangle className="w-4 h-4 text-gray-400" />
+                        <AlertTriangle className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
                     <p className="text-sm text-muted-foreground mb-2">
@@ -326,13 +327,14 @@ export function DeveloperDashboard() {
                     </p>
                     {token.found && token.value ? (
                       <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
+                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono text-foreground">
                           {showTokenValues ? token.value : maskToken(token.value)}
                         </code>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => copyToClipboard(token.value!, `${token.source} Token`)}
+                          className="text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                           <Copy className="w-3 h-3" />
                         </Button>
@@ -348,25 +350,25 @@ export function DeveloperDashboard() {
         </TabsContent>
 
         {/* Session Info Tab */}
-        <TabsContent value="session" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+        <TabsContent value="session" className="space-y-4 bg-background">
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
                 <User className="w-5 h-5 text-theme-accent" />
-                Session Information
+                <span className="text-card-foreground">Session Information</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Current user session and authentication details
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 bg-card">
               {sessionInfo && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Session ID</label>
                       <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
+                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono text-foreground">
                           {sessionInfo.sessionId || 'Not available'}
                         </code>
                         {sessionInfo.sessionId && (
@@ -374,6 +376,7 @@ export function DeveloperDashboard() {
                             size="sm"
                             variant="ghost"
                             onClick={() => copyToClipboard(sessionInfo.sessionId!, 'Session ID')}
+                            className="text-muted-foreground hover:text-foreground hover:bg-accent"
                           >
                             <Copy className="w-3 h-3" />
                           </Button>
@@ -384,7 +387,7 @@ export function DeveloperDashboard() {
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">User ID</label>
                       <div className="flex items-center gap-2">
-                        <code className="bg-muted px-2 py-1 rounded text-sm">
+                        <code className="bg-muted px-2 py-1 rounded text-sm text-foreground">
                           {sessionInfo.userId || 'Guest'}
                         </code>
                         {sessionInfo.userId && (
@@ -392,6 +395,7 @@ export function DeveloperDashboard() {
                             size="sm"
                             variant="ghost"
                             onClick={() => copyToClipboard(sessionInfo.userId!, 'User ID')}
+                            className="text-muted-foreground hover:text-foreground hover:bg-accent"
                           >
                             <Copy className="w-3 h-3" />
                           </Button>
@@ -401,21 +405,21 @@ export function DeveloperDashboard() {
 
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Full Name</label>
-                      <p className="text-sm">{sessionInfo.fullName || 'Not available'}</p>
+                      <p className="text-sm text-foreground">{sessionInfo.fullName || 'Not available'}</p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">System User</label>
-                      <Badge variant={sessionInfo.systemUser ? "default" : "secondary"}>
-                        {sessionInfo.systemUser ? 'Yes' : 'No'}
+                      <Badge variant={sessionInfo.systemUser ? "default" : "secondary"} className={sessionInfo.systemUser ? "bg-theme-accent text-theme-accent-foreground" : "bg-secondary text-secondary-foreground"}>
+                        <span>{sessionInfo.systemUser ? 'Yes' : 'No'}</span>
                       </Badge>
                     </div>
 
                     <div>
                       <label className="text-sm font-medium text-muted-foreground">Language</label>
-                      <p className="text-sm">{sessionInfo.language || 'Not set'}</p>
+                      <p className="text-sm text-foreground">{sessionInfo.language || 'Not set'}</p>
                     </div>
 
                     <div>
@@ -423,8 +427,8 @@ export function DeveloperDashboard() {
                       <div className="flex flex-wrap gap-1 mt-1">
                         {sessionInfo.userRoles.length > 0 ? (
                           sessionInfo.userRoles.map((role, index) => (
-                            <Badge key={index} variant="outline" className="text-xs">
-                              {role}
+                            <Badge key={index} variant="outline" className="text-xs border-border text-foreground">
+                              <span>{role}</span>
                             </Badge>
                           ))
                         ) : (
@@ -439,26 +443,26 @@ export function DeveloperDashboard() {
           </Card>
 
           {/* Cookies Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
                 <Cookie className="w-5 h-5 text-theme-accent" />
-                Browser Cookies
+                <span className="text-card-foreground">Browser Cookies</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 All cookies available in the current session
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <div className="space-y-2">
                 {document.cookie.split(';').filter(cookie => cookie.trim()).map((cookie, index) => {
                   const [name, value] = cookie.trim().split('=');
                   return (
                     <div key={index} className="flex items-center justify-between p-2 bg-muted rounded">
                       <div className="flex items-center gap-2">
-                        <code className="text-sm font-medium">{name}</code>
+                        <code className="text-sm font-medium text-foreground">{name}</code>
                         <span className="text-muted-foreground">=</span>
-                        <code className="text-sm">
+                        <code className="text-sm text-foreground">
                           {showTokenValues ? decodeURIComponent(value || '') : maskToken(decodeURIComponent(value || ''))}
                         </code>
                       </div>
@@ -466,6 +470,7 @@ export function DeveloperDashboard() {
                         size="sm"
                         variant="ghost"
                         onClick={() => copyToClipboard(`${name}=${value}`, 'Cookie')}
+                        className="text-muted-foreground hover:text-foreground hover:bg-accent"
                       >
                         <Copy className="w-3 h-3" />
                       </Button>
@@ -478,29 +483,29 @@ export function DeveloperDashboard() {
         </TabsContent>
 
         {/* Frappe Globals Tab */}
-        <TabsContent value="globals" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+        <TabsContent value="globals" className="space-y-4 bg-background">
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
                 <Globe className="w-5 h-5 text-theme-accent" />
-                Frappe Global Variables
+                <span className="text-card-foreground">Frappe Global Variables</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Global JavaScript objects and variables provided by Frappe
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 bg-card">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Frappe Ready</label>
                   <div className="flex items-center gap-2">
-                    <Badge variant={frappeGlobals.ready ? "default" : "secondary"}>
-                      {frappeGlobals.ready ? 'Yes' : 'No'}
+                    <Badge variant={frappeGlobals.ready ? "default" : "secondary"} className={frappeGlobals.ready ? "bg-theme-accent text-theme-accent-foreground" : "bg-secondary text-secondary-foreground"}>
+                      <span>{frappeGlobals.ready ? 'Yes' : 'No'}</span>
                     </Badge>
                     {frappeGlobals.ready ? (
-                      <Wifi className="w-4 h-4 text-green-600" />
+                      <Wifi className="w-4 h-4 text-theme-accent" />
                     ) : (
-                      <WifiOff className="w-4 h-4 text-gray-400" />
+                      <WifiOff className="w-4 h-4 text-muted-foreground" />
                     )}
                   </div>
                 </div>
@@ -510,13 +515,14 @@ export function DeveloperDashboard() {
                   <div className="flex items-center gap-2">
                     {frappeGlobals.csrf_token ? (
                       <>
-                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono">
+                        <code className="bg-muted px-2 py-1 rounded text-sm font-mono text-foreground">
                           {showTokenValues ? frappeGlobals.csrf_token : maskToken(frappeGlobals.csrf_token)}
                         </code>
                         <Button
                           size="sm"
                           variant="ghost"
                           onClick={() => copyToClipboard(frappeGlobals.csrf_token!, 'Frappe CSRF Token')}
+                          className="text-muted-foreground hover:text-foreground hover:bg-accent"
                         >
                           <Copy className="w-3 h-3" />
                         </Button>
@@ -532,14 +538,14 @@ export function DeveloperDashboard() {
               <div className="space-y-3">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Session Object</label>
-                  <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-32">
+                  <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-32 text-foreground">
                     {JSON.stringify(frappeGlobals.session, null, 2) || 'Not available'}
                   </pre>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">User Object</label>
-                  <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-32">
+                  <pre className="bg-muted p-3 rounded text-xs overflow-auto max-h-32 text-foreground">
                     {JSON.stringify(frappeGlobals.user, null, 2) || 'Not available'}
                   </pre>
                 </div>
@@ -549,40 +555,40 @@ export function DeveloperDashboard() {
         </TabsContent>
 
         {/* Debug Tools Tab */}
-        <TabsContent value="tools" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Terminal className="w-5 h-5 text-theme-accent" />
-                Debug Tools
+        <TabsContent value="tools" className="space-y-4 bg-background">
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <Terminal className="w-5 w-5 text-theme-accent" />
+                <span className="text-card-foreground">Debug Tools</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="text-muted-foreground">
                 Utilities for debugging and testing the Frappe integration
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 bg-card">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Environment Info */}
                 <div className="space-y-3">
-                  <h4 className="font-medium">Environment Information</h4>
+                  <h4 className="font-medium text-foreground">Environment Information</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">User Agent:</span>
-                      <code className="text-xs max-w-[200px] truncate" title={navigator.userAgent}>
+                      <code className="text-xs max-w-[200px] truncate text-foreground" title={navigator.userAgent}>
                         {navigator.userAgent.split(' ')[0]}
                       </code>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Language:</span>
-                      <code className="text-xs">{navigator.language}</code>
+                      <code className="text-xs text-foreground">{navigator.language}</code>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Platform:</span>
-                      <code className="text-xs">{navigator.platform}</code>
+                      <code className="text-xs text-foreground">{navigator.platform}</code>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Current URL:</span>
-                      <code className="text-xs max-w-[200px] truncate" title={window.location.href}>
+                      <code className="text-xs max-w-[200px] truncate text-foreground" title={window.location.href}>
                         {window.location.pathname}
                       </code>
                     </div>
@@ -591,23 +597,23 @@ export function DeveloperDashboard() {
 
                 {/* Timing Info */}
                 <div className="space-y-3">
-                  <h4 className="font-medium">Timing Information</h4>
+                  <h4 className="font-medium text-foreground">Timing Information</h4>
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Page Load:</span>
-                      <code className="text-xs">
+                      <code className="text-xs text-foreground">
                         {new Date().toLocaleTimeString()}
                       </code>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Time Zone:</span>
-                      <code className="text-xs">
+                      <code className="text-xs text-foreground">
                         {Intl.DateTimeFormat().resolvedOptions().timeZone}
                       </code>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">UTC Offset:</span>
-                      <code className="text-xs">
+                      <code className="text-xs text-foreground">
                         {new Date().getTimezoneOffset() / -60}h
                       </code>
                     </div>
@@ -616,7 +622,7 @@ export function DeveloperDashboard() {
               </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-2 pt-4 border-t">
+              <div className="flex flex-wrap gap-2 pt-4 border-t border-border">
                 <Button
                   variant="outline"
                   size="sm"
@@ -626,9 +632,10 @@ export function DeveloperDashboard() {
                     frappe_globals: frappeGlobals,
                     timestamp: new Date().toISOString()
                   }, null, 2), 'Debug Data')}
+                  className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy All Debug Data
+                  <Copy className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <span className="text-foreground">Copy All Debug Data</span>
                 </Button>
                 
                 <Button
@@ -643,9 +650,10 @@ export function DeveloperDashboard() {
                     });
                     toast.success("Debug data logged to console");
                   }}
+                  className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
-                  <Terminal className="w-4 h-4 mr-2" />
-                  Log to Console
+                  <Terminal className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <span className="text-foreground">Log to Console</span>
                 </Button>
 
                 <Button
@@ -660,9 +668,10 @@ export function DeveloperDashboard() {
                     }));
                     toast.success("Debug data saved to localStorage");
                   }}
+                  className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
                 >
-                  <Database className="w-4 h-4 mr-2" />
-                  Save to Storage
+                  <Database className="w-4 h-4 mr-2 text-muted-foreground" />
+                  <span className="text-foreground">Save to Storage</span>
                 </Button>
               </div>
             </CardContent>

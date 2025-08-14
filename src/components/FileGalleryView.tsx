@@ -163,20 +163,20 @@ export function FileGalleryView() {
   });
 
   return (
-    <div className="p-6">
+    <div className="p-6 bg-background">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold mb-2">File Gallery</h1>
+          <h1 className="text-2xl font-semibold mb-2 text-foreground">File Gallery</h1>
           <p className="text-muted-foreground">Manage attachments, images, and media files</p>
         </div>
         <div className="flex items-center gap-3">
-          <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700">
+          <Button size="sm" className="bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground">
             <Upload className="h-4 w-4 mr-2" />
-            Upload Files
+            <span>Upload Files</span>
           </Button>
-          <Button variant="outline" size="sm">
-            <FolderOpen className="h-4 w-4 mr-2" />
-            New Folder
+          <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+            <FolderOpen className="h-4 w-4 mr-2 text-muted-foreground" />
+            <span className="text-foreground">New Folder</span>
           </Button>
         </div>
       </div>
@@ -184,12 +184,12 @@ export function FileGalleryView() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Main Content */}
         <div className="lg:col-span-3">
-          <Tabs defaultValue="gallery">
+          <Tabs defaultValue="gallery" className="bg-background">
             <div className="flex items-center justify-between mb-4">
-              <TabsList className="grid w-fit grid-cols-3">
-                <TabsTrigger value="gallery">Gallery</TabsTrigger>
-                <TabsTrigger value="recent">Recent</TabsTrigger>
-                <TabsTrigger value="images">Images</TabsTrigger>
+              <TabsList className="grid w-fit grid-cols-3 bg-muted border-border">
+                <TabsTrigger value="gallery" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Gallery</TabsTrigger>
+                <TabsTrigger value="recent" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Recent</TabsTrigger>
+                <TabsTrigger value="images" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Images</TabsTrigger>
               </TabsList>
               
               <div className="flex items-center gap-2">
@@ -197,6 +197,10 @@ export function FileGalleryView() {
                   variant={viewMode === 'grid' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('grid')}
+                  className={viewMode === 'grid' 
+                    ? "bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground" 
+                    : "border-border text-foreground hover:bg-accent hover:text-accent-foreground"
+                  }
                 >
                   <Grid3X3 className="h-4 w-4" />
                 </Button>
@@ -204,13 +208,17 @@ export function FileGalleryView() {
                   variant={viewMode === 'list' ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setViewMode('list')}
+                  className={viewMode === 'list' 
+                    ? "bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground" 
+                    : "border-border text-foreground hover:bg-accent hover:text-accent-foreground"
+                  }
                 >
                   <List className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            <TabsContent value="gallery" className="space-y-4">
+            <TabsContent value="gallery" className="space-y-4 bg-background">
               {/* Search and Filters */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="relative flex-1">
@@ -219,7 +227,7 @@ export function FileGalleryView() {
                     placeholder="Search files, tags, or descriptions..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-input border-border text-foreground placeholder:text-muted-foreground"
                   />
                 </div>
                 <div className="flex gap-2">
@@ -229,10 +237,14 @@ export function FileGalleryView() {
                       variant={selectedCategory === category.id ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedCategory(category.id)}
-                      className="whitespace-nowrap"
+                      className={`whitespace-nowrap ${
+                        selectedCategory === category.id 
+                          ? "bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground" 
+                          : "border-border text-foreground hover:bg-accent hover:text-accent-foreground"
+                      }`}
                     >
-                      <category.icon className="h-4 w-4 mr-1" />
-                      {category.name} ({category.count})
+                      <category.icon className="h-4 w-4 mr-1 text-muted-foreground" />
+                      <span className="text-foreground">{category.name} ({category.count})</span>
                     </Button>
                   ))}
                 </div>
@@ -242,8 +254,8 @@ export function FileGalleryView() {
               {viewMode === 'grid' ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {filteredFiles.map(file => (
-                    <Card key={file.id} className="group hover:shadow-md transition-shadow">
-                      <CardContent className="p-4 space-y-3">
+                    <Card key={file.id} className="group hover:shadow-md transition-shadow border-border bg-card">
+                      <CardContent className="p-4 space-y-3 bg-card">
                         <div className="aspect-square rounded-lg overflow-hidden bg-muted flex items-center justify-center relative">
                           {file.type === 'image' ? (
                             <img 
@@ -255,32 +267,32 @@ export function FileGalleryView() {
                             <span className="text-4xl">{typeIcons[file.type as keyof typeof typeIcons]}</span>
                           )}
                           <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="secondary" size="sm" className="h-6 w-6 p-0">
+                            <Button variant="secondary" size="sm" className="h-6 w-6 p-0 bg-secondary text-secondary-foreground border-border hover:bg-accent hover:text-accent-foreground">
                               <MoreHorizontal className="h-3 w-3" />
                             </Button>
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <h3 className="font-medium text-sm truncate" title={file.name}>
+                          <h3 className="font-medium text-sm truncate text-card-foreground" title={file.name}>
                             {file.name}
                           </h3>
                           <p className="text-xs text-muted-foreground truncate">
                             {file.description}
                           </p>
                           <div className="flex items-center justify-between text-xs text-muted-foreground">
-                            <span>{file.size}</span>
-                            <span>{file.uploadDate}</span>
+                            <span className="text-muted-foreground">{file.size}</span>
+                            <span className="text-muted-foreground">{file.uploadDate}</span>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <Badge variant="outline" className="text-xs">
-                            {file.ticketId}
+                          <Badge variant="outline" className="text-xs border-border text-foreground">
+                            <span>{file.ticketId}</span>
                           </Badge>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent">
                               <Eye className="h-3 w-3" />
                             </Button>
-                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
+                            <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent">
                               <Download className="h-3 w-3" />
                             </Button>
                           </div>
@@ -292,8 +304,8 @@ export function FileGalleryView() {
               ) : (
                 <div className="space-y-2">
                   {filteredFiles.map(file => (
-                    <Card key={file.id} className="group hover:bg-accent/50 transition-colors">
-                      <CardContent className="p-4">
+                    <Card key={file.id} className="group hover:bg-accent/50 transition-colors border-border bg-card">
+                      <CardContent className="p-4 bg-card">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center shrink-0">
                             {file.type === 'image' ? (
@@ -307,28 +319,28 @@ export function FileGalleryView() {
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium truncate">{file.name}</h3>
+                            <h3 className="font-medium truncate text-card-foreground">{file.name}</h3>
                             <p className="text-sm text-muted-foreground truncate">{file.description}</p>
                             <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                              <span>By {file.uploadedBy}</span>
-                              <span>{file.uploadDate}</span>
-                              <span>{file.size}</span>
-                              <Badge variant="outline" className="text-xs">
-                                {file.ticketId}
+                              <span className="text-muted-foreground">By {file.uploadedBy}</span>
+                              <span className="text-muted-foreground">{file.uploadDate}</span>
+                              <span className="text-muted-foreground">{file.size}</span>
+                              <Badge variant="outline" className="text-xs border-border text-foreground">
+                                <span>{file.ticketId}</span>
                               </Badge>
                             </div>
                           </div>
                           <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
                               <Download className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
                               <Share2 className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </div>
@@ -340,11 +352,11 @@ export function FileGalleryView() {
               )}
             </TabsContent>
 
-            <TabsContent value="recent" className="space-y-4">
+            <TabsContent value="recent" className="space-y-4 bg-background">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {recentFiles.map(file => (
-                  <Card key={file.id} className="group hover:shadow-md transition-shadow">
-                    <CardContent className="p-4 space-y-3">
+                  <Card key={file.id} className="group hover:shadow-md transition-shadow border-border bg-card">
+                    <CardContent className="p-4 space-y-3 bg-card">
                       <div className="aspect-square rounded-lg overflow-hidden bg-muted flex items-center justify-center relative">
                         {file.type === 'image' ? (
                           <img 
@@ -357,7 +369,7 @@ export function FileGalleryView() {
                         )}
                       </div>
                       <div className="space-y-1">
-                        <h3 className="font-medium text-sm truncate">{file.name}</h3>
+                        <h3 className="font-medium text-sm truncate text-card-foreground">{file.name}</h3>
                         <p className="text-xs text-muted-foreground">{file.size}</p>
                       </div>
                     </CardContent>
@@ -366,11 +378,11 @@ export function FileGalleryView() {
               </div>
             </TabsContent>
 
-            <TabsContent value="images" className="space-y-4">
+            <TabsContent value="images" className="space-y-4 bg-background">
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {imageFiles.map(file => (
-                  <Card key={file.id} className="group hover:shadow-md transition-shadow">
-                    <CardContent className="p-0">
+                  <Card key={file.id} className="group hover:shadow-md transition-shadow border-border bg-card">
+                    <CardContent className="p-0 bg-card">
                       <div className="aspect-square rounded-t-lg overflow-hidden bg-muted">
                         <img 
                           src={file.url} 
@@ -378,12 +390,12 @@ export function FileGalleryView() {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <div className="p-3 space-y-2">
-                        <h3 className="font-medium text-sm truncate">{file.name}</h3>
+                      <div className="p-3 space-y-2 bg-card">
+                        <h3 className="font-medium text-sm truncate text-card-foreground">{file.name}</h3>
                         <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>{file.size}</span>
-                          <Badge variant="outline" className="text-xs">
-                            {file.ticketId}
+                          <span className="text-muted-foreground">{file.size}</span>
+                          <Badge variant="outline" className="text-xs border-border text-foreground">
+                            <span>{file.ticketId}</span>
                           </Badge>
                         </div>
                       </div>
@@ -398,51 +410,51 @@ export function FileGalleryView() {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Upload Area */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="h-5 w-5" />
-                Quick Upload
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="flex items-center gap-2 text-card-foreground">
+                <Upload className="h-5 w-5 text-theme-accent" />
+                <span className="text-card-foreground">Quick Upload</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center">
+            <CardContent className="bg-card">
+              <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center bg-card">
                 <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
                 <p className="text-sm text-muted-foreground mb-2">
                   Drop files here or click to browse
                 </p>
-                <Button size="sm" variant="outline">
-                  Choose Files
+                <Button size="sm" variant="outline" className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                  <span className="text-foreground">Choose Files</span>
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           {/* Storage Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Storage Usage</CardTitle>
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="text-card-foreground">Storage Usage</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="bg-card">
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Images</span>
-                  <span className="font-medium">145 MB</span>
+                  <span className="font-medium text-foreground">145 MB</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Documents</span>
-                  <span className="font-medium">423 MB</span>
+                  <span className="font-medium text-foreground">423 MB</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Videos</span>
-                  <span className="font-medium">1.2 GB</span>
+                  <span className="font-medium text-foreground">1.2 GB</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">Archives</span>
-                  <span className="font-medium">89 MB</span>
+                  <span className="font-medium text-foreground">89 MB</span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-2">
-                  <div className="bg-emerald-600 h-2 rounded-full" style={{ width: '38%' }}></div>
+                  <div className="bg-theme-accent h-2 rounded-full" style={{ width: '38%' }}></div>
                 </div>
                 <div className="text-xs text-muted-foreground">1.9 GB of 5 GB used</div>
               </div>
@@ -450,26 +462,26 @@ export function FileGalleryView() {
           </Card>
 
           {/* File Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
+          <Card className="border-border bg-card">
+            <CardHeader className="bg-card border-b border-border">
+              <CardTitle className="text-card-foreground">Quick Actions</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <Filter className="h-4 w-4 mr-2" />
-                Advanced Filter
+            <CardContent className="space-y-2 bg-card">
+              <Button variant="outline" size="sm" className="w-full justify-start border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="text-foreground">Advanced Filter</span>
               </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <Share2 className="h-4 w-4 mr-2" />
-                Share Selected
+              <Button variant="outline" size="sm" className="w-full justify-start border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                <Share2 className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="text-foreground">Share Selected</span>
               </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <Download className="h-4 w-4 mr-2" />
-                Bulk Download
+              <Button variant="outline" size="sm" className="w-full justify-start border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+                <Download className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span className="text-foreground">Bulk Download</span>
               </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start text-red-600 hover:text-red-600">
+              <Button variant="outline" size="sm" className="w-full justify-start text-destructive hover:text-destructive border-border hover:bg-destructive/10">
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete Selected
+                <span>Delete Selected</span>
               </Button>
             </CardContent>
           </Card>

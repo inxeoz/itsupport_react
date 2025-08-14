@@ -79,43 +79,43 @@ const kanbanColumns = [
   {
     id: 'reviewed',
     title: 'Reviewed',
-    color: 'bg-slate-500',
+    color: 'bg-muted',
     count: 2
   },
   {
     id: 'awaiting-customer',
     title: 'Awaiting customer',
-    color: 'bg-purple-500',
+    color: 'bg-theme-accent',
     count: 1
   },
   {
     id: 'need-reply',
     title: 'Need reply',
-    color: 'bg-blue-500',
+    color: 'bg-theme-accent',
     count: 0
   },
   {
     id: 'resolved',
     title: 'Resolved',
-    color: 'bg-green-500',
+    color: 'bg-theme-accent',
     count: 1
   },
   {
     id: 'self-resolved',
     title: 'Self resolved',
-    color: 'bg-yellow-500',
+    color: 'bg-muted-foreground',
     count: 0
   },
   {
     id: 'returned',
     title: 'Returned',
-    color: 'bg-cyan-500',
+    color: 'bg-theme-accent',
     count: 0
   },
   {
     id: 'new',
     title: 'New',
-    color: 'bg-indigo-500',
+    color: 'bg-theme-accent',
     count: 1
   }
 ];
@@ -181,42 +181,42 @@ export function KanbanBoard() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full bg-background">
         {/* Toolbar */}
         <div className="bg-card border-b border-border p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                <Search className="w-4 h-4 mr-1" />
-                Search
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground">
+                <Search className="w-4 h-4 mr-1 text-muted-foreground" />
+                <span className="text-foreground">Search</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                <Filter className="w-4 h-4 mr-1" />
-                Filter
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground">
+                <Filter className="w-4 h-4 mr-1 text-muted-foreground" />
+                <span className="text-foreground">Filter</span>
               </Button>
               
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                <MoreHorizontal className="w-4 h-4" />
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground">
+                <MoreHorizontal className="w-4 h-4 text-muted-foreground" />
               </Button>
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                📊
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground">
+                <span className="text-foreground">📊</span>
               </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                👁️
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground">
+                <span className="text-foreground">👁️</span>
               </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground">
-                ⬆
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground">
+                <span className="text-foreground">⬆</span>
               </Button>
             </div>
           </div>
         </div>
 
         {/* Kanban Board */}
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto bg-background">
           <div className="flex gap-4 p-4 min-w-max">
             {kanbanColumns.map((column) => (
               <KanbanColumn
@@ -234,10 +234,10 @@ export function KanbanBoard() {
             <div className="min-w-80">
               <Button
                 variant="ghost"
-                className="w-full h-12 border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+                className="w-full h-12 border-2 border-dashed border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground hover:bg-accent"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Add folder
+                <Plus className="w-4 h-4 mr-2 text-muted-foreground" />
+                <span className="text-foreground">Add folder</span>
               </Button>
             </div>
           </div>

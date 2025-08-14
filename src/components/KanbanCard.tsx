@@ -27,19 +27,19 @@ interface KanbanCardProps {
 }
 
 const priorityColors = {
-  low: 'bg-gray-500',
-  medium: 'bg-orange-500',
-  high: 'bg-red-500',
-  critical: 'bg-red-600',
+  low: 'bg-theme-accent/10 text-theme-accent border-theme-accent/10',
+  medium: 'bg-muted text-muted-foreground border-border',
+  high: 'bg-theme-accent/20 text-theme-accent border-theme-accent/20',
+  critical: 'bg-destructive/20 text-destructive border-destructive/20',
 };
 
 const tagColors = {
-  'Reviewed': 'bg-slate-500',
-  'Awaiting customer': 'bg-purple-500',
-  'Critical': 'bg-red-600',
-  'Removed': 'bg-gray-500',
-  'New': 'bg-indigo-500',
-  'High': 'bg-red-500',
+  'Reviewed': 'bg-muted text-muted-foreground border-border',
+  'Awaiting customer': 'bg-theme-accent/20 text-theme-accent border-theme-accent/20',
+  'Critical': 'bg-destructive/20 text-destructive border-destructive/20',
+  'Removed': 'bg-muted/50 text-muted-foreground border-border',
+  'New': 'bg-theme-accent/20 text-theme-accent border-theme-accent/20',
+  'High': 'bg-theme-accent/20 text-theme-accent border-theme-accent/20',
 };
 
 export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicateTicket }: KanbanCardProps) {
@@ -55,10 +55,10 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
   });
 
   const getPriorityColor = (priority: string) => 
-    priorityColors[priority as keyof typeof priorityColors] || 'bg-gray-500';
+    priorityColors[priority as keyof typeof priorityColors] || 'bg-muted text-muted-foreground border-border';
   
   const getTagColor = (tag: string) =>
-    tagColors[tag as keyof typeof tagColors] || 'bg-gray-500';
+    tagColors[tag as keyof typeof tagColors] || 'bg-muted text-muted-foreground border-border';
 
   const handleSaveEdit = () => {
     if (onUpdateTicket && (editTitle !== ticket.title || editDescription !== ticket.description)) {
@@ -110,7 +110,7 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
             <Input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
-              className="text-sm font-medium h-6 px-1 border-none bg-accent focus:bg-background"
+              className="text-sm font-medium h-6 px-1 border-none bg-accent focus:bg-background text-foreground"
               placeholder="Enter ticket title..."
               autoFocus
               onKeyDown={(e) => {
@@ -132,7 +132,7 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+              className="h-6 w-6 p-0 text-theme-accent hover:text-theme-accent-hover hover:bg-accent"
               onClick={handleSaveEdit}
             >
               <Check className="w-3 h-3" />
@@ -140,7 +140,7 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+              className="h-6 w-6 p-0 text-destructive hover:text-destructive-foreground hover:bg-destructive/10"
               onClick={handleCancelEdit}
             >
               <X className="w-3 h-3" />
@@ -152,27 +152,27 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100"
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 hover:bg-accent"
               >
                 <MoreHorizontal className="w-3 h-3" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={handleEdit} className="text-xs">
-                <Edit className="w-3 h-3 mr-2" />
-                Edit Ticket
+            <DropdownMenuContent align="end" className="w-48 bg-popover border-border">
+              <DropdownMenuItem onClick={handleEdit} className="text-xs text-foreground hover:bg-accent hover:text-accent-foreground">
+                <Edit className="w-3 h-3 mr-2 text-muted-foreground" />
+                <span className="text-foreground">Edit Ticket</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleDuplicate} className="text-xs">
-                <Copy className="w-3 h-3 mr-2" />
-                Duplicate
+              <DropdownMenuItem onClick={handleDuplicate} className="text-xs text-foreground hover:bg-accent hover:text-accent-foreground">
+                <Copy className="w-3 h-3 mr-2 text-muted-foreground" />
+                <span className="text-foreground">Duplicate</span>
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
+              <DropdownMenuSeparator className="bg-border" />
               <DropdownMenuItem 
                 onClick={handleDelete} 
-                className="text-xs text-destructive focus:text-destructive"
+                className="text-xs text-destructive focus:text-destructive hover:bg-destructive/10"
               >
                 <Trash2 className="w-3 h-3 mr-2" />
-                Delete Ticket
+                <span>Delete Ticket</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -185,7 +185,7 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
           <Textarea
             value={editDescription}
             onChange={(e) => setEditDescription(e.target.value)}
-            className="text-xs min-h-16 mb-3 px-2 py-1 border-none bg-accent focus:bg-background resize-none"
+            className="text-xs min-h-16 mb-3 px-2 py-1 border-none bg-accent focus:bg-background resize-none text-foreground"
             placeholder="Enter ticket description..."
             onKeyDown={(e) => {
               if (e.key === 'Enter' && e.ctrlKey) {
@@ -209,9 +209,9 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
             <Badge
               key={index}
               variant="secondary"
-              className={`${getTagColor(tag)} text-white border-none text-xs px-2 py-0.5`}
+              className={`${getTagColor(tag)} border text-xs px-2 py-0.5`}
             >
-              {tag}
+              <span>{tag}</span>
             </Badge>
           ))}
         </div>
@@ -221,9 +221,9 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
           <div className="flex items-center gap-2">
             <Badge
               variant="outline"
-              className="bg-red-600 text-white border-red-600 text-xs"
+              className="bg-theme-accent/20 text-theme-accent border-theme-accent/20 text-xs"
             >
-              {ticket.creationDate}
+              <span>{ticket.creationDate}</span>
             </Badge>
           </div>
           
@@ -231,14 +231,14 @@ export function KanbanCard({ ticket, onUpdateTicket, onDeleteTicket, onDuplicate
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               <MessageSquare className="w-3 h-3" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
             >
               <Paperclip className="w-3 h-3" />
             </Button>
