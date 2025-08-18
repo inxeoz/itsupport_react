@@ -6,8 +6,9 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Badge } from './ui/badge';
 import { Separator } from './ui/separator';
+import { Switch } from './ui/switch';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Settings, Save, RotateCcw, TestTube, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Settings, Save, RotateCcw, TestTube, CheckCircle, XCircle, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import { useTheme } from './ThemeProvider';
 
@@ -18,6 +19,8 @@ export interface ApiConfig {
   fields: string[];
   timeout: number;
   retries: number;
+  allowCookies: boolean;
+  customCookies: string;
 }
 
 interface ApiConfigDialogProps {
@@ -38,6 +41,7 @@ export function ApiConfigDialog({
   const [localConfig, setLocalConfig] = useState<ApiConfig>(config);
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testMessage, setTestMessage] = useState('');
+  const [showToken, setShowToken] = useState(false);
   const { getThemeClasses } = useTheme();
 
   // Update portal container theme classes when dialog opens
@@ -68,12 +72,14 @@ export function ApiConfigDialog({
 
   // Default configuration
   const defaultConfig: ApiConfig = {
-    baseUrl: 'http://localhost:8000',
+    baseUrl: 'https://itsupport.inxeoz.com',
     token: '698c17f4c776340:1ee1056e3b01ed9',
     endpoint: '/api/resource/Ticket',
-    fields: ['name', 'title', 'user_name', 'description', 'creation', 'modified', 'docstatus', 'amended_from', 'ticket_id', 'department', 'contact_name', 'contact_email', 'contact_phone', 'category', 'priority', 'status', 'assigned_to', 'resolution', 'resolution_date', 'time_logged', 'billable_hours', 'tags', 'attachments', 'customer'],
+    fields: ['user_name', 'title'],
     timeout: 10000,
     retries: 3,
+    allowCookies: true,
+    customCookies: 'full_name=Guest; sid=Guest; system_user=no; user_id=Guest; user_lang=en',
   };
 
   // Update local config when prop config changes
@@ -183,24 +189,42 @@ export function ApiConfigDialog({
                     id="baseUrl"
                     value={localConfig.baseUrl}
                     onChange={(e) => setLocalConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
-                    placeholder="http://localhost:8000"
+                    placeholder="https://itsupport.inxeoz.com"
                     className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    Your Frappe ERPNext server URL (including protocol and port)
+                    Your Frappe ERPNext server URL (including protocol and port). Example: http://localhost:8000
                   </p>
                 </div>
 
                 <div>
                   <Label htmlFor="token" className="text-foreground">Authentication Token</Label>
-                  <Input
-                    id="token"
-                    type="password"
-                    value={localConfig.token}
-                    onChange={(e) => setLocalConfig(prev => ({ ...prev, token: e.target.value }))}
-                    placeholder="api_key:api_secret"
-                    className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground"
-                  />
+                  <div className="relative">
+                    <Input
+                      id="token"
+                      type={showToken ? "text" : "password"}
+                      value={localConfig.token}
+                      onChange={(e) => setLocalConfig(prev => ({ ...prev, token: e.target.value }))}
+                      placeholder="api_key:api_secret"
+                      className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowToken(!showToken)}
+                    >
+                      {showToken ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                      <span className="sr-only">
+                        {showToken ? "Hide token" : "Show token"}
+                      </span>
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     Generate from Frappe: User → API Access → Generate Keys
                   </p>
@@ -258,7 +282,7 @@ export function ApiConfigDialog({
           <Card className="border-border bg-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base text-card-foreground">Advanced Settings</CardTitle>
-              <CardDescription className="text-muted-foreground">Timeout and retry configuration</CardDescription>
+              <CardDescription className="text-muted-foreground">Timeout, retry, and security configuration</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
@@ -291,6 +315,37 @@ export function ApiConfigDialog({
                   />
                 </div>
               </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="allowCookies" className="text-foreground">Allow Cookies</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Include cookies in API requests for session-based authentication and CSRF protection
+                  </p>
+                </div>
+                <Switch
+                  id="allowCookies"
+                  checked={localConfig.allowCookies}
+                  onCheckedChange={(checked) => setLocalConfig(prev => ({ ...prev, allowCookies: checked }))}
+                  className="data-[state=checked]:bg-theme-accent"
+                />
+              </div>
+
+              {localConfig.allowCookies && (
+                <div>
+                  <Label htmlFor="customCookies" className="text-foreground">Custom Cookie Header</Label>
+                  <Textarea
+                    id="customCookies"
+                    value={localConfig.customCookies}
+                    onChange={(e) => setLocalConfig(prev => ({ ...prev, customCookies: e.target.value }))}
+                    placeholder="full_name=Guest; sid=Guest; system_user=no; user_id=Guest; user_lang=en"
+                    className="font-mono text-sm min-h-[80px] bg-input border-border text-foreground placeholder:text-muted-foreground"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Optional custom cookie values to send with requests. Format: name=value; name2=value2
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -340,12 +395,20 @@ export function ApiConfigDialog({
               <div className="bg-muted p-3 rounded-md font-mono text-sm border border-border">
                 <div className="text-muted-foreground">URL:</div>
                 <div className="break-all mb-2 text-foreground">
-                  {localConfig.baseUrl}{localConfig.endpoint}?fields=[{localConfig.fields.map(f => `"${f}"`).join(', ')}]
+                  {localConfig.baseUrl}{localConfig.endpoint}?fields=[ {localConfig.fields.map(f => `"${f}"`).join(', ')} ]
                 </div>
                 
                 <div className="text-muted-foreground">Headers:</div>
                 <div className="text-foreground">Authorization: token {localConfig.token.split(':')[0]}:***</div>
                 <div className="text-foreground">Content-Type: application/json</div>
+                {localConfig.allowCookies && localConfig.customCookies && (
+                  <div className="text-foreground">Cookie: {localConfig.customCookies.substring(0, 50)}{localConfig.customCookies.length > 50 ? '...' : ''}</div>
+                )}
+                
+                <div className="text-muted-foreground mt-2">Options:</div>
+                <div className="text-foreground">Credentials: {localConfig.allowCookies ? 'include' : 'same-origin'}</div>
+                <div className="text-foreground">Timeout: {localConfig.timeout}ms</div>
+                <div className="text-foreground">Max Retries: {localConfig.retries}</div>
               </div>
             </CardContent>
           </Card>

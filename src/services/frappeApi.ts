@@ -6,21 +6,48 @@ export interface ApiConfig {
   fields: string[];
   timeout: number;
   retries: number;
+  allowCookies: boolean;
+  customCookies: string;
 }
 
 export const DEFAULT_API_CONFIG: ApiConfig = {
-  baseUrl: 'http://localhost:8000',
-  token: '698c17f4c776340:1ee1056e3b01ed9',
-  endpoint: '/api/resource/Ticket',
+  baseUrl: "https://itsupport.inxeoz.com",
+  token: "d7b641ed7217322:077a79b4a1cf85b",
+  endpoint: "/api/resource/Ticket",
   fields: [
-    'name', 'amended_from', 'ticket_id', 'user_name', 'department', 'contact_email', 
-    'contact_phone', 'title', 'description', 'category', 'subcategory', 'priority', 
-    'impact', 'status', 'assignee', 'created_datetime', 'due_datetime', 
-    'resolution_datetime', 'resolution_summary', 'root_cause', 'requester_confirmation', 
-    'time_spent', 'attachments', 'tags', 'creation', 'modified', 'docstatus'
+    "name",
+    "amended_from",
+    "ticket_id",
+    "user_name",
+    "department",
+    "contact_email",
+    "contact_phone",
+    "title",
+    "description",
+    "category",
+    "subcategory",
+    "priority",
+    "impact",
+    "status",
+    "assignee",
+    "created_datetime",
+    "due_datetime",
+    "resolution_datetime",
+    "resolution_summary",
+    "root_cause",
+    "requester_confirmation",
+    "time_spent",
+    "attachments",
+    "tags",
+    "creation",
+    "modified",
+    "docstatus",
   ],
   timeout: 10000,
   retries: 3,
+  allowCookies: true,
+  customCookies:
+    "full_name=Guest; sid=Guest; system_user=no; user_id=Guest; user_lang=en",
 };
 
 export interface FrappeTicket {
@@ -64,25 +91,31 @@ export interface FrappeDocResponse<T> {
 // CSRF Token Detection Utilities (from Developer Dashboard)
 export const extractCSRFToken = (): string | null => {
   // 1. Check meta tag (most common in Frappe)
-  const metaTag = document.querySelector('meta[name="csrf-token"]');
-  const metaToken = metaTag?.getAttribute('content');
+  const metaTag = document.querySelector(
+    'meta[name="csrf-token"]',
+  );
+  const metaToken = metaTag?.getAttribute("content");
   if (metaToken) return metaToken;
 
   // 2. Check Frappe global object
-  const frappeToken = (window as any).frappe?.csrf_token || (window as any).csrf_token;
+  const frappeToken =
+    (window as any).frappe?.csrf_token ||
+    (window as any).csrf_token;
   if (frappeToken) return frappeToken;
 
   // 3. Check cookies
-  const cookies = document.cookie.split(';');
+  const cookies = document.cookie.split(";");
   for (const cookie of cookies) {
-    const [name, value] = cookie.trim().split('=');
-    if (name === 'csrf_token' || name === 'csrftoken') {
+    const [name, value] = cookie.trim().split("=");
+    if (name === "csrf_token" || name === "csrftoken") {
       return decodeURIComponent(value);
     }
   }
 
   // 4. Check localStorage as fallback
-  const localStorageToken = localStorage.getItem('csrf_token') || localStorage.getItem('frappe_csrf_token');
+  const localStorageToken =
+    localStorage.getItem("csrf_token") ||
+    localStorage.getItem("frappe_csrf_token");
   if (localStorageToken) return localStorageToken;
 
   return null;
@@ -112,28 +145,44 @@ class FrappeApiService {
   private getCSRFToken(): string | null {
     // Always get fresh token from the environment
     const token = extractCSRFToken();
-    
+
     if (token) {
-      console.log('CSRF token found from environment:', token.substring(0, 8) + '...');
+      console.log(
+        "CSRF token found from environment:",
+        token.substring(0, 8) + "...",
+      );
     } else {
-      console.warn('No CSRF token found in environment. Request may fail if CSRF protection is enabled.');
+      console.warn(
+        "No CSRF token found in environment. Request may fail if CSRF protection is enabled.",
+      );
     }
-    
+
     return token;
   }
 
-  private async getHeaders(includeCSRF: boolean = false): Promise<HeadersInit> {
+  private async getHeaders(
+    includeCSRF: boolean = false,
+  ): Promise<HeadersInit> {
     const headers: HeadersInit = {
-      'Authorization': `token ${this.config.token}`,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
+      Authorization: `token ${this.config.token}`,
+      "Content-Type": "application/json",
+      Accept: "application/json",
     };
+
+    // Include custom cookies if provided and cookies are allowed
+    if (
+      this.config.allowCookies &&
+      this.config.customCookies &&
+      this.config.customCookies.trim()
+    ) {
+      headers["Cookie"] = this.config.customCookies.trim();
+    }
 
     // Include CSRF token for POST/PUT/DELETE requests
     if (includeCSRF) {
       const csrfToken = this.getCSRFToken();
       if (csrfToken) {
-        headers['X-Frappe-CSRF-Token'] = csrfToken;
+        headers["X-Frappe-CSRF-Token"] = csrfToken;
       }
     }
 
@@ -141,23 +190,33 @@ class FrappeApiService {
   }
 
   private async makeRequest<T>(
-    endpoint: string, 
+    endpoint: string,
     options: RequestInit = {},
-    customConfig?: Partial<ApiConfig>
+    customConfig?: Partial<ApiConfig>,
   ): Promise<T> {
-    const config = customConfig ? { ...this.config, ...customConfig } : this.config;
+    const config = customConfig
+      ? { ...this.config, ...customConfig }
+      : this.config;
     const url = `${config.baseUrl}${endpoint}`;
-    
+
     // Determine if we need CSRF token
-    const method = options.method || 'GET';
-    const needsCSRF = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(method.toUpperCase());
-    
+    const method = options.method || "GET";
+    const needsCSRF = [
+      "POST",
+      "PUT",
+      "DELETE",
+      "PATCH",
+    ].includes(method.toUpperCase());
+
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), config.timeout);
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      config.timeout,
+    );
 
     try {
       const headers = await this.getHeaders(needsCSRF);
-      
+
       const response = await fetch(url, {
         ...options,
         headers: {
@@ -165,18 +224,28 @@ class FrappeApiService {
           ...options.headers,
         },
         signal: controller.signal,
-        credentials: 'include', // Important for CSRF protection and session cookies
+        credentials: config.allowCookies
+          ? "include"
+          : "same-origin", // Important for CSRF protection and session cookies
       });
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
         // If we get a CSRF error, try to get fresh token and retry once
-        if (response.status === 403 || response.status === 400) {
+        if (
+          response.status === 403 ||
+          response.status === 400
+        ) {
           const errorText = await response.text();
-          if (errorText.includes('CSRF') || errorText.includes('Invalid Request')) {
-            console.warn('CSRF token invalid, getting fresh token and retrying...');
-            
+          if (
+            errorText.includes("CSRF") ||
+            errorText.includes("Invalid Request")
+          ) {
+            console.warn(
+              "CSRF token invalid, getting fresh token and retrying...",
+            );
+
             // Get fresh token and retry the request once
             const newHeaders = await this.getHeaders(needsCSRF);
             const retryResponse = await fetch(url, {
@@ -185,47 +254,68 @@ class FrappeApiService {
                 ...newHeaders,
                 ...options.headers,
               },
-              credentials: 'include',
+              credentials: config.allowCookies
+                ? "include"
+                : "same-origin",
             });
-            
+
             if (!retryResponse.ok) {
-              throw new Error(`Frappe API Error: ${retryResponse.status} ${retryResponse.statusText}`);
+              throw new Error(
+                `Frappe API Error: ${retryResponse.status} ${retryResponse.statusText}`,
+              );
             }
-            
+
             return retryResponse.json();
           }
         }
-        
-        throw new Error(`Frappe API Error: ${response.status} ${response.statusText}`);
+
+        throw new Error(
+          `Frappe API Error: ${response.status} ${response.statusText}`,
+        );
       }
 
       return response.json();
     } catch (error) {
       clearTimeout(timeoutId);
-      
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error(`Request timeout after ${config.timeout}ms`);
+
+      if (
+        error instanceof Error &&
+        error.name === "AbortError"
+      ) {
+        throw new Error(
+          `Request timeout after ${config.timeout}ms`,
+        );
       }
-      
+
       throw error;
     }
   }
 
   // Test API connection
-  async testConnection(testConfig?: ApiConfig): Promise<boolean> {
+  async testConnection(
+    testConfig?: ApiConfig,
+  ): Promise<boolean> {
     const config = testConfig || this.config;
-    
+
     try {
       // Try a simple GET request first
-      await this.makeRequest('/api/method/ping', { method: 'GET' }, config);
+      await this.makeRequest(
+        "/api/method/ping",
+        { method: "GET" },
+        config,
+      );
       return true;
     } catch (error) {
       // If ping fails, try the actual tickets endpoint with limit
       try {
-        await this.makeRequest(`${config.endpoint}?limit=1`, { method: 'GET' }, config);
+        await this.makeRequest(
+          `${config.endpoint}?limit=1`,
+          { method: "GET" },
+          config,
+        );
         return true;
       } catch (secondError) {
-        console.error('Connection test failed:', secondError);
+        console.error("Connection test failed:", secondError);
         return false;
       }
     }
@@ -235,19 +325,19 @@ class FrappeApiService {
   async getTickets(): Promise<FrappeTicket[]> {
     try {
       // Build fields parameter from configuration
-      const fieldsParam = `[${this.config.fields.map(field => `"${field}"`).join(', ')}]`;
+      const fieldsParam = `[${this.config.fields.map((field) => `"${field}"`).join(", ")}]`;
       const encodedFields = encodeURIComponent(fieldsParam);
-      
-      const response = await this.makeRequest<FrappeListResponse<FrappeTicket>>(
-        `${this.config.endpoint}?fields=${encodedFields}`
-      );
-      
+
+      const response = await this.makeRequest<
+        FrappeListResponse<FrappeTicket>
+      >(`${this.config.endpoint}?fields=${encodedFields}`);
+
       // Handle the response and ensure proper typing
       const tickets = response.data || [];
-      
+
       // Clean up and normalize the data
-      return tickets.map(ticket => ({
-        name: ticket.name || 'Unknown',
+      return tickets.map((ticket) => ({
+        name: ticket.name || "Unknown",
         amended_from: ticket.amended_from || null,
         ticket_id: ticket.ticket_id || null,
         user_name: ticket.user_name || null,
@@ -267,7 +357,8 @@ class FrappeApiService {
         resolution_datetime: ticket.resolution_datetime || null,
         resolution_summary: ticket.resolution_summary || null,
         root_cause: ticket.root_cause || null,
-        requester_confirmation: ticket.requester_confirmation || null,
+        requester_confirmation:
+          ticket.requester_confirmation || null,
         time_spent: ticket.time_spent || null,
         attachments: ticket.attachments || null,
         tags: ticket.tags || null,
@@ -275,27 +366,31 @@ class FrappeApiService {
         modified: ticket.modified || null,
         docstatus: ticket.docstatus ?? 0,
       }));
-      
     } catch (error) {
-      console.error('Error fetching tickets:', error);
+      console.error("Error fetching tickets:", error);
       throw error;
     }
   }
 
   // Create a new ticket
-  async createTicket(ticket: Partial<FrappeTicket>): Promise<FrappeTicket> {
+  async createTicket(
+    ticket: Partial<FrappeTicket>,
+  ): Promise<FrappeTicket> {
     try {
-      console.log('Creating ticket with data:', ticket);
-      console.log('CSRF token being used:', this.getCSRFToken()?.substring(0, 8) + '...' || 'None');
-      
+      console.log("Creating ticket with data:", ticket);
+      console.log(
+        "CSRF token being used:",
+        this.getCSRFToken()?.substring(0, 8) + "..." || "None",
+      );
+
       const requestBody = {
-        title: ticket.title || 'New Ticket',
-        user_name: ticket.user_name || 'Unknown User',
-        description: ticket.description || 'No description',
-        category: ticket.category || 'Other',
-        priority: ticket.priority || 'Medium',
-        impact: ticket.impact || 'Single User',
-        status: ticket.status || 'New',
+        title: ticket.title || "New Ticket",
+        user_name: ticket.user_name || "Unknown User",
+        description: ticket.description || "No description",
+        category: ticket.category || "Other",
+        priority: ticket.priority || "Medium",
+        impact: ticket.impact || "Single User",
+        status: ticket.status || "New",
         contact_email: ticket.contact_email || null,
         contact_phone: ticket.contact_phone || null,
         department: ticket.department || null,
@@ -305,50 +400,60 @@ class FrappeApiService {
         tags: ticket.tags || null,
         docstatus: ticket.docstatus ?? 0,
       };
-      
-      console.log('Request body:', requestBody);
-      
-      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
-        this.config.endpoint,
-        {
-          method: 'POST',
-          body: JSON.stringify(requestBody),
-        }
-      );
-      
-      console.log('Create ticket response:', response);
+
+      console.log("Request body:", requestBody);
+
+      const response = await this.makeRequest<
+        FrappeDocResponse<FrappeTicket>
+      >(this.config.endpoint, {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+      });
+
+      console.log("Create ticket response:", response);
       return response.data;
     } catch (error) {
-      console.error('Error creating ticket:', error);
-      
+      console.error("Error creating ticket:", error);
+
       // Provide more specific error messages
       if (error instanceof Error) {
-        if (error.message.includes('CSRF')) {
-          throw new Error('CSRF token error. Please refresh the page and try again.');
-        } else if (error.message.includes('403')) {
-          throw new Error('Permission denied. Check your API credentials.');
-        } else if (error.message.includes('401')) {
-          throw new Error('Authentication failed. Please check your token.');
+        if (error.message.includes("CSRF")) {
+          throw new Error(
+            "CSRF token error. Please refresh the page and try again.",
+          );
+        } else if (error.message.includes("403")) {
+          throw new Error(
+            "Permission denied. Check your API credentials.",
+          );
+        } else if (error.message.includes("401")) {
+          throw new Error(
+            "Authentication failed. Please check your token.",
+          );
         }
       }
-      
+
       throw error;
     }
   }
 
   // Update a ticket
-  async updateTicket(ticketId: string, updates: Partial<FrappeTicket>): Promise<FrappeTicket> {
+  async updateTicket(
+    ticketId: string,
+    updates: Partial<FrappeTicket>,
+  ): Promise<FrappeTicket> {
     try {
-      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
-        `${this.config.endpoint}/${ticketId}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify(updates),
-        }
-      );
+      const response = await this.makeRequest<
+        FrappeDocResponse<FrappeTicket>
+      >(`${this.config.endpoint}/${ticketId}`, {
+        method: "PUT",
+        body: JSON.stringify(updates),
+      });
       return response.data;
     } catch (error) {
-      console.error(`Error updating ticket ${ticketId}:`, error);
+      console.error(
+        `Error updating ticket ${ticketId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -359,11 +464,14 @@ class FrappeApiService {
       await this.makeRequest<void>(
         `${this.config.endpoint}/${ticketId}`,
         {
-          method: 'DELETE',
-        }
+          method: "DELETE",
+        },
       );
     } catch (error) {
-      console.error(`Error deleting ticket ${ticketId}:`, error);
+      console.error(
+        `Error deleting ticket ${ticketId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -371,16 +479,18 @@ class FrappeApiService {
   // Submit a ticket (change docstatus to 1)
   async submitTicket(ticketId: string): Promise<FrappeTicket> {
     try {
-      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
-        `${this.config.endpoint}/${ticketId}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({ docstatus: 1 }),
-        }
-      );
+      const response = await this.makeRequest<
+        FrappeDocResponse<FrappeTicket>
+      >(`${this.config.endpoint}/${ticketId}`, {
+        method: "PUT",
+        body: JSON.stringify({ docstatus: 1 }),
+      });
       return response.data;
     } catch (error) {
-      console.error(`Error submitting ticket ${ticketId}:`, error);
+      console.error(
+        `Error submitting ticket ${ticketId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -388,16 +498,18 @@ class FrappeApiService {
   // Cancel a ticket (change docstatus to 2)
   async cancelTicket(ticketId: string): Promise<FrappeTicket> {
     try {
-      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
-        `${this.config.endpoint}/${ticketId}`,
-        {
-          method: 'PUT',
-          body: JSON.stringify({ docstatus: 2 }),
-        }
-      );
+      const response = await this.makeRequest<
+        FrappeDocResponse<FrappeTicket>
+      >(`${this.config.endpoint}/${ticketId}`, {
+        method: "PUT",
+        body: JSON.stringify({ docstatus: 2 }),
+      });
       return response.data;
     } catch (error) {
-      console.error(`Error cancelling ticket ${ticketId}:`, error);
+      console.error(
+        `Error cancelling ticket ${ticketId}:`,
+        error,
+      );
       throw error;
     }
   }
@@ -411,7 +523,7 @@ class FrappeApiService {
         userAgent: navigator.userAgent,
         url: window.location.href,
         timestamp: new Date().toISOString(),
-      }
+      },
     };
   }
 }
@@ -429,7 +541,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "Sales",
     contact_email: "alice.johnson@company.com",
     contact_phone: "+1-555-0101",
-    description: "Customer cannot log into the portal after password reset. Getting 'Account temporarily locked' message even with correct credentials. This is affecting their ability to view order history and make new purchases.",
+    description:
+      "Customer cannot log into the portal after password reset. Getting 'Account temporarily locked' message even with correct credentials. This is affecting their ability to view order history and make new purchases.",
     category: "Software",
     subcategory: "Authentication",
     priority: "High",
@@ -457,7 +570,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "IT",
     contact_email: "bob.chen@company.com",
     contact_phone: "+1-555-0102",
-    description: "SMTP server configuration appears to be incorrect. Users are not receiving password reset emails, order confirmations, or system notifications. This is a critical issue affecting user communication.",
+    description:
+      "SMTP server configuration appears to be incorrect. Users are not receiving password reset emails, order confirmations, or system notifications. This is a critical issue affecting user communication.",
     category: "Network",
     subcategory: "Email Configuration",
     priority: "Critical",
@@ -485,7 +599,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "Operations",
     contact_email: "carol.martinez@company.com",
     contact_phone: "+1-555-0103",
-    description: "Experiencing intermittent database connection timeouts between 2-4 PM daily. This causes page load failures and transaction errors. Database performance monitoring shows high CPU usage during these periods.",
+    description:
+      "Experiencing intermittent database connection timeouts between 2-4 PM daily. This causes page load failures and transaction errors. Database performance monitoring shows high CPU usage during these periods.",
     category: "Software",
     subcategory: "Database Performance",
     priority: "High",
@@ -513,7 +628,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "Finance",
     contact_email: "david.rodriguez@company.com",
     contact_phone: "+1-555-0104",
-    description: "The automated monthly sales report generation is failing with 'Memory limit exceeded' error. Reports over 500 records cause the system to crash. This affects month-end financial processes.",
+    description:
+      "The automated monthly sales report generation is failing with 'Memory limit exceeded' error. Reports over 500 records cause the system to crash. This affects month-end financial processes.",
     category: "Software",
     subcategory: "Reporting",
     priority: "Medium",
@@ -523,8 +639,10 @@ export const mockTickets: FrappeTicket[] = [
     created_datetime: "2025-01-12 11:45:00.000000",
     due_datetime: "2025-01-15 17:00:00.000000",
     resolution_datetime: "2025-01-14 15:30:00.000000",
-    resolution_summary: "Increased memory limits and optimized report generation queries. Implemented pagination for large datasets.",
-    root_cause: "Insufficient memory allocation for large dataset processing",
+    resolution_summary:
+      "Increased memory limits and optimized report generation queries. Implemented pagination for large datasets.",
+    root_cause:
+      "Insufficient memory allocation for large dataset processing",
     requester_confirmation: "Yes",
     time_spent: 6.5,
     attachments: null,
@@ -541,7 +659,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "Marketing",
     contact_email: "emma.thompson@company.com",
     contact_phone: "+1-555-0105",
-    description: "Mobile application is not syncing properly with the server. Offline changes are not being uploaded when internet connection is restored. Users are losing data and experiencing frustration.",
+    description:
+      "Mobile application is not syncing properly with the server. Offline changes are not being uploaded when internet connection is restored. Users are losing data and experiencing frustration.",
     category: "Software",
     subcategory: "Mobile Application",
     priority: "High",
@@ -569,7 +688,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "E-commerce",
     contact_email: "frank.wilson@company.com",
     contact_phone: "+1-555-0106",
-    description: "Credit card payments are failing with 'Invalid merchant configuration' error. This is preventing customers from completing purchases and affecting revenue. PayPal integration works fine.",
+    description:
+      "Credit card payments are failing with 'Invalid merchant configuration' error. This is preventing customers from completing purchases and affecting revenue. PayPal integration works fine.",
     category: "Software",
     subcategory: "Payment Processing",
     priority: "Critical",
@@ -597,7 +717,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "HR",
     contact_email: "grace.lee@company.com",
     contact_phone: "+1-555-0107",
-    description: "New employee onboarding requires laptop setup with standard software package, domain join, and access permissions for HR systems.",
+    description:
+      "New employee onboarding requires laptop setup with standard software package, domain join, and access permissions for HR systems.",
     category: "Hardware",
     subcategory: "Laptop Setup",
     priority: "Low",
@@ -607,7 +728,8 @@ export const mockTickets: FrappeTicket[] = [
     created_datetime: "2025-01-09 15:50:00.000000",
     due_datetime: "2025-01-12 17:00:00.000000",
     resolution_datetime: "2025-01-11 14:30:00.000000",
-    resolution_summary: "Laptop configured with standard HR software package. Domain joined and user permissions granted.",
+    resolution_summary:
+      "Laptop configured with standard HR software package. Domain joined and user permissions granted.",
     root_cause: "Standard onboarding process",
     requester_confirmation: "Yes",
     time_spent: 2.5,
@@ -625,7 +747,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "Development",
     contact_email: "henry.zhang@company.com",
     contact_phone: "+1-555-0108",
-    description: "Remote employee needs VPN access to company network for development work. Requires access to development servers and internal documentation.",
+    description:
+      "Remote employee needs VPN access to company network for development work. Requires access to development servers and internal documentation.",
     category: "Access Request",
     subcategory: "VPN Access",
     priority: "Medium",
@@ -635,7 +758,8 @@ export const mockTickets: FrappeTicket[] = [
     created_datetime: "2025-01-08 12:30:00.000000",
     due_datetime: "2025-01-10 17:00:00.000000",
     resolution_datetime: "2025-01-09 16:45:00.000000",
-    resolution_summary: "VPN credentials provided and access configured for development resources.",
+    resolution_summary:
+      "VPN credentials provided and access configured for development resources.",
     root_cause: "New remote work arrangement",
     requester_confirmation: "Yes",
     time_spent: 1.5,
@@ -653,7 +777,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "Administration",
     contact_email: "ivy.parker@company.com",
     contact_phone: "+1-555-0109",
-    description: "Office printer is not appearing in the network printer list. Multiple users cannot print documents. Printer shows as offline in the print queue.",
+    description:
+      "Office printer is not appearing in the network printer list. Multiple users cannot print documents. Printer shows as offline in the print queue.",
     category: "Hardware",
     subcategory: "Printer Configuration",
     priority: "Medium",
@@ -681,7 +806,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "IT",
     contact_email: "jack.morrison@company.com",
     contact_phone: "+1-555-0110",
-    description: "Adobe Creative Suite licenses expiring next month. Need to renew for 15 users in the design team. Budget approval already obtained.",
+    description:
+      "Adobe Creative Suite licenses expiring next month. Need to renew for 15 users in the design team. Budget approval already obtained.",
     category: "Software",
     subcategory: "License Management",
     priority: "Low",
@@ -709,7 +835,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "Accounting",
     contact_email: "karen.davis@company.com",
     contact_phone: "+1-555-0111",
-    description: "Primary monitor flickering constantly, making work impossible. Monitor is 3 years old and showing signs of hardware failure. Need replacement urgently.",
+    description:
+      "Primary monitor flickering constantly, making work impossible. Monitor is 3 years old and showing signs of hardware failure. Need replacement urgently.",
     category: "Hardware",
     subcategory: "Monitor Replacement",
     priority: "High",
@@ -737,7 +864,8 @@ export const mockTickets: FrappeTicket[] = [
     department: "IT",
     contact_email: "luke.anderson@company.com",
     contact_phone: "+1-555-0112",
-    description: "Automated daily backups have been failing for the past week. The backup logs show 'Insufficient disk space' errors. This creates a critical data loss risk for the organization.",
+    description:
+      "Automated daily backups have been failing for the past week. The backup logs show 'Insufficient disk space' errors. This creates a critical data loss risk for the organization.",
     category: "Software",
     subcategory: "Backup Systems",
     priority: "Critical",
@@ -747,8 +875,10 @@ export const mockTickets: FrappeTicket[] = [
     created_datetime: "2025-01-04 08:10:00.000000",
     due_datetime: "2025-01-05 17:00:00.000000",
     resolution_datetime: "2025-01-05 14:20:00.000000",
-    resolution_summary: "Cleared old backup files and increased storage allocation. Implemented automated cleanup policies.",
-    root_cause: "Insufficient disk space due to accumulated old backup files",
+    resolution_summary:
+      "Cleared old backup files and increased storage allocation. Implemented automated cleanup policies.",
+    root_cause:
+      "Insufficient disk space due to accumulated old backup files",
     requester_confirmation: "Yes",
     time_spent: 4.0,
     attachments: null,
@@ -756,5 +886,5 @@ export const mockTickets: FrappeTicket[] = [
     creation: "2025-01-04 08:10:00.000000",
     modified: "2025-01-05 14:20:00.000000",
     docstatus: 2,
-  }
+  },
 ];

@@ -175,6 +175,13 @@ export function TopBar({
       badge: "Dev",
       description: "CSRF tokens, session info, and debug tools",
     },
+    {
+      id: "hacker-pro",
+      label: "Hacker Pro",
+      icon: Code,
+      badge: "Pro",
+      description: "Bulk ticket generation with demo data",
+    },
   ];
 
   const themeOptions = [
@@ -271,6 +278,7 @@ export function TopBar({
       "file-gallery": "File Gallery",
       customizable: "Custom View",
       developer: "Developer Dashboard",
+      "hacker-pro": "Hacker Pro",
     };
 
     if (viewToTabMap[viewId]) {

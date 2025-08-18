@@ -1,85 +1,476 @@
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Area, AreaChart } from 'recharts';
+import { useState, useEffect } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, AreaChart, Area } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
-import { Calendar, Clock, TrendingUp, TrendingDown, Users, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Alert, AlertDescription } from './ui/alert';
+import { Skeleton } from './ui/skeleton';
+import { 
+  Calendar, 
+  Clock, 
+  TrendingUp, 
+  TrendingDown, 
+  Users, 
+  AlertTriangle, 
+  CheckCircle, 
+  XCircle,
+  RefreshCw,
+  Wifi,
+  WifiOff,
+  Database,
+  Download,
+  Activity,
+  BarChart3,
+  Target
+} from 'lucide-react';
+import { useTheme } from './ThemeProvider';
+import { frappeApi, type FrappeTicket, mockTickets } from '../services/frappeApi';
+import { toast } from "sonner";
 
-// Mock data for analytics with theme-based colors
-const ticketVolumeData = [
-  { month: 'Jan', tickets: 120, resolved: 115 },
-  { month: 'Feb', tickets: 135, resolved: 128 },
-  { month: 'Mar', tickets: 148, resolved: 142 },
-  { month: 'Apr', tickets: 162, resolved: 158 },
-  { month: 'May', tickets: 178, resolved: 165 },
-  { month: 'Jun', tickets: 195, resolved: 188 },
-];
+interface AnalyticsData {
+  totalTickets: number;
+  resolvedTickets: number;
+  resolutionRate: number;
+  avgResolutionTime: number;
+  avgSatisfaction: number;
+  statusDistribution: Array<{ name: string; value: number; color: string }>;
+  priorityDistribution: Array<{ name: string; value: number; color: string }>;
+  departmentDistribution: Array<{ name: string; value: number; color: string }>;
+  weeklyTrends: Array<{ day: string; tickets: number; resolved: number }>;
+  monthlyTrends: Array<{ month: string; tickets: number; resolved: number }>;
+  resolutionTimeByPriority: Array<{ priority: string; avgHours: number; count: number }>;
+}
 
-const priorityDistribution = [
-  { name: 'Critical', value: 15, color: 'hsl(var(--destructive))' },
-  { name: 'High', value: 35, color: 'hsl(var(--theme-accent))' },
-  { name: 'Medium', value: 45, color: 'hsl(var(--muted-foreground))' },
-  { name: 'Low', value: 25, color: 'hsl(var(--theme-accent))' },
-];
-
-const statusDistribution = [
-  { name: 'New', value: 28, color: 'hsl(var(--theme-accent))' },
-  { name: 'In Progress', value: 45, color: 'hsl(var(--muted-foreground))' },
-  { name: 'Pending', value: 22, color: 'hsl(var(--secondary-foreground))' },
-  { name: 'Resolved', value: 185, color: 'hsl(var(--theme-accent))' },
-  { name: 'Closed', value: 98, color: 'hsl(var(--muted))' },
-];
-
-const resolutionTimeData = [
-  { category: 'Critical', avgHours: 2.5, target: 4 },
-  { category: 'High', avgHours: 8.2, target: 12 },
-  { category: 'Medium', avgHours: 24.1, target: 48 },
-  { category: 'Low', avgHours: 72.3, target: 96 },
-];
-
-const agentPerformance = [
-  { name: 'John Smith', resolved: 45, avg_resolution: 18.5, satisfaction: 4.8 },
-  { name: 'Sarah Wilson', resolved: 52, avg_resolution: 16.2, satisfaction: 4.9 },
-  { name: 'Mike Johnson', resolved: 38, avg_resolution: 22.1, satisfaction: 4.6 },
-  { name: 'David Brown', resolved: 41, avg_resolution: 19.8, satisfaction: 4.7 },
-  { name: 'Lisa Anderson', resolved: 48, avg_resolution: 17.3, satisfaction: 4.8 },
-];
-
-const weeklyTrends = [
-  { day: 'Mon', tickets: 35, resolved: 32 },
-  { day: 'Tue', tickets: 42, resolved: 38 },
-  { day: 'Wed', tickets: 38, resolved: 41 },
-  { day: 'Thu', tickets: 45, resolved: 43 },
-  { day: 'Fri', tickets: 52, resolved: 48 },
-  { day: 'Sat', tickets: 28, resolved: 31 },
-  { day: 'Sun', tickets: 22, resolved: 25 },
-];
+interface DataSource {
+  isLive: boolean;
+  lastUpdated: Date;
+  source: 'api' | 'demo';
+  errorMessage?: string;
+}
 
 export function AnalyticsDashboard() {
-  const totalTickets = statusDistribution.reduce((sum, item) => sum + item.value, 0);
-  const resolvedTickets = statusDistribution.find(item => item.name === 'Resolved')?.value || 0;
-  const resolutionRate = ((resolvedTickets / totalTickets) * 100).toFixed(1);
-  
-  const avgResolutionTime = agentPerformance.reduce((sum, agent) => sum + agent.avg_resolution, 0) / agentPerformance.length;
-  const avgSatisfaction = agentPerformance.reduce((sum, agent) => sum + agent.satisfaction, 0) / agentPerformance.length;
+  const { getThemeClasses } = useTheme();
+  const [isLoading, setIsLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [dataSource, setDataSource] = useState<DataSource>({
+    isLive: false,
+    lastUpdated: new Date(),
+    source: 'demo'
+  });
+  const [refreshInterval, setRefreshInterval] = useState<NodeJS.Timeout | null>(null);
+
+  // Process ticket data to generate analytics
+  const processTicketData = (tickets: FrappeTicket[]): AnalyticsData => {
+    const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const oneMonthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Basic metrics
+    const totalTickets = tickets.length;
+    const resolvedTickets = tickets.filter(t => 
+      t.status === 'Resolved' || t.status === 'Closed'
+    ).length;
+    const resolutionRate = totalTickets > 0 ? (resolvedTickets / totalTickets) * 100 : 0;
+
+    // Calculate average resolution time for resolved tickets
+    const resolvedWithTime = tickets.filter(t => 
+      (t.status === 'Resolved' || t.status === 'Closed') && 
+      t.created_datetime && 
+      t.resolution_datetime
+    );
+    
+    let avgResolutionTime = 0;
+    if (resolvedWithTime.length > 0) {
+      const totalResolutionTime = resolvedWithTime.reduce((acc, ticket) => {
+        const created = new Date(ticket.created_datetime!);
+        const resolved = new Date(ticket.resolution_datetime!);
+        const diffHours = (resolved.getTime() - created.getTime()) / (1000 * 60 * 60);
+        return acc + diffHours;
+      }, 0);
+      avgResolutionTime = totalResolutionTime / resolvedWithTime.length;
+    }
+
+    // Mock satisfaction score (in real app, this would come from customer feedback)
+    const avgSatisfaction = 4.7;
+
+    // Status distribution
+    const statusCounts = tickets.reduce((acc, ticket) => {
+      const status = ticket.status || 'Unknown';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const statusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
+      name,
+      value,
+      color: getStatusColor(name)
+    }));
+
+    // Priority distribution
+    const priorityCounts = tickets.reduce((acc, ticket) => {
+      const priority = ticket.priority || 'Medium';
+      acc[priority] = (acc[priority] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const priorityDistribution = Object.entries(priorityCounts).map(([name, value]) => ({
+      name,
+      value,
+      color: getPriorityColor(name)
+    }));
+
+    // Department distribution
+    const departmentCounts = tickets.reduce((acc, ticket) => {
+      const department = ticket.department || 'Other';
+      acc[department] = (acc[department] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const departmentDistribution = Object.entries(departmentCounts).map(([name, value]) => ({
+      name,
+      value,
+      color: 'hsl(var(--theme-accent))'
+    }));
+
+    // Weekly trends (last 7 days)
+    const weeklyTrends = [];
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const dayName = dayNames[date.getDay()];
+      
+      const dayTickets = tickets.filter(t => {
+        if (!t.created_datetime) return false;
+        const ticketDate = new Date(t.created_datetime);
+        return ticketDate.toDateString() === date.toDateString();
+      });
+
+      const dayResolved = tickets.filter(t => {
+        if (!t.resolution_datetime) return false;
+        const resolvedDate = new Date(t.resolution_datetime);
+        return resolvedDate.toDateString() === date.toDateString();
+      });
+
+      weeklyTrends.push({
+        day: dayName,
+        tickets: dayTickets.length,
+        resolved: dayResolved.length
+      });
+    }
+
+    // Monthly trends (last 6 months)
+    const monthlyTrends = [];
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const monthName = monthNames[date.getMonth()];
+      
+      const monthTickets = tickets.filter(t => {
+        if (!t.created_datetime) return false;
+        const ticketDate = new Date(t.created_datetime);
+        return ticketDate.getMonth() === date.getMonth() && 
+               ticketDate.getFullYear() === date.getFullYear();
+      });
+
+      const monthResolved = tickets.filter(t => {
+        if (!t.resolution_datetime) return false;
+        const resolvedDate = new Date(t.resolution_datetime);
+        return resolvedDate.getMonth() === date.getMonth() && 
+               resolvedDate.getFullYear() === date.getFullYear();
+      });
+
+      monthlyTrends.push({
+        month: monthName,
+        tickets: monthTickets.length,
+        resolved: monthResolved.length
+      });
+    }
+
+    // Resolution time by priority
+    const priorityResolutionTimes = ['Critical', 'High', 'Medium', 'Low'].map(priority => {
+      const priorityTickets = resolvedWithTime.filter(t => t.priority === priority);
+      let avgHours = 0;
+      
+      if (priorityTickets.length > 0) {
+        const totalTime = priorityTickets.reduce((acc, ticket) => {
+          const created = new Date(ticket.created_datetime!);
+          const resolved = new Date(ticket.resolution_datetime!);
+          const diffHours = (resolved.getTime() - created.getTime()) / (1000 * 60 * 60);
+          return acc + diffHours;
+        }, 0);
+        avgHours = totalTime / priorityTickets.length;
+      }
+
+      return {
+        priority,
+        avgHours: Math.round(avgHours * 10) / 10,
+        count: priorityTickets.length
+      };
+    });
+
+    return {
+      totalTickets,
+      resolvedTickets,
+      resolutionRate,
+      avgResolutionTime,
+      avgSatisfaction,
+      statusDistribution,
+      priorityDistribution,
+      departmentDistribution,
+      weeklyTrends,
+      monthlyTrends,
+      resolutionTimeByPriority: priorityResolutionTimes
+    };
+  };
+
+  // Helper functions for colors
+  const getStatusColor = (status: string): string => {
+    switch (status.toLowerCase()) {
+      case 'new':
+        return 'hsl(var(--theme-accent))';
+      case 'in progress':
+        return 'hsl(var(--chart-2))';
+      case 'waiting for info':
+        return 'hsl(var(--chart-3))';
+      case 'resolved':
+        return 'hsl(var(--chart-4))';
+      case 'closed':
+        return 'hsl(var(--chart-5))';
+      default:
+        return 'hsl(var(--muted-foreground))';
+    }
+  };
+
+  const getPriorityColor = (priority: string): string => {
+    switch (priority.toLowerCase()) {
+      case 'critical':
+        return 'hsl(var(--destructive))';
+      case 'high':
+        return 'hsl(var(--chart-1))';
+      case 'medium':
+        return 'hsl(var(--theme-accent))';
+      case 'low':
+        return 'hsl(var(--chart-4))';
+      default:
+        return 'hsl(var(--muted-foreground))';
+    }
+  };
+
+  // Fetch data from API or use demo data
+  const fetchAnalyticsData = async (showToast: boolean = true) => {
+    setIsLoading(true);
+    
+    try {
+      // Try to fetch from API first
+      const tickets = await frappeApi.getTickets();
+      const data = processTicketData(tickets);
+      
+      setAnalyticsData(data);
+      setDataSource({
+        isLive: true,
+        lastUpdated: new Date(),
+        source: 'api'
+      });
+      
+      if (showToast) {
+        toast.success('Analytics data refreshed from live API', {
+          description: `Processed ${tickets.length} tickets`
+        });
+      }
+    } catch (error) {
+      // Fallback to demo data
+      console.warn('Failed to fetch live data, using demo data:', error);
+      const data = processTicketData(mockTickets);
+      
+      setAnalyticsData(data);
+      setDataSource({
+        isLive: false,
+        lastUpdated: new Date(),
+        source: 'demo',
+        errorMessage: error instanceof Error ? error.message : 'Unknown error'
+      });
+      
+      if (showToast) {
+        toast.warning('Using demo data - API unavailable', {
+          description: 'Check your API configuration in settings'
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Auto-refresh data every 5 minutes if live
+  useEffect(() => {
+    fetchAnalyticsData(false);
+
+    // Set up auto-refresh for live data
+    const interval = setInterval(() => {
+      if (dataSource.isLive) {
+        fetchAnalyticsData(false);
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    setRefreshInterval(interval);
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+
+  // Manual refresh
+  const handleRefresh = () => {
+    fetchAnalyticsData(true);
+  };
+
+  // Export data function
+  const handleExport = () => {
+    if (!analyticsData) return;
+    
+    const dataToExport = {
+      generatedAt: new Date().toISOString(),
+      dataSource: dataSource,
+      analytics: analyticsData
+    };
+    
+    const blob = new Blob([JSON.stringify(dataToExport, null, 2)], {
+      type: 'application/json'
+    });
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mytick-analytics-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Analytics data exported successfully');
+  };
+
+  if (isLoading || !analyticsData) {
+    return (
+      <div className={`p-6 space-y-6 bg-background ${getThemeClasses()}`}>
+        {/* Header Skeleton */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <Skeleton className="h-8 w-64 bg-muted" />
+            <Skeleton className="h-4 w-96 mt-2 bg-muted" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-32 bg-muted" />
+            <Skeleton className="h-8 w-32 bg-muted" />
+          </div>
+        </div>
+
+        {/* Metrics Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="border-border bg-card">
+              <CardHeader className="bg-card">
+                <Skeleton className="h-4 w-24 bg-muted" />
+              </CardHeader>
+              <CardContent className="bg-card">
+                <Skeleton className="h-8 w-16 bg-muted" />
+                <Skeleton className="h-3 w-32 mt-2 bg-muted" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Charts Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i} className="border-border bg-card">
+              <CardHeader className="bg-card">
+                <Skeleton className="h-5 w-40 bg-muted" />
+                <Skeleton className="h-3 w-64 bg-muted" />
+              </CardHeader>
+              <CardContent className="bg-card">
+                <Skeleton className="h-64 w-full bg-muted" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-6 space-y-6 bg-background">
-      {/* Header */}
+    <div className={`p-6 space-y-6 bg-background ${getThemeClasses()}`}>
+      {/* Header with Data Source Indicator */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-medium text-foreground">Analytics Dashboard</h1>
-          <p className="text-muted-foreground mt-1">IT Support Performance Metrics & Insights</p>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-medium text-foreground">Analytics Dashboard</h1>
+            <div className="flex items-center gap-2">
+              {dataSource.isLive ? (
+                <Badge variant="secondary" className="bg-theme-accent/20 text-theme-accent border-theme-accent/20">
+                  <Wifi className="w-3 h-3 mr-1" />
+                  Live Data
+                </Badge>
+              ) : (
+                <Badge variant="secondary" className="bg-destructive/20 text-destructive border-destructive/20">
+                  <WifiOff className="w-3 h-3 mr-1" />
+                  Demo Data
+                </Badge>
+              )}
+              <Badge variant="outline" className="border-border text-muted-foreground">
+                <Database className="w-3 h-3 mr-1" />
+                {analyticsData.totalTickets} Tickets
+              </Badge>
+            </div>
+          </div>
+          <p className="text-muted-foreground mt-1">
+            IT Support Performance Metrics & Insights
+            <span className="ml-2 text-xs">
+              Last updated: {dataSource.lastUpdated.toLocaleTimeString()}
+            </span>
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
             <Calendar className="w-4 h-4 mr-2 text-muted-foreground" />
             <span className="text-foreground">Last 30 Days</span>
           </Button>
-          <Button variant="outline" size="sm" className="border-border text-foreground hover:bg-accent hover:text-accent-foreground">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleExport}
+            className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <Download className="w-4 h-4 mr-2" />
             <span className="text-foreground">Export Report</span>
           </Button>
         </div>
       </div>
+
+      {/* Data Source Alert */}
+      {!dataSource.isLive && (
+        <Alert className="border-destructive/20 bg-destructive/5">
+          <WifiOff className="h-4 w-4 text-destructive" />
+          <AlertDescription className="text-foreground">
+            Currently showing demo data. {dataSource.errorMessage ? `Error: ${dataSource.errorMessage}` : 'Check your API configuration to view live data.'}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Key Metrics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -89,11 +480,11 @@ export function AnalyticsDashboard() {
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="bg-card">
-            <div className="text-2xl font-medium text-foreground">{totalTickets}</div>
+            <div className="text-2xl font-medium text-foreground">{analyticsData.totalTickets}</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-theme-accent flex items-center">
-                <TrendingUp className="w-3 h-3 mr-1" />
-                <span>+12% from last month</span>
+                <Activity className="w-3 h-3 mr-1" />
+                <span>Active tracking</span>
               </span>
             </p>
           </CardContent>
@@ -105,11 +496,15 @@ export function AnalyticsDashboard() {
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="bg-card">
-            <div className="text-2xl font-medium text-foreground">{resolutionRate}%</div>
+            <div className="text-2xl font-medium text-foreground">{analyticsData.resolutionRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-theme-accent flex items-center">
-                <TrendingUp className="w-3 h-3 mr-1" />
-                <span>+2.3% from last month</span>
+              <span className={`flex items-center ${analyticsData.resolutionRate >= 80 ? 'text-theme-accent' : 'text-destructive'}`}>
+                {analyticsData.resolutionRate >= 80 ? (
+                  <TrendingUp className="w-3 h-3 mr-1" />
+                ) : (
+                  <TrendingDown className="w-3 h-3 mr-1" />
+                )}
+                <span>{analyticsData.resolvedTickets}/{analyticsData.totalTickets} resolved</span>
               </span>
             </p>
           </CardContent>
@@ -121,11 +516,11 @@ export function AnalyticsDashboard() {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="bg-card">
-            <div className="text-2xl font-medium text-foreground">{avgResolutionTime.toFixed(1)}h</div>
+            <div className="text-2xl font-medium text-foreground">{analyticsData.avgResolutionTime.toFixed(1)}h</div>
             <p className="text-xs text-muted-foreground">
-              <span className="text-destructive flex items-center">
-                <TrendingDown className="w-3 h-3 mr-1" />
-                <span>-15% from last month</span>
+              <span className={`flex items-center ${analyticsData.avgResolutionTime <= 24 ? 'text-theme-accent' : 'text-destructive'}`}>
+                <Target className="w-3 h-3 mr-1" />
+                <span>Target: 24h</span>
               </span>
             </p>
           </CardContent>
@@ -137,11 +532,11 @@ export function AnalyticsDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="bg-card">
-            <div className="text-2xl font-medium text-foreground">{avgSatisfaction.toFixed(1)}/5</div>
+            <div className="text-2xl font-medium text-foreground">{analyticsData.avgSatisfaction.toFixed(1)}/5</div>
             <p className="text-xs text-muted-foreground">
               <span className="text-theme-accent flex items-center">
                 <TrendingUp className="w-3 h-3 mr-1" />
-                <span>+0.2 from last month</span>
+                <span>Simulated metric</span>
               </span>
             </p>
           </CardContent>
@@ -150,15 +545,15 @@ export function AnalyticsDashboard() {
 
       {/* Charts Row 1 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Ticket Volume Trends */}
+        {/* Monthly Trends */}
         <Card className="border-border bg-card">
           <CardHeader className="bg-card border-b border-border">
-            <CardTitle className="text-card-foreground">Ticket Volume Trends</CardTitle>
-            <CardDescription className="text-muted-foreground">Monthly ticket creation vs resolution</CardDescription>
+            <CardTitle className="text-card-foreground">Monthly Ticket Trends</CardTitle>
+            <CardDescription className="text-muted-foreground">Ticket creation vs resolution over time</CardDescription>
           </CardHeader>
           <CardContent className="bg-card">
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={ticketVolumeData}>
+              <AreaChart data={analyticsData.monthlyTrends}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="month" className="text-muted-foreground" />
                 <YAxis className="text-muted-foreground" />
@@ -171,7 +566,7 @@ export function AnalyticsDashboard() {
                   }} 
                 />
                 <Area type="monotone" dataKey="tickets" stackId="1" stroke="hsl(var(--theme-accent))" fill="hsl(var(--theme-accent))" fillOpacity={0.6} />
-                <Area type="monotone" dataKey="resolved" stackId="2" stroke="hsl(var(--theme-accent))" fill="hsl(var(--theme-accent))" fillOpacity={0.3} />
+                <Area type="monotone" dataKey="resolved" stackId="2" stroke="hsl(var(--chart-4))" fill="hsl(var(--chart-4))" fillOpacity={0.4} />
               </AreaChart>
             </ResponsiveContainer>
           </CardContent>
@@ -187,7 +582,7 @@ export function AnalyticsDashboard() {
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={priorityDistribution}
+                  data={analyticsData.priorityDistribution}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -196,7 +591,7 @@ export function AnalyticsDashboard() {
                   label={({name, value}) => `${name}: ${value}`}
                   labelStyle={{ fill: 'hsl(var(--foreground))' }}
                 >
-                  {priorityDistribution.map((entry, index) => (
+                  {analyticsData.priorityDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -216,7 +611,7 @@ export function AnalyticsDashboard() {
 
       {/* Charts Row 2 */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Weekly Trends */}
+        {/* Weekly Activity */}
         <Card className="border-border bg-card">
           <CardHeader className="bg-card border-b border-border">
             <CardTitle className="text-card-foreground">Weekly Activity</CardTitle>
@@ -224,7 +619,7 @@ export function AnalyticsDashboard() {
           </CardHeader>
           <CardContent className="bg-card">
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={weeklyTrends}>
+              <LineChart data={analyticsData.weeklyTrends}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="day" className="text-muted-foreground" />
                 <YAxis className="text-muted-foreground" />
@@ -236,8 +631,8 @@ export function AnalyticsDashboard() {
                     color: 'hsl(var(--card-foreground))'
                   }} 
                 />
-                <Line type="monotone" dataKey="tickets" stroke="hsl(var(--theme-accent))" strokeWidth={2} />
-                <Line type="monotone" dataKey="resolved" stroke="hsl(var(--muted-foreground))" strokeWidth={2} />
+                <Line type="monotone" dataKey="tickets" stroke="hsl(var(--theme-accent))" strokeWidth={2} name="Created" />
+                <Line type="monotone" dataKey="resolved" stroke="hsl(var(--chart-4))" strokeWidth={2} name="Resolved" />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
@@ -246,12 +641,12 @@ export function AnalyticsDashboard() {
         {/* Status Distribution */}
         <Card className="border-border bg-card">
           <CardHeader className="bg-card border-b border-border">
-            <CardTitle className="text-card-foreground">Ticket Status Overview</CardTitle>
-            <CardDescription className="text-muted-foreground">Current status breakdown</CardDescription>
+            <CardTitle className="text-card-foreground">Status Overview</CardTitle>
+            <CardDescription className="text-muted-foreground">Current ticket status breakdown</CardDescription>
           </CardHeader>
           <CardContent className="bg-card">
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={statusDistribution}>
+              <BarChart data={analyticsData.statusDistribution}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="name" className="text-muted-foreground" />
                 <YAxis className="text-muted-foreground" />
@@ -264,7 +659,7 @@ export function AnalyticsDashboard() {
                   }} 
                 />
                 <Bar dataKey="value" fill="hsl(var(--theme-accent))">
-                  {statusDistribution.map((entry, index) => (
+                  {analyticsData.statusDistribution.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Bar>
@@ -274,17 +669,45 @@ export function AnalyticsDashboard() {
         </Card>
       </div>
 
-      {/* Resolution Time Performance */}
+      {/* Department Distribution */}
+      {analyticsData.departmentDistribution.length > 0 && (
+        <Card className="border-border bg-card">
+          <CardHeader className="bg-card border-b border-border">
+            <CardTitle className="text-card-foreground">Department Workload</CardTitle>
+            <CardDescription className="text-muted-foreground">Ticket distribution across departments</CardDescription>
+          </CardHeader>
+          <CardContent className="bg-card">
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={analyticsData.departmentDistribution}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis dataKey="name" className="text-muted-foreground" />
+                <YAxis className="text-muted-foreground" />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))', 
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px',
+                    color: 'hsl(var(--card-foreground))'
+                  }} 
+                />
+                <Bar dataKey="value" fill="hsl(var(--theme-accent))" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Resolution Time by Priority */}
       <Card className="border-border bg-card">
         <CardHeader className="bg-card border-b border-border">
-          <CardTitle className="text-card-foreground">Resolution Time Performance</CardTitle>
-          <CardDescription className="text-muted-foreground">Average resolution time vs targets by priority</CardDescription>
+          <CardTitle className="text-card-foreground">Resolution Time by Priority</CardTitle>
+          <CardDescription className="text-muted-foreground">Average resolution times for different priority levels</CardDescription>
         </CardHeader>
         <CardContent className="bg-card">
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={resolutionTimeData}>
+            <BarChart data={analyticsData.resolutionTimeByPriority}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis dataKey="category" className="text-muted-foreground" />
+              <XAxis dataKey="priority" className="text-muted-foreground" />
               <YAxis className="text-muted-foreground" />
               <Tooltip 
                 contentStyle={{ 
@@ -293,70 +716,11 @@ export function AnalyticsDashboard() {
                   borderRadius: '8px',
                   color: 'hsl(var(--card-foreground))'
                 }} 
+                formatter={(value, name) => [`${value} hours`, `${name === 'avgHours' ? 'Average Time' : name}`]}
               />
-              <Bar dataKey="avgHours" fill="hsl(var(--theme-accent))" name="Actual (hours)" />
-              <Bar dataKey="target" fill="hsl(var(--muted-foreground))" name="Target (hours)" />
+              <Bar dataKey="avgHours" fill="hsl(var(--theme-accent))" name="Average Hours" />
             </BarChart>
           </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Agent Performance Table */}
-      <Card className="border-border bg-card">
-        <CardHeader className="bg-card border-b border-border">
-          <CardTitle className="text-card-foreground">Agent Performance</CardTitle>
-          <CardDescription className="text-muted-foreground">Individual agent metrics and performance indicators</CardDescription>
-        </CardHeader>
-        <CardContent className="bg-card">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left p-3 text-muted-foreground font-medium">Agent</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Tickets Resolved</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Avg Resolution Time</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Customer Satisfaction</th>
-                  <th className="text-left p-3 text-muted-foreground font-medium">Performance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {agentPerformance.map((agent, index) => (
-                  <tr key={index} className="border-b border-border hover:bg-accent">
-                    <td className="p-3 font-medium text-foreground">{agent.name}</td>
-                    <td className="p-3 text-foreground">{agent.resolved}</td>
-                    <td className="p-3 text-foreground">{agent.avg_resolution}h</td>
-                    <td className="p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="text-foreground">{agent.satisfaction}/5</span>
-                        <div className="flex">
-                          {[...Array(5)].map((_, i) => (
-                            <span key={i} className={i < Math.floor(agent.satisfaction) ? 'text-theme-accent' : 'text-muted'}>
-                              ★
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-3">
-                      <Badge 
-                        variant="secondary" 
-                        className={`border ${
-                          agent.satisfaction >= 4.8 ? 'bg-theme-accent/20 text-theme-accent border-theme-accent/20' :
-                          agent.satisfaction >= 4.5 ? 'bg-muted text-muted-foreground border-border' :
-                          'bg-destructive/20 text-destructive border-destructive/20'
-                        }`}
-                      >
-                        <span>
-                          {agent.satisfaction >= 4.8 ? 'Excellent' :
-                           agent.satisfaction >= 4.5 ? 'Good' : 'Needs Improvement'}
-                        </span>
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
         </CardContent>
       </Card>
     </div>
