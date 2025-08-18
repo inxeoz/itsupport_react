@@ -11,7 +11,14 @@ import { Switch } from './ui/switch';
 import { Textarea } from './ui/textarea';
 import { Alert, AlertDescription } from './ui/alert';
 import { useTheme } from './ThemeProvider';
-import { frappeApi, type FrappeTicket } from '../services/frappeApi';
+import { 
+  frappeApi, 
+  type FrappeTicket, 
+  type BulkCreateConfig, 
+  type BulkCreateProgress,
+  type BulkCreateBatchResult,
+  type BulkCreateResult 
+} from '../services/frappeApi';
 import { toast } from "sonner";
 import { 
   Zap, 
@@ -29,7 +36,10 @@ import {
   Users,
   AlertTriangle,
   CheckCircle2,
-  Clock
+  Clock,
+  Timer,
+  Wifi,
+  WifiOff
 } from 'lucide-react';
 
 interface BulkTicketConfig {
@@ -41,6 +51,10 @@ interface BulkTicketConfig {
   customUsers: string;
   includeDescriptions: boolean;
   simulateTimeSpread: boolean;
+  batchSize: number;
+  delayBetweenRequests: number;
+  delayBetweenBatches: number;
+  stopOnError: boolean;
 }
 
 interface GenerationStats {
@@ -50,6 +64,12 @@ interface GenerationStats {
   inProgress: boolean;
   startTime?: Date;
   endTime?: Date;
+  currentBatch?: number;
+  totalBatches?: number;
+  retries: number;
+  currentTicketIndex?: number;
+  currentTicketTitle?: string;
+  estimatedTimeRemaining?: number;
 }
 
 export function HackerProDashboard() {
@@ -64,6 +84,10 @@ export function HackerProDashboard() {
     customUsers: '',
     includeDescriptions: true,
     simulateTimeSpread: false,
+    batchSize: 5, // Process tickets in batches of 5
+    delayBetweenRequests: 2000, // 2 second delay between each ticket
+    delayBetweenBatches: 3000, // 3 second delay between batches
+    stopOnError: false, // Continue even if some tickets fail
   });
 
   const [stats, setStats] = useState<GenerationStats>({
@@ -71,10 +95,12 @@ export function HackerProDashboard() {
     completed: 0,
     failed: 0,
     inProgress: false,
+    retries: 0,
   });
 
   const [generatedTickets, setGeneratedTickets] = useState<FrappeTicket[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [currentOperation, setCurrentOperation] = useState<string>('');
 
   // Demo data templates
   const demoUsers = [
@@ -166,6 +192,7 @@ export function HackerProDashboard() {
     ]
   };
 
+  // Generate random ticket data
   const generateRandomTicket = (): Partial<FrappeTicket> => {
     const department = config.departments[Math.floor(Math.random() * config.departments.length)];
     const priority = config.priorities[Math.floor(Math.random() * config.priorities.length)];
@@ -193,75 +220,163 @@ export function HackerProDashboard() {
     };
 
     return {
-      title,
-      description,
-      user_name: userName,
-      department,
-      priority,
-      category,
-      subcategory: subcategories[category as keyof typeof subcategories]?.[Math.floor(Math.random() * 5)] || 'General',
-      impact: impacts[Math.floor(Math.random() * impacts.length)],
-      status: statuses[Math.floor(Math.random() * statuses.length)],
+      title: title.trim(),
+      user_name: userName.trim(),
+      department: department.trim() || null,
       contact_email: `${userName.toLowerCase().replace(' ', '.')}@company.com`,
       contact_phone: `+1-555-${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
+      description: description.trim(),
+      category: category,
+      subcategory: subcategories[category as keyof typeof subcategories]?.[Math.floor(Math.random() * 5)]?.trim() || null,
+      priority: priority,
+      impact: impacts[Math.floor(Math.random() * impacts.length)],
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      assignee: Math.random() > 0.5 ? `${category.toLowerCase()}.support@company.com` : null,
+      due_datetime: null,
+      tags: `${category.toLowerCase()},${priority.toLowerCase()},demo`,
+      docstatus: 0, // Draft status
     };
   };
 
+  // Generate array of ticket data for bulk creation
+  const generateBulkTicketData = (): Partial<FrappeTicket>[] => {
+    const ticketData: Partial<FrappeTicket>[] = [];
+    
+    for (let i = 0; i < config.count; i++) {
+      ticketData.push(generateRandomTicket());
+    }
+    
+    return ticketData;
+  };
+
+  // Handle progress updates from bulk creation
+  const handleProgress = (progress: BulkCreateProgress) => {
+    setStats(prev => ({
+      ...prev,
+      total: progress.total,
+      completed: progress.completed,
+      failed: progress.failed,
+      currentBatch: progress.currentBatch,
+      totalBatches: progress.totalBatches,
+      retries: progress.retries,
+      currentTicketIndex: progress.currentTicketIndex,
+      currentTicketTitle: progress.currentTicketTitle,
+      estimatedTimeRemaining: progress.estimatedTimeRemaining,
+    }));
+
+    // Update current operation display
+    if (progress.currentTicketTitle) {
+      setCurrentOperation(`Creating ticket ${progress.currentTicketIndex}/${progress.total}: ${progress.currentTicketTitle}`);
+    } else {
+      setCurrentOperation(`Processing batch ${progress.currentBatch}/${progress.totalBatches}...`);
+    }
+  };
+
+  // Handle batch completion
+  const handleBatchComplete = (batchResult: BulkCreateBatchResult) => {
+    console.log(`✅ Batch ${batchResult.batchIndex + 1} completed:`, batchResult);
+    
+    // Show batch completion toast
+    if (batchResult.failed === 0) {
+      toast.success(`Batch ${batchResult.batchIndex + 1} completed`, {
+        description: `Successfully created ${batchResult.completed} tickets`,
+        duration: 2000,
+      });
+    } else {
+      toast.warning(`Batch ${batchResult.batchIndex + 1} completed with errors`, {
+        description: `Created ${batchResult.completed} tickets, ${batchResult.failed} failed`,
+        duration: 3000,
+      });
+    }
+  };
+
+  // Main bulk generation function using the new API method
   const generateBulkTickets = async () => {
     if (isGenerating) return;
 
     setIsGenerating(true);
+    setCurrentOperation('Preparing bulk ticket creation...');
+    
+    const startTime = new Date();
     setStats({
       total: config.count,
       completed: 0,
       failed: 0,
       inProgress: true,
-      startTime: new Date(),
+      startTime,
+      retries: 0,
     });
 
-    const newTickets: FrappeTicket[] = [];
-    let completed = 0;
-    let failed = 0;
+    try {
+      // Generate all ticket data
+      console.log('🎯 Generating ticket data for bulk creation...');
+      const ticketsData = generateBulkTicketData();
+      
+      // Configure bulk creation
+      const bulkConfig: BulkCreateConfig = {
+        batchSize: config.batchSize,
+        delayBetweenRequests: config.simulateTimeSpread 
+          ? Math.random() * config.delayBetweenRequests 
+          : config.delayBetweenRequests,
+        delayBetweenBatches: config.delayBetweenBatches,
+        stopOnError: config.stopOnError,
+        maxRetries: 3,
+        onProgress: handleProgress,
+        onBatchComplete: handleBatchComplete,
+      };
 
-    for (let i = 0; i < config.count; i++) {
-      try {
-        const ticketData = generateRandomTicket();
-        
-        // Simulate time spread if enabled
-        if (config.simulateTimeSpread && i > 0) {
-          const delay = Math.random() * 1000; // Random delay up to 1 second
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
+      // Start bulk creation using the new API method
+      console.log('🚀 Starting bulk creation with new API method...');
+      const result: BulkCreateResult = await frappeApi.create_ticket_in_bulk(ticketsData, bulkConfig);
 
-        const createdTicket = await frappeApi.createTicket(ticketData);
-        newTickets.push(createdTicket);
-        completed++;
-        
-        toast.success(`Created ticket ${i + 1}/${config.count}: ${ticketData.title}`);
-      } catch (error) {
-        failed++;
-        console.error(`Failed to create ticket ${i + 1}:`, error);
-        toast.error(`Failed to create ticket ${i + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-      }
-
-      // Update progress
+      // Update final stats
       setStats(prev => ({
         ...prev,
-        completed: completed,
-        failed: failed,
+        inProgress: false,
+        endTime: new Date(),
+        completed: result.completed,
+        failed: result.failed,
+        retries: result.retries,
       }));
+
+      // Store successful tickets
+      setGeneratedTickets(result.successfulTickets);
+      setCurrentOperation('');
+
+      // Show final result
+      if (result.success) {
+        toast.success("Bulk generation completed successfully!", {
+          description: `Created ${result.completed} tickets in ${result.duration}s`,
+          duration: 5000,
+        });
+      } else {
+        toast.error("Bulk generation completed with errors", {
+          description: `Created ${result.completed} tickets, ${result.failed} failed in ${result.duration}s`,
+          duration: 8000,
+        });
+      }
+
+      // Log detailed results
+      console.log('🏁 Bulk creation final results:', result);
+
+    } catch (error) {
+      console.error('💥 Critical error during bulk generation:', error);
+      
+      setStats(prev => ({
+        ...prev,
+        inProgress: false,
+        endTime: new Date(),
+      }));
+      
+      setCurrentOperation('');
+      
+      toast.error("Bulk generation failed", {
+        description: error instanceof Error ? error.message : 'Unknown error occurred',
+        duration: 8000,
+      });
+    } finally {
+      setIsGenerating(false);
     }
-
-    setStats(prev => ({
-      ...prev,
-      inProgress: false,
-      endTime: new Date(),
-    }));
-
-    setGeneratedTickets(newTickets);
-    setIsGenerating(false);
-
-    toast.success(`Bulk generation complete! Created ${completed} tickets, ${failed} failed.`);
   };
 
   const resetStats = () => {
@@ -270,8 +385,11 @@ export function HackerProDashboard() {
       completed: 0,
       failed: 0,
       inProgress: false,
+      retries: 0,
     });
     setGeneratedTickets([]);
+    setCurrentOperation('');
+    setIsGenerating(false);
   };
 
   const calculateProgress = () => {
@@ -295,7 +413,7 @@ export function HackerProDashboard() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-card-foreground">Hacker Pro Dashboard</h1>
-            <p className="text-muted-foreground">Advanced bulk ticket generation with demo data</p>
+            <p className="text-muted-foreground">Advanced bulk ticket creation using new bulk API method</p>
           </div>
         </div>
         
@@ -306,8 +424,14 @@ export function HackerProDashboard() {
           </Badge>
           <Badge variant="outline" className="border-theme-accent text-theme-accent">
             <Database className="w-3 h-3 mr-1" />
-            Live API
+            {stats.inProgress ? 'Generating' : 'Bulk API'}
           </Badge>
+          {stats.inProgress && (
+            <Badge variant="outline" className="border-theme-accent text-theme-accent">
+              <Wifi className="w-3 h-3 mr-1" />
+              Active
+            </Badge>
+          )}
         </div>
       </div>
 
@@ -318,10 +442,10 @@ export function HackerProDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-card-foreground">
                 <Code className="w-5 h-5 text-theme-accent" />
-                Generation Configuration
+                Bulk Generation Configuration
               </CardTitle>
               <CardDescription className="text-muted-foreground">
-                Configure bulk ticket generation parameters
+                Configure bulk ticket generation using the new create_ticket_in_bulk API method
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -337,12 +461,74 @@ export function HackerProDashboard() {
                     value={config.count}
                     onChange={(e) => setConfig(prev => ({ ...prev, count: parseInt(e.target.value) || 1 }))}
                     className="bg-input border-border text-foreground"
+                    disabled={isGenerating}
                   />
                 </div>
                 
                 <div>
+                  <Label htmlFor="batchSize" className="text-card-foreground">Batch Size</Label>
+                  <Input
+                    id="batchSize"
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={config.batchSize}
+                    onChange={(e) => setConfig(prev => ({ ...prev, batchSize: parseInt(e.target.value) || 1 }))}
+                    className="bg-input border-border text-foreground"
+                    disabled={isGenerating}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Number of tickets to process in each batch
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="delay" className="text-card-foreground">Request Delay (ms)</Label>
+                  <Input
+                    id="delay"
+                    type="number"
+                    min="500"
+                    max="10000"
+                    step="500"
+                    value={config.delayBetweenRequests}
+                    onChange={(e) => setConfig(prev => ({ ...prev, delayBetweenRequests: parseInt(e.target.value) || 2000 }))}
+                    className="bg-input border-border text-foreground"
+                    disabled={isGenerating}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Delay between individual ticket requests
+                  </p>
+                </div>
+                
+                <div>
+                  <Label htmlFor="batchDelay" className="text-card-foreground">Batch Delay (ms)</Label>
+                  <Input
+                    id="batchDelay"
+                    type="number"
+                    min="1000"
+                    max="15000"
+                    step="500"
+                    value={config.delayBetweenBatches}
+                    onChange={(e) => setConfig(prev => ({ ...prev, delayBetweenBatches: parseInt(e.target.value) || 3000 }))}
+                    className="bg-input border-border text-foreground"
+                    disabled={isGenerating}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Delay between processing batches
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
                   <Label htmlFor="departments" className="text-card-foreground">Departments</Label>
-                  <Select value={config.departments.join(',')} onValueChange={(value) => setConfig(prev => ({ ...prev, departments: value.split(',') }))}>
+                  <Select 
+                    value={config.departments.join(',')} 
+                    onValueChange={(value) => setConfig(prev => ({ ...prev, departments: value.split(',') }))}
+                    disabled={isGenerating}
+                  >
                     <SelectTrigger className="bg-input border-border text-foreground">
                       <SelectValue placeholder="Select departments" />
                     </SelectTrigger>
@@ -354,12 +540,14 @@ export function HackerProDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                
                 <div>
                   <Label htmlFor="priorities" className="text-card-foreground">Priority Levels</Label>
-                  <Select value={config.priorities.join(',')} onValueChange={(value) => setConfig(prev => ({ ...prev, priorities: value.split(',') }))}>
+                  <Select 
+                    value={config.priorities.join(',')} 
+                    onValueChange={(value) => setConfig(prev => ({ ...prev, priorities: value.split(',') }))}
+                    disabled={isGenerating}
+                  >
                     <SelectTrigger className="bg-input border-border text-foreground">
                       <SelectValue placeholder="Select priorities" />
                     </SelectTrigger>
@@ -371,21 +559,25 @@ export function HackerProDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
-                
-                <div>
-                  <Label htmlFor="categories" className="text-card-foreground">Categories</Label>
-                  <Select value={config.categories.join(',')} onValueChange={(value) => setConfig(prev => ({ ...prev, categories: value.split(',') }))}>
-                    <SelectTrigger className="bg-input border-border text-foreground">
-                      <SelectValue placeholder="Select categories" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-popover border-border">
-                      <SelectItem value="Software,Hardware,Network,Security">All Categories</SelectItem>
-                      <SelectItem value="Software,Network">Software + Network</SelectItem>
-                      <SelectItem value="Hardware,Security">Hardware + Security</SelectItem>
-                      <SelectItem value="Software">Software Only</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="categories" className="text-card-foreground">Categories</Label>
+                <Select 
+                  value={config.categories.join(',')} 
+                  onValueChange={(value) => setConfig(prev => ({ ...prev, categories: value.split(',') }))}
+                  disabled={isGenerating}
+                >
+                  <SelectTrigger className="bg-input border-border text-foreground">
+                    <SelectValue placeholder="Select categories" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-popover border-border">
+                    <SelectItem value="Software,Hardware,Network,Security">All Categories</SelectItem>
+                    <SelectItem value="Software,Network">Software + Network</SelectItem>
+                    <SelectItem value="Hardware,Security">Hardware + Security</SelectItem>
+                    <SelectItem value="Software">Software Only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <Separator className="bg-border" />
@@ -408,6 +600,7 @@ export function HackerProDashboard() {
                       checked={config.useRandomUsers}
                       onCheckedChange={(checked) => setConfig(prev => ({ ...prev, useRandomUsers: checked }))}
                       className="data-[state=checked]:bg-theme-accent"
+                      disabled={isGenerating}
                     />
                   </div>
                   
@@ -421,21 +614,39 @@ export function HackerProDashboard() {
                       checked={config.includeDescriptions}
                       onCheckedChange={(checked) => setConfig(prev => ({ ...prev, includeDescriptions: checked }))}
                       className="data-[state=checked]:bg-theme-accent"
+                      disabled={isGenerating}
                     />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between p-3 rounded-md border border-border bg-muted/30">
-                  <div>
-                    <Label htmlFor="timeSpread" className="text-card-foreground">Simulate Time Spread</Label>
-                    <p className="text-xs text-muted-foreground">Add random delays between ticket creation</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-3 rounded-md border border-border bg-muted/30">
+                    <div>
+                      <Label htmlFor="timeSpread" className="text-card-foreground">Randomize Delays</Label>
+                      <p className="text-xs text-muted-foreground">Add random variation to delays</p>
+                    </div>
+                    <Switch
+                      id="timeSpread"
+                      checked={config.simulateTimeSpread}
+                      onCheckedChange={(checked) => setConfig(prev => ({ ...prev, simulateTimeSpread: checked }))}
+                      className="data-[state=checked]:bg-theme-accent"
+                      disabled={isGenerating}
+                    />
                   </div>
-                  <Switch
-                    id="timeSpread"
-                    checked={config.simulateTimeSpread}
-                    onCheckedChange={(checked) => setConfig(prev => ({ ...prev, simulateTimeSpread: checked }))}
-                    className="data-[state=checked]:bg-theme-accent"
-                  />
+                  
+                  <div className="flex items-center justify-between p-3 rounded-md border border-border bg-muted/30">
+                    <div>
+                      <Label htmlFor="stopOnError" className="text-card-foreground">Stop on Error</Label>
+                      <p className="text-xs text-muted-foreground">Stop if any ticket fails</p>
+                    </div>
+                    <Switch
+                      id="stopOnError"
+                      checked={config.stopOnError}
+                      onCheckedChange={(checked) => setConfig(prev => ({ ...prev, stopOnError: checked }))}
+                      className="data-[state=checked]:bg-theme-accent"
+                      disabled={isGenerating}
+                    />
+                  </div>
                 </div>
 
                 {!config.useRandomUsers && (
@@ -447,6 +658,7 @@ export function HackerProDashboard() {
                       onChange={(e) => setConfig(prev => ({ ...prev, customUsers: e.target.value }))}
                       placeholder="John Doe, Jane Smith, Mike Johnson"
                       className="bg-input border-border text-foreground"
+                      disabled={isGenerating}
                     />
                     <p className="text-xs text-muted-foreground mt-1">
                       Comma-separated list of user names
@@ -465,7 +677,7 @@ export function HackerProDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-card-foreground">
                 <TrendingUp className="w-5 h-5 text-theme-accent" />
-                Generation Stats
+                Bulk Creation Stats
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -476,6 +688,23 @@ export function HackerProDashboard() {
                     <span className="text-card-foreground">{calculateProgress()}%</span>
                   </div>
                   <Progress value={calculateProgress()} className="bg-muted" />
+                  
+                  {stats.currentBatch && stats.totalBatches && (
+                    <div className="flex justify-between text-xs mt-1">
+                      <span className="text-muted-foreground">Batch {stats.currentBatch}/{stats.totalBatches}</span>
+                      {stats.estimatedTimeRemaining && (
+                        <span className="text-muted-foreground">
+                          ETA: {stats.estimatedTimeRemaining}s
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  
+                  {stats.currentTicketIndex && (
+                    <div className="text-xs mt-1 text-muted-foreground">
+                      Ticket {stats.currentTicketIndex}/{stats.total}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -489,6 +718,13 @@ export function HackerProDashboard() {
                   <div className="text-xs text-muted-foreground">Failed</div>
                 </div>
               </div>
+
+              {stats.retries > 0 && (
+                <div className="text-center p-3 rounded-md bg-muted/30 border border-border">
+                  <div className="text-lg font-bold text-orange-500">{stats.retries}</div>
+                  <div className="text-xs text-muted-foreground">Retries</div>
+                </div>
+              )}
 
               {stats.startTime && (
                 <div className="text-center p-3 rounded-md bg-muted/30 border border-border">
@@ -530,6 +766,7 @@ export function HackerProDashboard() {
                 onClick={resetStats}
                 variant="outline"
                 className="w-full border-border text-foreground hover:bg-accent"
+                disabled={isGenerating}
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
                 Reset Stats
@@ -537,38 +774,63 @@ export function HackerProDashboard() {
             </CardContent>
           </Card>
 
-          {/* Quick Stats */}
+          {/* Configuration Summary */}
           <Card className="border-border bg-card">
             <CardHeader>
-              <CardTitle className="text-sm text-card-foreground">Quick Info</CardTitle>
+              <CardTitle className="text-sm text-card-foreground">API Configuration</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div className="flex items-center gap-2 text-sm">
+                <Timer className="w-4 h-4 text-theme-accent" />
+                <span className="text-muted-foreground">Request Delay:</span>
+                <span className="text-card-foreground">{config.delayBetweenRequests}ms</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
                 <Users className="w-4 h-4 text-theme-accent" />
-                <span className="text-muted-foreground">Demo Users:</span>
-                <span className="text-card-foreground">{demoUsers.length}</span>
+                <span className="text-muted-foreground">Batch Size:</span>
+                <span className="text-card-foreground">{config.batchSize}</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <Clock className="w-4 h-4 text-theme-accent" />
+                <span className="text-muted-foreground">Batch Delay:</span>
+                <span className="text-card-foreground">{config.delayBetweenBatches}ms</span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Bug className="w-4 h-4 text-theme-accent" />
-                <span className="text-muted-foreground">Template Issues:</span>
-                <span className="text-card-foreground">40+</span>
+                <span className="text-muted-foreground">Stop on Error:</span>
+                <span className={config.stopOnError ? "text-destructive" : "text-theme-accent"}>
+                  {config.stopOnError ? "Yes" : "No"}
+                </span>
               </div>
               <div className="flex items-center gap-2 text-sm">
                 <Shield className="w-4 h-4 text-theme-accent" />
-                <span className="text-muted-foreground">Categories:</span>
-                <span className="text-card-foreground">4</span>
+                <span className="text-muted-foreground">Method:</span>
+                <span className="text-theme-accent">Bulk API</span>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Status Alert */}
-      {stats.inProgress && (
+      {/* Current Operation Status */}
+      {currentOperation && (
         <Alert className="border-theme-accent/20 bg-theme-accent/5">
           <Clock className="h-4 w-4 text-theme-accent" />
           <AlertDescription className="text-foreground">
-            Generating tickets... {stats.completed + stats.failed}/{stats.total} processed
+            {currentOperation}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Status Alert */}
+      {stats.inProgress && (
+        <Alert className="border-theme-accent/20 bg-theme-accent/5">
+          <Wifi className="h-4 w-4 text-theme-accent" />
+          <AlertDescription className="text-foreground">
+            Generating tickets using bulk API method... 
+            {' '}{stats.completed + stats.failed}/{stats.total} processed
+            {stats.retries > 0 && ` (${stats.retries} retries)`}
+            {stats.currentBatch && ` • Batch ${stats.currentBatch}/${stats.totalBatches}`}
           </AlertDescription>
         </Alert>
       )}
@@ -582,8 +844,13 @@ export function HackerProDashboard() {
             <AlertTriangle className="h-4 w-4 text-destructive" />
           )}
           <AlertDescription className="text-foreground">
-            Bulk generation completed! Successfully created {stats.completed} tickets
-            {stats.failed > 0 && `, ${stats.failed} failed`} in {calculateDuration()} seconds.
+            Bulk creation completed using new bulk API method! Created {stats.completed} tickets
+            {stats.failed > 0 && `, ${stats.failed} failed`}
+            {stats.retries > 0 && ` (${stats.retries} retries)`} in {calculateDuration()} seconds.
+            <br />
+            <span className="text-sm text-muted-foreground">
+              Success rate: {stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0}%
+            </span>
           </AlertDescription>
         </Alert>
       )}

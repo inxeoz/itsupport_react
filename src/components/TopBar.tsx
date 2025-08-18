@@ -22,6 +22,7 @@ import {
   Terminal,
   Code,
   Plug,
+  TestTube,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -182,6 +183,13 @@ export function TopBar({
       badge: "Pro",
       description: "Bulk ticket generation with demo data",
     },
+    {
+      id: "tester",
+      label: "API Tester",
+      icon: TestTube,
+      badge: "Test",
+      description: "Comprehensive API testing suite with live results",
+    },
   ];
 
   const themeOptions = [
@@ -279,6 +287,7 @@ export function TopBar({
       customizable: "Custom View",
       developer: "Developer Dashboard",
       "hacker-pro": "Hacker Pro",
+      "tester": "API Tester",
     };
 
     if (viewToTabMap[viewId]) {
