@@ -1,3 +1,13 @@
+import { API_TOKEN, BASE_URL } from "../env";
+import { getBaseUrl } from "../env";
+
+import { getUrlParts } from "../env";
+console.log(getBaseUrl());
+
+console.log(getUrlParts().hostname);
+
+console.log(`${getUrlParts().protocol}//${getUrlParts().hostname}:8000`);
+
 // Frappe API Configuration
 export interface ApiConfig {
   baseUrl: string;
@@ -11,8 +21,8 @@ export interface ApiConfig {
 }
 
 export const DEFAULT_API_CONFIG: ApiConfig = {
-  baseUrl: "https://itsupport.inxeoz.com",
-  token: "d7b641ed7217322:077a79b4a1cf85b",
+  baseUrl: `${getUrlParts().protocol}//${getUrlParts().hostname}:8000`,
+  token: API_TOKEN,
   endpoint: "/api/resource/Ticket",
   fields: [
     "name",
@@ -91,16 +101,13 @@ export interface FrappeDocResponse<T> {
 // CSRF Token Detection Utilities (from Developer Dashboard)
 export const extractCSRFToken = (): string | null => {
   // 1. Check meta tag (most common in Frappe)
-  const metaTag = document.querySelector(
-    'meta[name="csrf-token"]',
-  );
+  const metaTag = document.querySelector('meta[name="csrf-token"]');
   const metaToken = metaTag?.getAttribute("content");
   if (metaToken) return metaToken;
 
   // 2. Check Frappe global object
   const frappeToken =
-    (window as any).frappe?.csrf_token ||
-    (window as any).csrf_token;
+    (window as any).frappe?.csrf_token || (window as any).csrf_token;
   if (frappeToken) return frappeToken;
 
   // 3. Check cookies
@@ -160,9 +167,7 @@ class FrappeApiService {
     return token;
   }
 
-  private async getHeaders(
-    includeCSRF: boolean = false,
-  ): Promise<HeadersInit> {
+  private async getHeaders(includeCSRF: boolean = false): Promise<HeadersInit> {
     const headers: HeadersInit = {
       Authorization: `token ${this.config.token}`,
       "Content-Type": "application/json",
@@ -201,18 +206,12 @@ class FrappeApiService {
 
     // Determine if we need CSRF token
     const method = options.method || "GET";
-    const needsCSRF = [
-      "POST",
-      "PUT",
-      "DELETE",
-      "PATCH",
-    ].includes(method.toUpperCase());
+    const needsCSRF = ["POST", "PUT", "DELETE", "PATCH"].includes(
+      method.toUpperCase(),
+    );
 
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      config.timeout,
-    );
+    const timeoutId = setTimeout(() => controller.abort(), config.timeout);
 
     try {
       const headers = await this.getHeaders(needsCSRF);
@@ -224,19 +223,14 @@ class FrappeApiService {
           ...options.headers,
         },
         signal: controller.signal,
-        credentials: config.allowCookies
-          ? "include"
-          : "same-origin", // Important for CSRF protection and session cookies
+        credentials: config.allowCookies ? "include" : "same-origin", // Important for CSRF protection and session cookies
       });
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
         // If we get a CSRF error, try to get fresh token and retry once
-        if (
-          response.status === 403 ||
-          response.status === 400
-        ) {
+        if (response.status === 403 || response.status === 400) {
           const errorText = await response.text();
           if (
             errorText.includes("CSRF") ||
@@ -254,9 +248,7 @@ class FrappeApiService {
                 ...newHeaders,
                 ...options.headers,
               },
-              credentials: config.allowCookies
-                ? "include"
-                : "same-origin",
+              credentials: config.allowCookies ? "include" : "same-origin",
             });
 
             if (!retryResponse.ok) {
@@ -278,13 +270,8 @@ class FrappeApiService {
     } catch (error) {
       clearTimeout(timeoutId);
 
-      if (
-        error instanceof Error &&
-        error.name === "AbortError"
-      ) {
-        throw new Error(
-          `Request timeout after ${config.timeout}ms`,
-        );
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new Error(`Request timeout after ${config.timeout}ms`);
       }
 
       throw error;
@@ -292,18 +279,12 @@ class FrappeApiService {
   }
 
   // Test API connection
-  async testConnection(
-    testConfig?: ApiConfig,
-  ): Promise<boolean> {
+  async testConnection(testConfig?: ApiConfig): Promise<boolean> {
     const config = testConfig || this.config;
 
     try {
       // Try a simple GET request first
-      await this.makeRequest(
-        "/api/method/ping",
-        { method: "GET" },
-        config,
-      );
+      await this.makeRequest("/api/method/ping", { method: "GET" }, config);
       return true;
     } catch (error) {
       // If ping fails, try the actual tickets endpoint with limit
@@ -328,9 +309,9 @@ class FrappeApiService {
       const fieldsParam = `[${this.config.fields.map((field) => `"${field}"`).join(", ")}]`;
       const encodedFields = encodeURIComponent(fieldsParam);
 
-      const response = await this.makeRequest<
-        FrappeListResponse<FrappeTicket>
-      >(`${this.config.endpoint}?fields=${encodedFields}`);
+      const response = await this.makeRequest<FrappeListResponse<FrappeTicket>>(
+        `${this.config.endpoint}?fields=${encodedFields}`,
+      );
 
       // Handle the response and ensure proper typing
       const tickets = response.data || [];
@@ -357,8 +338,7 @@ class FrappeApiService {
         resolution_datetime: ticket.resolution_datetime || null,
         resolution_summary: ticket.resolution_summary || null,
         root_cause: ticket.root_cause || null,
-        requester_confirmation:
-          ticket.requester_confirmation || null,
+        requester_confirmation: ticket.requester_confirmation || null,
         time_spent: ticket.time_spent || null,
         attachments: ticket.attachments || null,
         tags: ticket.tags || null,
@@ -373,9 +353,7 @@ class FrappeApiService {
   }
 
   // Create a new ticket
-  async createTicket(
-    ticket: Partial<FrappeTicket>,
-  ): Promise<FrappeTicket> {
+  async createTicket(ticket: Partial<FrappeTicket>): Promise<FrappeTicket> {
     try {
       console.log("Creating ticket with data:", ticket);
       console.log(
@@ -403,12 +381,13 @@ class FrappeApiService {
 
       console.log("Request body:", requestBody);
 
-      const response = await this.makeRequest<
-        FrappeDocResponse<FrappeTicket>
-      >(this.config.endpoint, {
-        method: "POST",
-        body: JSON.stringify(requestBody),
-      });
+      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
+        this.config.endpoint,
+        {
+          method: "POST",
+          body: JSON.stringify(requestBody),
+        },
+      );
 
       console.log("Create ticket response:", response);
       return response.data;
@@ -422,13 +401,9 @@ class FrappeApiService {
             "CSRF token error. Please refresh the page and try again.",
           );
         } else if (error.message.includes("403")) {
-          throw new Error(
-            "Permission denied. Check your API credentials.",
-          );
+          throw new Error("Permission denied. Check your API credentials.");
         } else if (error.message.includes("401")) {
-          throw new Error(
-            "Authentication failed. Please check your token.",
-          );
+          throw new Error("Authentication failed. Please check your token.");
         }
       }
 
@@ -442,18 +417,16 @@ class FrappeApiService {
     updates: Partial<FrappeTicket>,
   ): Promise<FrappeTicket> {
     try {
-      const response = await this.makeRequest<
-        FrappeDocResponse<FrappeTicket>
-      >(`${this.config.endpoint}/${ticketId}`, {
-        method: "PUT",
-        body: JSON.stringify(updates),
-      });
+      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
+        `${this.config.endpoint}/${ticketId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(updates),
+        },
+      );
       return response.data;
     } catch (error) {
-      console.error(
-        `Error updating ticket ${ticketId}:`,
-        error,
-      );
+      console.error(`Error updating ticket ${ticketId}:`, error);
       throw error;
     }
   }
@@ -461,17 +434,11 @@ class FrappeApiService {
   // Delete a ticket
   async deleteTicket(ticketId: string): Promise<void> {
     try {
-      await this.makeRequest<void>(
-        `${this.config.endpoint}/${ticketId}`,
-        {
-          method: "DELETE",
-        },
-      );
+      await this.makeRequest<void>(`${this.config.endpoint}/${ticketId}`, {
+        method: "DELETE",
+      });
     } catch (error) {
-      console.error(
-        `Error deleting ticket ${ticketId}:`,
-        error,
-      );
+      console.error(`Error deleting ticket ${ticketId}:`, error);
       throw error;
     }
   }
@@ -479,18 +446,16 @@ class FrappeApiService {
   // Submit a ticket (change docstatus to 1)
   async submitTicket(ticketId: string): Promise<FrappeTicket> {
     try {
-      const response = await this.makeRequest<
-        FrappeDocResponse<FrappeTicket>
-      >(`${this.config.endpoint}/${ticketId}`, {
-        method: "PUT",
-        body: JSON.stringify({ docstatus: 1 }),
-      });
+      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
+        `${this.config.endpoint}/${ticketId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ docstatus: 1 }),
+        },
+      );
       return response.data;
     } catch (error) {
-      console.error(
-        `Error submitting ticket ${ticketId}:`,
-        error,
-      );
+      console.error(`Error submitting ticket ${ticketId}:`, error);
       throw error;
     }
   }
@@ -498,18 +463,16 @@ class FrappeApiService {
   // Cancel a ticket (change docstatus to 2)
   async cancelTicket(ticketId: string): Promise<FrappeTicket> {
     try {
-      const response = await this.makeRequest<
-        FrappeDocResponse<FrappeTicket>
-      >(`${this.config.endpoint}/${ticketId}`, {
-        method: "PUT",
-        body: JSON.stringify({ docstatus: 2 }),
-      });
+      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
+        `${this.config.endpoint}/${ticketId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ docstatus: 2 }),
+        },
+      );
       return response.data;
     } catch (error) {
-      console.error(
-        `Error cancelling ticket ${ticketId}:`,
-        error,
-      );
+      console.error(`Error cancelling ticket ${ticketId}:`, error);
       throw error;
     }
   }
@@ -641,8 +604,7 @@ export const mockTickets: FrappeTicket[] = [
     resolution_datetime: "2025-01-14 15:30:00.000000",
     resolution_summary:
       "Increased memory limits and optimized report generation queries. Implemented pagination for large datasets.",
-    root_cause:
-      "Insufficient memory allocation for large dataset processing",
+    root_cause: "Insufficient memory allocation for large dataset processing",
     requester_confirmation: "Yes",
     time_spent: 6.5,
     attachments: null,
@@ -877,8 +839,7 @@ export const mockTickets: FrappeTicket[] = [
     resolution_datetime: "2025-01-05 14:20:00.000000",
     resolution_summary:
       "Cleared old backup files and increased storage allocation. Implemented automated cleanup policies.",
-    root_cause:
-      "Insufficient disk space due to accumulated old backup files",
+    root_cause: "Insufficient disk space due to accumulated old backup files",
     requester_confirmation: "Yes",
     time_spent: 4.0,
     attachments: null,
