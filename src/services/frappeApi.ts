@@ -1,12 +1,12 @@
 import { API_TOKEN, BASE_URL } from "../env";
-import { getBaseUrl } from "../env";
+// import { getBaseUrl } from "../env";
 
-import { getUrlParts } from "../env";
-console.log(getBaseUrl());
+// import { getUrlParts } from "../env";
+// console.log(getBaseUrl());
 
-console.log(getUrlParts().hostname);
+// console.log(getUrlParts().hostname);
 
-console.log(`${getUrlParts().protocol}//${getUrlParts().hostname}:8000`);
+// console.log(`${getUrlParts().protocol}//${getUrlParts().hostname}:8000`);
 
 // Frappe API Configuration
 export interface ApiConfig {
@@ -21,7 +21,8 @@ export interface ApiConfig {
 }
 
 export const DEFAULT_API_CONFIG: ApiConfig = {
-  baseUrl: `${getUrlParts().protocol}//${getUrlParts().hostname}:8000`,
+  // baseUrl: `${getUrlParts().protocol}//${getUrlParts().hostname}:8000`,
+  baseUrl: BASE_URL,
   token: API_TOKEN,
   endpoint: "/api/resource/Ticket",
   fields: [
