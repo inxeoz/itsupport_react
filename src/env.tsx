@@ -1,6 +1,6 @@
 // export const API_TOKEN = "your_token_here";
 //
-export const API_TOKEN = "2d0c9c06260f73f:667d5babc3706d3";
+export const API_TOKEN = "1212:1212";
 // 97299629556d968:bf70432185b6d73
 export const BASE_URL = "https://itsupport.inxeoz.com";
 
