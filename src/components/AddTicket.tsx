@@ -96,7 +96,7 @@ export function AddTicket() {
     contact_email: '',
     contact_phone: '',
     department: '',
-    category: '',
+    category: 'Software', // Set default instead of empty string
     subcategory: '',
     priority: 'Medium',
     impact: 'Single User',
@@ -436,8 +436,8 @@ export function AddTicket() {
 
       const createdTicket = await frappeApi.createTicket(ticketData);
 
-      toast.success('Ticket created successfully!', {
-        description: `Ticket ${createdTicket.name || 'created'} has been submitted to the system`
+      toast.success('✅ Ticket created successfully!', {
+        description: `Ticket "${createdTicket.ticket_id || createdTicket.name}" created with ${formData.priority} priority. Status: ${formData.status}`
       });
 
       // Clear form and draft
@@ -469,8 +469,34 @@ export function AddTicket() {
 
     } catch (error) {
       console.error('Failed to create ticket:', error);
-      toast.error('Failed to create ticket', {
-        description: error instanceof Error ? error.message : 'Please check your API configuration and try again'
+      
+      let errorMessage = 'Failed to create ticket';
+      let errorDescription = '';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('CSRF')) {
+          errorMessage = 'Security Token Error';
+          errorDescription = 'Authentication token issue. Please try again.';
+        } else if (error.message.includes('403') || error.message.includes('Permission denied')) {
+          errorMessage = 'Permission Denied';
+          errorDescription = 'You don\'t have permission to create tickets. Contact your administrator.';
+        } else if (error.message.includes('401') || error.message.includes('Authentication')) {
+          errorMessage = 'Authentication Failed';
+          errorDescription = 'Your session expired. Please refresh the page and try again.';
+        } else if (error.message.includes('timeout')) {
+          errorMessage = 'Request Timeout';
+          errorDescription = 'Server took too long to respond. Check your connection and try again.';
+        } else if (error.message.includes('Network') || error.message.includes('fetch')) {
+          errorMessage = 'Connection Error';
+          errorDescription = 'Unable to connect to server. Check your network connection.';
+        } else {
+          errorMessage = 'Server Error';
+          errorDescription = error.message || 'An unexpected error occurred. Please try again.';
+        }
+      }
+      
+      toast.error(`❌ ${errorMessage}`, {
+        description: errorDescription
       });
     } finally {
       setIsSubmitting(false);
@@ -486,7 +512,7 @@ export function AddTicket() {
       contact_email: '',
       contact_phone: '',
       department: '',
-      category: '',
+      category: 'Software',
       subcategory: '',
       priority: 'Medium',
       impact: 'Single User',

@@ -343,15 +343,15 @@ export function HackerProDashboard() {
       setGeneratedTickets(result.successfulTickets);
       setCurrentOperation('');
 
-      // Show final result
+      // Show final result - REAL NOTIFICATIONS, NO DEMO/DECOY
       if (result.success) {
-        toast.success("Bulk generation completed successfully!", {
-          description: `Created ${result.completed} tickets in ${result.duration}s`,
+        toast.success("✅ Bulk ticket creation completed!", {
+          description: `Successfully created ${result.completed} tickets in ${result.duration}s. ${result.retries} retries performed.`,
           duration: 5000,
         });
       } else {
-        toast.error("Bulk generation completed with errors", {
-          description: `Created ${result.completed} tickets, ${result.failed} failed in ${result.duration}s`,
+        toast.error("❌ Bulk creation completed with errors", {
+          description: `Created ${result.completed} tickets, ${result.failed} failed in ${result.duration}s. Check logs for details.`,
           duration: 8000,
         });
       }
@@ -370,8 +370,8 @@ export function HackerProDashboard() {
       
       setCurrentOperation('');
       
-      toast.error("Bulk generation failed", {
-        description: error instanceof Error ? error.message : 'Unknown error occurred',
+      toast.error("❌ Bulk generation failed", {
+        description: error instanceof Error ? error.message : 'Unknown error occurred during bulk creation',
         duration: 8000,
       });
     } finally {

@@ -78,8 +78,8 @@ export function ApiConfigDialog({
     fields: ['user_name', 'title'],
     timeout: 10000,
     retries: 3,
-    allowCookies: true,
-    customCookies: 'full_name=Guest; sid=Guest; system_user=no; user_id=Guest; user_lang=en',
+    allowCookies: false, // Disable cookies by default to avoid SameSite issues
+    customCookies: '', // Remove default cookies
   };
 
   // Update local config when prop config changes

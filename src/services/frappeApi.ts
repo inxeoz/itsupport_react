@@ -17,6 +17,8 @@ export interface ApiConfig {
   // DocType validation options
   validateDocTypes?: boolean;
   fallbackMode?: boolean;
+  // CORS and Cookie options
+  forceCookies?: boolean; // Force cookies even for cross-origin (may cause SameSite issues)
 }
 
 import { API_TOKEN, BASE_URL } from "../env";
@@ -55,9 +57,8 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
   ],
   timeout: 15000,
   retries: 3,
-  allowCookies: true,
-  customCookies:
-    "full_name=Guest; sid=Guest; system_user=no; user_id=Guest; user_lang=en",
+  allowCookies: false, // Disable cookies by default for cross-origin requests
+  customCookies: "", // Remove custom cookies to avoid SameSite issues
   skipCSRF: true, // Skip CSRF by default to avoid token issues
   validateDocTypes: true,
   fallbackMode: true,
@@ -232,9 +233,36 @@ class FrappeApiService {
   private lastCSRFError: number = 0;
   private docTypeCache: Map<string, DocTypeInfo> = new Map();
   private systemInfo: SystemInfo | null = null;
+  private isCrossOrigin: boolean = false;
+  private hasShownCookieWarning: boolean = false;
 
   constructor(initialConfig: ApiConfig = DEFAULT_API_CONFIG) {
     this.config = { ...initialConfig };
+    this.checkCrossOrigin();
+  }
+
+  // Check if the request will be cross-origin
+  private checkCrossOrigin() {
+    try {
+      const currentOrigin = window.location.origin;
+      const apiUrl = new URL(this.config.baseUrl);
+      const apiOrigin = apiUrl.origin;
+      
+      this.isCrossOrigin = currentOrigin !== apiOrigin;
+      
+      if (this.isCrossOrigin) {
+        console.info(
+          `🌐 Cross-origin detected: ${currentOrigin} → ${apiOrigin}. Cookies will be disabled for SameSite compatibility.`
+        );
+      } else {
+        console.info(
+          `🏠 Same-origin detected: ${currentOrigin}. Cookies can be used if configured.`
+        );
+      }
+    } catch (error) {
+      console.warn("⚠️ Failed to determine origin, assuming cross-origin for safety:", error);
+      this.isCrossOrigin = true;
+    }
   }
 
   // Update configuration
@@ -245,6 +273,8 @@ class FrappeApiService {
     this.sessionCookies = null;
     this.docTypeCache.clear();
     this.systemInfo = null;
+    // Re-check cross-origin status
+    this.checkCrossOrigin();
   }
 
   // Get current configuration
@@ -255,6 +285,7 @@ class FrappeApiService {
   // Check if a DocType exists and is accessible
   private async checkDocType(
     docTypeName: string,
+    isOptional: boolean = false,
   ): Promise<DocTypeInfo> {
     // Check cache first
     if (this.docTypeCache.has(docTypeName)) {
@@ -268,7 +299,9 @@ class FrappeApiService {
     };
 
     try {
-      console.log(`🔍 Checking DocType: ${docTypeName}`);
+      if (!isOptional) {
+        console.log(`🔍 Checking DocType: ${docTypeName}`);
+      }
 
       // Try to access the DocType metadata
       const response = await this.makeRequest(
@@ -283,40 +316,46 @@ class FrappeApiService {
       if (response) {
         docTypeInfo.exists = true;
         docTypeInfo.accessible = true;
-        console.log(
-          `✅ DocType ${docTypeName} exists and is accessible`,
-        );
+        if (!isOptional) {
+          console.log(
+            `✅ DocType ${docTypeName} exists and is accessible`,
+          );
+        }
       }
     } catch (error) {
-      console.warn(
-        `⚠️ DocType ${docTypeName} check failed:`,
-        error,
-      );
+      if (!isOptional) {
+        console.warn(
+          `⚠️ DocType ${docTypeName} check failed:`,
+          error,
+        );
+      }
       docTypeInfo.error =
         error instanceof Error
           ? error.message
           : "Unknown error";
 
-      // Try alternative endpoints to check existence
-      try {
-        await this.makeRequest(
-          `/api/resource/${docTypeName}?limit=1`,
-          {
-            method: "GET",
-          },
-          undefined,
-          true,
-        );
+      // Try alternative endpoints to check existence (only for required DocTypes)
+      if (!isOptional) {
+        try {
+          await this.makeRequest(
+            `/api/resource/${docTypeName}?limit=1`,
+            {
+              method: "GET",
+            },
+            undefined,
+            true,
+          );
 
-        docTypeInfo.exists = true;
-        docTypeInfo.accessible = true;
-        console.log(
-          `✅ DocType ${docTypeName} accessible via resource endpoint`,
-        );
-      } catch (secondError) {
-        console.warn(
-          `❌ DocType ${docTypeName} not accessible via any method`,
-        );
+          docTypeInfo.exists = true;
+          docTypeInfo.accessible = true;
+          console.log(
+            `✅ DocType ${docTypeName} accessible via resource endpoint`,
+          );
+        } catch (secondError) {
+          console.warn(
+            `❌ DocType ${docTypeName} not accessible via any method`,
+          );
+        }
       }
     }
 
@@ -333,18 +372,20 @@ class FrappeApiService {
 
     console.log("🔍 Gathering system information...");
 
-    const docTypesToCheck = [
-      "Ticket",
-      "Department",
-      "Employee",
-      "User",
-      "Issue",
-      "Task",
-    ];
+    // Define required and optional DocTypes
+    const requiredDocTypes = ["Ticket", "Issue", "Task"];
+    const optionalDocTypes = ["Department", "Employee", "User"];
     const docTypes: DocTypeInfo[] = [];
 
-    for (const docType of docTypesToCheck) {
-      const info = await this.checkDocType(docType);
+    // Check required DocTypes with full logging
+    for (const docType of requiredDocTypes) {
+      const info = await this.checkDocType(docType, false);
+      docTypes.push(info);
+    }
+
+    // Check optional DocTypes silently
+    for (const docType of optionalDocTypes) {
+      const info = await this.checkDocType(docType, true);
       docTypes.push(info);
     }
 
@@ -391,11 +432,9 @@ class FrappeApiService {
       (dt) => dt.name === "Department",
     );
     if (!departmentDocType?.exists) {
-      recommendations.push(
-        "The Department DocType does not exist. Department fields will be treated as simple text fields.",
-      );
+      // Only add this as an info message, not a warning
       fallbacksAvailable.push(
-        "Department fields will be stored as plain text",
+        "Department fields will be stored as plain text (Department DocType not available)",
       );
     }
 
@@ -502,11 +541,11 @@ class FrappeApiService {
       Accept: "application/json",
     };
 
-    // Include session cookies if available
-    if (
-      this.sessionCookies ||
-      (this.config.allowCookies && this.config.customCookies)
-    ) {
+    // Handle cookie inclusion based on origin and configuration
+    const shouldIncludeCookies = (!this.isCrossOrigin || this.config.forceCookies) && 
+                                (this.sessionCookies || (this.config.allowCookies && this.config.customCookies));
+
+    if (shouldIncludeCookies) {
       const cookies = [];
 
       if (this.sessionCookies) {
@@ -522,11 +561,22 @@ class FrappeApiService {
 
       if (cookies.length > 0) {
         headers["Cookie"] = cookies.join("; ");
+        if (!this.isCrossOrigin) {
+          console.log("🍪 Including cookies for same-origin request");
+        } else {
+          console.warn("⚠️ Force-including cookies for cross-origin request (may cause SameSite issues)");
+        }
+      }
+    } else if (this.isCrossOrigin && (this.sessionCookies || this.config.customCookies)) {
+      // Only show this info message once per session to avoid spam
+      if (!this.hasShownCookieWarning) {
+        console.info("🚫 Skipping cookies for cross-origin request to avoid SameSite issues. Using Authorization token only.");
+        this.hasShownCookieWarning = true;
       }
     }
 
-    // Include CSRF token for POST/PUT/DELETE requests
-    if (includeCSRF && !this.config.skipCSRF) {
+    // Include CSRF token for POST/PUT/DELETE requests (only for same-origin)
+    if (includeCSRF && !this.config.skipCSRF && !this.isCrossOrigin) {
       const csrfToken = await this.getCSRFToken();
       if (csrfToken) {
         headers["X-Frappe-CSRF-Token"] = csrfToken;
@@ -576,9 +626,10 @@ class FrappeApiService {
           ...options.headers,
         },
         signal: controller.signal,
-        credentials: config.allowCookies
-          ? "include"
-          : "same-origin",
+        // Use appropriate credentials policy based on origin and configuration
+        credentials: this.isCrossOrigin && !config.forceCookies
+          ? "omit" 
+          : (config.allowCookies ? "include" : "same-origin"),
       });
 
       clearTimeout(timeoutId);
@@ -623,6 +674,14 @@ class FrappeApiService {
               /DocType (\w+) not found/,
             )?.[1];
             if (docTypeName) {
+              // Don't throw errors for optional DocTypes like Department
+              if (["Department", "Employee", "User"].includes(docTypeName)) {
+                console.info(
+                  `ℹ️ Optional DocType '${docTypeName}' not found - this is expected and the application will work normally.`,
+                );
+                // Return a minimal response instead of throwing
+                return { data: [] } as T;
+              }
               throw new Error(
                 `DocType '${docTypeName}' does not exist in your ERPNext instance. Please create the ${docTypeName} DocType or remove references to it.`,
               );
@@ -789,8 +848,8 @@ class FrappeApiService {
     try {
       console.log("📊 Fetching total ticket count from Frappe...");
 
-      // First check if Ticket DocType exists
-      const ticketInfo = await this.checkDocType("Ticket");
+      // First check if Ticket DocType exists (required check, not silent)
+      const ticketInfo = await this.checkDocType("Ticket", false);
       let docTypeName = "Ticket";
 
       if (!ticketInfo.exists && this.config.fallbackMode) {
@@ -799,13 +858,13 @@ class FrappeApiService {
         );
 
         // Try Issue DocType as fallback
-        const issueInfo = await this.checkDocType("Issue");
+        const issueInfo = await this.checkDocType("Issue", false);
         if (issueInfo.exists) {
           console.log("🔄 Using Issue DocType as fallback for count");
           docTypeName = "Issue";
         } else {
           // Try Task DocType as fallback
-          const taskInfo = await this.checkDocType("Task");
+          const taskInfo = await this.checkDocType("Task", false);
           if (taskInfo.exists) {
             console.log("🔄 Using Task DocType as fallback for count");
             docTypeName = "Task";
@@ -832,21 +891,21 @@ class FrappeApiService {
     try {
       console.log("📋 Fetching tickets from Frappe...");
 
-      // First check if Ticket DocType exists
-      const ticketInfo = await this.checkDocType("Ticket");
+      // First check if Ticket DocType exists (required check, not silent)
+      const ticketInfo = await this.checkDocType("Ticket", false);
       if (!ticketInfo.exists && this.config.fallbackMode) {
         console.warn(
           "⚠️ Ticket DocType not found, checking alternatives...",
         );
 
         // Try Issue DocType as fallback
-        const issueInfo = await this.checkDocType("Issue");
+        const issueInfo = await this.checkDocType("Issue", false);
         if (issueInfo.exists) {
           console.log("🔄 Using Issue DocType as fallback");
           this.config.endpoint = "/api/resource/Issue";
         } else {
           // Try Task DocType as fallback
-          const taskInfo = await this.checkDocType("Task");
+          const taskInfo = await this.checkDocType("Task", false);
           if (taskInfo.exists) {
             console.log("🔄 Using Task DocType as fallback");
             this.config.endpoint = "/api/resource/Task";
@@ -920,15 +979,12 @@ class FrappeApiService {
   ): Promise<Partial<FrappeTicket>> {
     const sanitizedTicket = { ...ticket };
 
-    // Check if Department DocType exists
+    // Check if Department DocType exists (silent check) - only log once per session
     const departmentInfo =
-      await this.checkDocType("Department");
+      await this.checkDocType("Department", true);
     if (!departmentInfo.exists) {
-      // Remove department field if Department DocType doesn't exist
-      console.warn(
-        "⚠️ Removing department field - Department DocType not found",
-      );
-      delete sanitizedTicket.department;
+      // Keep the department field as it will be treated as plain text
+      // No need to log this repeatedly since it's expected behavior
     }
 
     // Remove any null or undefined values that might cause issues

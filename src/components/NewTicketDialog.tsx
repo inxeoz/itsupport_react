@@ -6,7 +6,7 @@ import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Loader2, Plus, User, FileText, MessageSquare, AlertTriangle, Building, Mail, Phone, Tag, Calendar, UserCheck } from 'lucide-react';
+import { Loader2, Plus, User, FileText, MessageSquare, AlertTriangle, Building, Mail, Phone, Tag, Calendar, UserCheck, Clock, CheckCircle, Paperclip } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import { toast } from "sonner";
 import { frappeApi, type FrappeTicket } from '../services/frappeApi';
@@ -18,35 +18,53 @@ interface NewTicketDialogProps {
 }
 
 interface TicketFormData {
+  // Basic Information (required by DocType)
   title: string;
   user_name: string;
+  description: string;
+  
+  // Contact & Department
   department: string;
   contact_email: string;
   contact_phone: string;
-  description: string;
+  
+  // Classification
   category: string;
   subcategory: string;
   priority: string;
   impact: string;
   status: string;
+  
+  // Assignment & Scheduling
   assignee: string;
   due_datetime: string;
+  
+  // Resolution & Tracking (from DocType)
+  resolution_datetime: string;
+  resolution_summary: string;
+  root_cause: string;
+  requester_confirmation: string;
+  time_spent: number | null;
+  
+  // Metadata
   tags: string;
+  attachments: string;
 }
 
 const CATEGORIES = ['Hardware', 'Software', 'Network', 'Access Request', 'Other'];
 const PRIORITIES = ['Low', 'Medium', 'High', 'Critical'];
 const IMPACTS = ['Single User', 'Multiple Users', 'Entire Department', 'Organization-wide'];
 const STATUSES = ['New', 'In Progress', 'Waiting for Info', 'Resolved', 'Closed'];
+const REQUESTER_CONFIRMATIONS = ['Yes', 'No'];
 
 export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTicketDialogProps) {
   const [formData, setFormData] = useState<TicketFormData>({
     title: '',
     user_name: '',
+    description: '',
     department: '',
     contact_email: '',
     contact_phone: '',
-    description: '',
     category: 'Software',
     subcategory: '',
     priority: 'Medium',
@@ -54,7 +72,13 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
     status: 'New',
     assignee: '',
     due_datetime: '',
+    resolution_datetime: '',
+    resolution_summary: '',
+    root_cause: '',
+    requester_confirmation: '',
+    time_spent: null,
     tags: '',
+    attachments: '',
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<TicketFormData>>({});
@@ -92,6 +116,18 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
         newErrors.due_datetime = 'Due date must be in the future';
       }
     }
+
+    if (formData.resolution_datetime) {
+      const resolutionDate = new Date(formData.resolution_datetime);
+      const now = new Date();
+      if (resolutionDate > now) {
+        newErrors.resolution_datetime = 'Resolution date cannot be in the future';
+      }
+    }
+
+    if (formData.time_spent !== null && formData.time_spent < 0) {
+      newErrors.time_spent = 'Time spent cannot be negative';
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -126,13 +162,19 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
         status: formData.status,
         assignee: formData.assignee.trim() || null,
         due_datetime: formData.due_datetime || null,
+        resolution_datetime: formData.resolution_datetime || null,
+        resolution_summary: formData.resolution_summary.trim() || null,
+        root_cause: formData.root_cause.trim() || null,
+        requester_confirmation: formData.requester_confirmation || null,
+        time_spent: formData.time_spent || null,
         tags: formData.tags.trim() || null,
+        attachments: formData.attachments.trim() || null,
         docstatus: 0, // Draft status
       });
 
-      // Show success toast with ticket details
-      toast.success("Ticket created successfully!", {
-        description: `Ticket "${newTicket.ticket_id || newTicket.name}" has been created with ${formData.priority} priority.`,
+      // Show real success toast with actual ticket details - NO DEMO/DECOY DATA
+      toast.success("✅ Ticket created successfully!", {
+        description: `Ticket "${newTicket.ticket_id || newTicket.name}" created with ${formData.priority} priority. Status: ${formData.status}`,
         duration: 5000,
       });
 
@@ -140,10 +182,10 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
       setFormData({
         title: '',
         user_name: '',
+        description: '',
         department: '',
         contact_email: '',
         contact_phone: '',
-        description: '',
         category: 'Software',
         subcategory: '',
         priority: 'Medium',
@@ -151,7 +193,13 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
         status: 'New',
         assignee: '',
         due_datetime: '',
+        resolution_datetime: '',
+        resolution_summary: '',
+        root_cause: '',
+        requester_confirmation: '',
+        time_spent: null,
         tags: '',
+        attachments: '',
       });
       setErrors({});
       setApiError(null);
@@ -165,36 +213,36 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
     } catch (error) {
       console.error('Error creating ticket:', error);
       
-      let errorMessage = 'An unexpected error occurred. Please try again.';
+      let errorMessage = 'Failed to create ticket';
       let errorDescription = '';
       
       if (error instanceof Error) {
         if (error.message.includes('CSRF')) {
           errorMessage = 'Security Token Error';
-          errorDescription = 'There was a security validation issue. This usually resolves itself - please try again.';
+          errorDescription = 'Authentication token issue. Please try again.';
         } else if (error.message.includes('403') || error.message.includes('Permission denied')) {
           errorMessage = 'Permission Denied';
-          errorDescription = 'You don\'t have permission to create tickets. Please check with your administrator.';
+          errorDescription = 'You don\'t have permission to create tickets. Contact your administrator.';
         } else if (error.message.includes('401') || error.message.includes('Authentication')) {
           errorMessage = 'Authentication Failed';
-          errorDescription = 'Your session may have expired. Please refresh the page and try again.';
+          errorDescription = 'Your session expired. Please refresh the page and try again.';
         } else if (error.message.includes('timeout')) {
           errorMessage = 'Request Timeout';
-          errorDescription = 'The server took too long to respond. Please check your connection and try again.';
+          errorDescription = 'Server took too long to respond. Check your connection and try again.';
         } else if (error.message.includes('Network') || error.message.includes('fetch')) {
           errorMessage = 'Connection Error';
-          errorDescription = 'Unable to connect to the server. Please check your network connection.';
+          errorDescription = 'Unable to connect to server. Check your network connection.';
         } else {
           errorMessage = 'Server Error';
-          errorDescription = error.message || 'Please try again or contact support if the problem persists.';
+          errorDescription = error.message || 'An unexpected error occurred. Please try again.';
         }
       }
       
       // Set API error for display in the dialog
       setApiError(errorDescription);
       
-      // Show error toast
-      toast.error(errorMessage, {
+      // Show real error toast - NO DEMO/DECOY DATA
+      toast.error(`❌ ${errorMessage}`, {
         description: errorDescription,
         duration: 8000,
       });
@@ -203,7 +251,7 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
     }
   };
 
-  const handleInputChange = (field: keyof TicketFormData, value: string) => {
+  const handleInputChange = (field: keyof TicketFormData, value: string | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
     // Clear error when user starts typing
@@ -222,10 +270,10 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
       setFormData({
         title: '',
         user_name: '',
+        description: '',
         department: '',
         contact_email: '',
         contact_phone: '',
-        description: '',
         category: 'Software',
         subcategory: '',
         priority: 'Medium',
@@ -233,7 +281,13 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
         status: 'New',
         assignee: '',
         due_datetime: '',
+        resolution_datetime: '',
+        resolution_summary: '',
+        root_cause: '',
+        requester_confirmation: '',
+        time_spent: null,
         tags: '',
+        attachments: '',
       });
       setErrors({});
       setApiError(null);
@@ -261,7 +315,7 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-popover border-border">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-popover border-border">
         <DialogHeader className="bg-popover">
           <DialogTitle className="flex items-center gap-2 text-popover-foreground">
             <Plus className="w-5 h-5 text-theme-accent" />
@@ -284,10 +338,11 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
 
         <form onSubmit={handleSubmit} className="space-y-6 bg-popover">
           <Tabs defaultValue="basic" className="w-full bg-popover">
-            <TabsList className="grid w-full grid-cols-3 bg-muted border-border">
+            <TabsList className="grid w-full grid-cols-4 bg-muted border-border">
               <TabsTrigger value="basic" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Basic Info</TabsTrigger>
               <TabsTrigger value="details" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Details</TabsTrigger>
               <TabsTrigger value="assignment" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Assignment</TabsTrigger>
+              <TabsTrigger value="resolution" className="text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground">Resolution</TabsTrigger>
             </TabsList>
 
             {/* Basic Information Tab */}
@@ -590,6 +645,145 @@ export function NewTicketDialog({ open, onOpenChange, onTicketCreated }: NewTick
                   >
                     Set to 1 week
                   </Button>
+                </div>
+              </div>
+            </TabsContent>
+
+            {/* Resolution Tab */}
+            <TabsContent value="resolution" className="space-y-4 bg-popover">
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 pb-2 border-b border-border">
+                  <CheckCircle className="w-5 h-5 text-theme-accent" />
+                  <h4 className="text-foreground font-medium">Resolution & Tracking Information</h4>
+                </div>
+                
+                {/* Resolution Date & Time */}
+                <div className="space-y-2">
+                  <Label htmlFor="resolution_datetime" className="flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Resolution Date & Time
+                  </Label>
+                  <Input
+                    id="resolution_datetime"
+                    type="datetime-local"
+                    value={formData.resolution_datetime}
+                    onChange={(e) => handleInputChange('resolution_datetime', e.target.value)}
+                    className={errors.resolution_datetime ? 'border-destructive focus-visible:ring-destructive' : ''}
+                    disabled={loading}
+                    max={formatDatetimeForInput(new Date())}
+                  />
+                  {errors.resolution_datetime && (
+                    <p className="text-sm text-destructive">{errors.resolution_datetime}</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    When the ticket was resolved (leave empty for new tickets)
+                  </p>
+                </div>
+
+                {/* Resolution Summary */}
+                <div className="space-y-2">
+                  <Label htmlFor="resolution_summary" className="flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4" />
+                    Resolution Summary
+                  </Label>
+                  <Textarea
+                    id="resolution_summary"
+                    value={formData.resolution_summary}
+                    onChange={(e) => handleInputChange('resolution_summary', e.target.value)}
+                    placeholder="Describe how the issue was resolved..."
+                    className="min-h-[100px] resize-none"
+                    disabled={loading}
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.resolution_summary.length}/500 characters
+                  </p>
+                </div>
+
+                {/* Root Cause */}
+                <div className="space-y-2">
+                  <Label htmlFor="root_cause" className="flex items-center gap-2">
+                    <AlertTriangle className="w-4 h-4" />
+                    Root Cause
+                  </Label>
+                  <Textarea
+                    id="root_cause"
+                    value={formData.root_cause}
+                    onChange={(e) => handleInputChange('root_cause', e.target.value)}
+                    placeholder="What was the underlying cause of this issue?"
+                    className="min-h-[100px] resize-none"
+                    disabled={loading}
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {formData.root_cause.length}/500 characters
+                  </p>
+                </div>
+
+                {/* Requester Confirmation and Time Spent */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="requester_confirmation" className="flex items-center gap-2">
+                      <CheckCircle className="w-4 h-4" />
+                      Requester Confirmation
+                    </Label>
+                    <Select value={formData.requester_confirmation || 'not_set'} onValueChange={(value) => handleInputChange('requester_confirmation', value === 'not_set' ? '' : value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Has requester confirmed resolution?" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="not_set">Not Set</SelectItem>
+                        {REQUESTER_CONFIRMATIONS.map((confirmation) => (
+                          <SelectItem key={confirmation} value={confirmation}>
+                            {confirmation}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="time_spent" className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      Time Spent (Hours)
+                    </Label>
+                    <Input
+                      id="time_spent"
+                      type="number"
+                      step="0.25"
+                      min="0"
+                      value={formData.time_spent ?? ''}
+                      onChange={(e) => handleInputChange('time_spent', e.target.value ? parseFloat(e.target.value) : null)}
+                      placeholder="e.g., 2.5"
+                      className={errors.time_spent ? 'border-destructive focus-visible:ring-destructive' : ''}
+                      disabled={loading}
+                    />
+                    {errors.time_spent && (
+                      <p className="text-sm text-destructive">{errors.time_spent}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Total hours spent working on this ticket
+                    </p>
+                  </div>
+                </div>
+
+                {/* Attachments */}
+                <div className="space-y-2">
+                  <Label htmlFor="attachments" className="flex items-center gap-2">
+                    <Paperclip className="w-4 h-4" />
+                    Attachments
+                  </Label>
+                  <Input
+                    id="attachments"
+                    value={formData.attachments}
+                    onChange={(e) => handleInputChange('attachments', e.target.value)}
+                    placeholder="File URLs or attachment references"
+                    disabled={loading}
+                    maxLength={200}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    References to attached files (implementation-specific)
+                  </p>
                 </div>
               </div>
             </TabsContent>

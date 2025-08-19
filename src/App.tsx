@@ -16,74 +16,27 @@ import { TesterDashboard } from "./components/TesterDashboard";
 import { Toaster } from "./components/ui/sonner";
 import { ThemeProvider, type Theme } from "./components/ThemeProvider";
 
-export default function App() {
-  const [activeTab, setActiveTab] = useState("main-table");
-  const [theme, setTheme] = useState<Theme>({
-    mode: "dark",
-    accent: "blue",
-  });
-  const [tabs, setTabs] = useState([
-    { id: "main-table", label: "Main table", icon: "⋯" },
-    { id: "form", label: "Form", icon: null },
-    { id: "kanban", label: "Kanban", icon: null },
-    { id: "add-ticket", label: "Add Ticket", icon: null },
-  ]);
+interface AppContentProps {
+  activeTab: string;
+  onTabChange: (tab: string) => void;
+  theme: Theme;
+  onThemeChange: (theme: Theme) => void;
+  tabs: Array<{ id: string; label: string; icon: string | null }>;
+  onAddTab: (tabId: string, label: string) => void;
+  onRemoveTab: (tabId: string) => void;
+  onMoveTab: (dragIndex: number, hoverIndex: number) => void;
+}
 
-  const handleThemeChange = (newTheme: Theme) => {
-    setTheme(newTheme);
-  };
-
-  const handleAddTab = (tabId: string, label: string) => {
-    const existingTab = tabs.find((tab) => tab.id === tabId);
-    if (!existingTab) {
-      setTabs((prevTabs) => [
-        ...prevTabs,
-        { id: tabId, label, icon: null },
-      ]);
-    }
-  };
-
-  const handleRemoveTab = (tabId: string) => {
-    // Don't allow removing the last tab
-    if (tabs.length <= 1) {
-      return;
-    }
-
-    // Remove the tab from the list
-    setTabs((prevTabs) =>
-      prevTabs.filter((tab) => tab.id !== tabId),
-    );
-
-    // If the removed tab was the active tab, switch to another tab
-    if (activeTab === tabId) {
-      const remainingTabs = tabs.filter(
-        (tab) => tab.id !== tabId,
-      );
-      if (remainingTabs.length > 0) {
-        // Switch to the first remaining tab
-        setActiveTab(remainingTabs[0].id);
-      }
-    }
-  };
-
-  const handleMoveTab = useCallback(
-    (dragIndex: number, hoverIndex: number) => {
-      setTabs((prevTabs) => {
-        const newTabs = [...prevTabs];
-        const draggedTab = newTabs[dragIndex];
-
-        // Remove the dragged tab
-        newTabs.splice(dragIndex, 1);
-
-        // Insert it at the new position
-        newTabs.splice(hoverIndex, 0, draggedTab);
-
-        return newTabs;
-      });
-    },
-    [],
-  );
-
+function AppContent({
+  activeTab,
+  onTabChange,
+  theme,
+  onThemeChange,
+  tabs,
+  onAddTab,
+  onRemoveTab,
+  onMoveTab,
+}: AppContentProps) {
   const renderActiveView = () => {
     switch (activeTab) {
       case "main-table":
@@ -118,57 +71,124 @@ export default function App() {
     }
   };
 
-  // Generate CSS classes for theme
-  const getThemeClasses = () => {
-    let classes =
-      "h-screen bg-background text-foreground flex flex-col transition-colors duration-300";
+  return (
+    <div className="h-screen bg-background text-foreground flex flex-col transition-colors duration-300 mytick-theme">
+      <TopBar
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        theme={theme}
+        onThemeChange={onThemeChange}
+        tabs={tabs}
+        onAddTab={onAddTab}
+        onRemoveTab={onRemoveTab}
+        onMoveTab={onMoveTab}
+      />
+      <main className="flex-1 overflow-auto m-5 bg-background mytick-theme">
+        {renderActiveView()}
+      </main>
 
-    // Add dark mode class
-    if (theme.mode === "dark") {
-      classes += " dark";
-    }
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-right"
+        expand={true}
+        richColors
+        closeButton
+        toastOptions={{
+          className: "bg-card border-border text-card-foreground mytick-theme",
+        }}
+      />
+    </div>
+  );
+}
 
-    // Add theme background classes
-    if (theme.accent === "blue") {
-      classes += " blue-theme";
-    } else if (theme.accent === "orange") {
-      classes += " orange-theme";
-    } else if (theme.accent === "green") {
-      classes += " green-theme";
-    }
+export default function App() {
+  const [activeTab, setActiveTab] = useState("main-table");
+  const [theme, setTheme] = useState<Theme>({
+    mode: "light",
+    accent: "blue",
+  });
+  const [tabs, setTabs] = useState([
+    { id: "main-table", label: "Main table", icon: "⋯" },
+    { id: "form", label: "Form", icon: null },
+    { id: "kanban", label: "Kanban", icon: null },
+    { id: "add-ticket", label: "Add Ticket", icon: null },
+  ]);
 
-    return classes;
-  };
+  const handleThemeChange = useCallback((newTheme: Theme) => {
+    setTheme(newTheme);
+  }, []);
+
+  const handleAddTab = useCallback((tabId: string, label: string) => {
+    setTabs((prevTabs) => {
+      const existingTab = prevTabs.find((tab) => tab.id === tabId);
+      if (!existingTab) {
+        return [
+          ...prevTabs,
+          { id: tabId, label, icon: null },
+        ];
+      }
+      return prevTabs;
+    });
+  }, []);
+
+  const handleRemoveTab = useCallback((tabId: string) => {
+    setTabs((prevTabs) => {
+      // Don't allow removing the last tab
+      if (prevTabs.length <= 1) {
+        return prevTabs;
+      }
+
+      const newTabs = prevTabs.filter((tab) => tab.id !== tabId);
+      
+      // If the removed tab was the active tab, switch to another tab
+      if (activeTab === tabId && newTabs.length > 0) {
+        // Switch to the first remaining tab
+        setActiveTab(newTabs[0].id);
+      }
+
+      return newTabs;
+    });
+  }, [activeTab]);
+
+  const handleMoveTab = useCallback(
+    (dragIndex: number, hoverIndex: number) => {
+      setTabs((prevTabs) => {
+        if (dragIndex < 0 || dragIndex >= prevTabs.length || 
+            hoverIndex < 0 || hoverIndex >= prevTabs.length) {
+          return prevTabs;
+        }
+
+        const newTabs = [...prevTabs];
+        const draggedTab = newTabs[dragIndex];
+
+        // Remove the dragged tab
+        newTabs.splice(dragIndex, 1);
+
+        // Insert it at the new position
+        newTabs.splice(hoverIndex, 0, draggedTab);
+
+        return newTabs;
+      });
+    },
+    [],
+  );
+
+  const handleTabChange = useCallback((tab: string) => {
+    setActiveTab(tab);
+  }, []);
 
   return (
     <ThemeProvider theme={theme}>
-      <div className={getThemeClasses()}>
-        <TopBar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          theme={theme}
-          onThemeChange={handleThemeChange}
-          tabs={tabs}
-          onAddTab={handleAddTab}
-          onRemoveTab={handleRemoveTab}
-          onMoveTab={handleMoveTab}
-        />
-        <main className="flex-1 overflow-auto m-5">
-          {renderActiveView()}
-        </main>
-
-        {/* Toast Notifications */}
-        <Toaster
-          position="top-right"
-          expand={true}
-          richColors
-          closeButton
-          toastOptions={{
-            className:
-              "bg-card border-border text-card-foreground",
-          }}
-        />
-      </div>
+      <AppContent
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        theme={theme}
+        onThemeChange={handleThemeChange}
+        tabs={tabs}
+        onAddTab={handleAddTab}
+        onRemoveTab={handleRemoveTab}
+        onMoveTab={handleMoveTab}
+      />
     </ThemeProvider>
   );
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 
 export type Theme = {
   mode: "light" | "dark";
@@ -29,24 +29,80 @@ export function ThemeProvider({ theme, children }: ThemeProviderProps) {
   const getThemeClasses = () => {
     let classes = "";
 
+    // Apply dark mode class
     if (theme.mode === "dark") {
       classes += " dark";
     }
 
-    if (theme.accent === "blue") {
-      classes += " blue-theme";
-    } else if (theme.accent === "orange") {
-      classes += " orange-theme";
-    } else if (theme.accent === "green") {
-      classes += " green-theme";
+    // Apply accent theme classes
+    switch (theme.accent) {
+      case "blue":
+        classes += " blue-theme";
+        break;
+      case "orange":
+        classes += " orange-theme";
+        break;
+      case "green":
+        classes += " green-theme";
+        break;
+      case "default":
+        // Default theme doesn't need additional classes beyond dark/light
+        break;
+      default:
+        // Fallback to default if invalid accent
+        break;
     }
 
     return classes.trim();
   };
 
+  // Apply theme classes to document root
+  useEffect(() => {
+    const root = document.documentElement;
+    const themeClasses = getThemeClasses();
+    
+    // Remove all possible theme classes first
+    root.classList.remove(
+      'dark',
+      'blue-theme',
+      'orange-theme',
+      'green-theme'
+    );
+    
+    // Add current theme classes
+    if (themeClasses) {
+      themeClasses.split(' ').forEach(cls => {
+        if (cls) root.classList.add(cls);
+      });
+    }
+    
+    // Also update any portal containers
+    setTimeout(() => {
+      const portals = document.querySelectorAll('[data-radix-portal]');
+      portals.forEach((portal) => {
+        // Remove existing theme classes
+        portal.classList.remove(
+          'dark',
+          'blue-theme',
+          'orange-theme',
+          'green-theme'
+        );
+        
+        // Add current theme classes
+        if (themeClasses) {
+          themeClasses.split(' ').forEach((cls) => {
+            if (cls) portal.classList.add(cls);
+          });
+        }
+      });
+    }, 0);
+  }, [theme.mode, theme.accent]);
+
   return (
     <ThemeContext.Provider value={{ theme, getThemeClasses }}>
-      {children}
+      <div className={`min-h-screen transition-colors duration-300 mytick-app ${getThemeClasses()}`}>
+        {children}
+      </div>
     </ThemeContext.Provider>
   );
 }
