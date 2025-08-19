@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { TopBar } from "./components/TopBar";
 import { TicketDashboard } from "./components/TicketDashboard";
 import { KanbanBoard } from "./components/KanbanBoard";
@@ -103,16 +103,45 @@ function AppContent({
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("main-table");
-  const [theme, setTheme] = useState<Theme>({
-    mode: "light",
-    accent: "blue",
+  
+  // Load theme from localStorage or use system default
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedTheme = localStorage.getItem('mytick-theme');
+        if (savedTheme) {
+          const parsed = JSON.parse(savedTheme);
+          // Validate the parsed theme
+          if (parsed && 
+              ['light', 'dark', 'system'].includes(parsed.mode) &&
+              ['default', 'blue', 'orange', 'green'].includes(parsed.accent)) {
+            return parsed;
+          }
+        }
+      } catch (error) {
+        console.error('Failed to parse saved theme:', error);
+      }
+    }
+    // Default to system theme with blue accent
+    return {
+      mode: "system",
+      accent: "blue",
+    };
   });
+
   const [tabs, setTabs] = useState([
     { id: "main-table", label: "Main table", icon: "⋯" },
     { id: "form", label: "Form", icon: null },
     { id: "kanban", label: "Kanban", icon: null },
     { id: "add-ticket", label: "Add Ticket", icon: null },
   ]);
+
+  // Save theme to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('mytick-theme', JSON.stringify(theme));
+    }
+  }, [theme]);
 
   const handleThemeChange = useCallback((newTheme: Theme) => {
     setTheme(newTheme);

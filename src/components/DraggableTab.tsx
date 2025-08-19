@@ -2,6 +2,7 @@ import React from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { MoreHorizontal, X } from 'lucide-react';
 import { Button } from './ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,7 @@ interface DraggableTabProps {
   onMoveTab: (dragIndex: number, hoverIndex: number) => void;
   canRemoveTab: boolean;
   getThemeClasses: () => string;
+  showTooltips?: boolean;
 }
 
 interface DragItem {
@@ -46,6 +48,7 @@ export function DraggableTab({
   onMoveTab,
   canRemoveTab,
   getThemeClasses,
+  showTooltips = true,
 }: DraggableTabProps) {
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -121,127 +124,175 @@ export function DraggableTab({
   // Apply drag and drop to the entire container
   drag(drop(ref));
 
+  // Conditional wrapper component for tooltips
+  const ConditionalTooltip = ({ 
+    children, 
+    content, 
+    ...props 
+  }: { 
+    children: React.ReactNode; 
+    content: React.ReactNode; 
+    [key: string]: any; 
+  }) => {
+    if (!showTooltips) {
+      return <>{children}</>;
+    }
+    
+    return (
+      <Tooltip {...props}>
+        <TooltipTrigger asChild>
+          {children}
+        </TooltipTrigger>
+        <TooltipContent className="mytick-theme">
+          {content}
+        </TooltipContent>
+      </Tooltip>
+    );
+  };
+
   return (
     <div 
       ref={ref} 
       style={{ opacity, transform }}
       data-handler-id={handlerId}
-      className="flex items-center transition-all duration-200"
+      className="flex items-center transition-all duration-200 mytick-theme"
     >
       {isActive ? (
         /* Active tab - separate button and dropdown */
-        <div className="flex items-center">
-          <button
-            className={`px-4 py-2 rounded-l-md transition-all duration-200 flex items-center gap-2 text-sm bg-accent text-accent-foreground hover:bg-accent cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg' : ''}`}
+        <div className="flex items-center mytick-theme">
+          <ConditionalTooltip
+            content={
+              <div className="mytick-theme">
+                <p className="font-medium mytick-theme">Active Tab: {tab.label}</p>
+                <p className="text-sm mt-1 mytick-theme">Drag to reorder tabs or click the menu for options</p>
+              </div>
+            }
           >
-            <span className="text-accent-foreground">{tab.label}</span>
-          </button>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                className={`px-2 py-2 rounded-r-md transition-all duration-200 text-sm bg-accent text-accent-foreground hover:bg-accent/80 border-l border-accent-foreground/10 cursor-pointer ${isDragging ? 'shadow-lg' : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation(); // Prevent event bubbling
-                }}
-              >
-                <MoreHorizontal className="w-4 h-4 text-accent-foreground" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="start"
-              className={`w-48 bg-popover border-border ${getThemeClasses()}`}
+            <button
+              className={`px-4 py-2 rounded-l-md transition-all duration-200 flex items-center gap-2 text-sm bg-accent text-accent-foreground hover:bg-accent cursor-grab active:cursor-grabbing mytick-theme ${isDragging ? 'shadow-lg' : ''}`}
             >
-              <DropdownMenuLabel className="text-muted-foreground">
-                {tab.label} Options
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator className="bg-border" />
-              <DropdownMenuGroup>
-                {tab.id === "main-table" && (
+              <span className="text-accent-foreground mytick-theme">{tab.label}</span>
+            </button>
+          </ConditionalTooltip>
+          
+          <ConditionalTooltip
+            content={<p className="mytick-theme">Tab options and settings</p>}
+          >
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={`px-2 py-2 rounded-r-md transition-all duration-200 text-sm bg-accent text-accent-foreground hover:bg-accent/80 border-l border-accent-foreground/10 cursor-pointer mytick-theme ${isDragging ? 'shadow-lg' : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+                  }}
+                >
+                  <MoreHorizontal className="w-4 h-4 text-accent-foreground mytick-theme" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className={`w-48 bg-popover border-border mytick-theme ${getThemeClasses()}`}
+              >
+                <DropdownMenuLabel className="text-muted-foreground mytick-theme">
+                  {tab.label} Options
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border mytick-theme" />
+                <DropdownMenuGroup className="mytick-theme">
+                  {tab.id === "main-table" && (
+                    <>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Table Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Configure Filters</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Customize Columns</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {tab.id === "kanban" && (
+                    <>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Board Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Add Column</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Customize Colors</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {tab.id === "form" && (
+                    <>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Form Builder</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Form Settings</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {tab.id === "add-ticket" && (
+                    <>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Form Preferences</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Template Settings</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                  {tab.id === "chart" && (
+                    <>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Chart Settings</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Data Filters</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground mytick-theme">
+                        <span className="text-foreground mytick-theme">Export Options</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuGroup>
+                
+                {/* Remove Tab option - only show if more than one tab exists */}
+                {canRemoveTab && (
                   <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Table Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Configure Filters</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Customize Columns</span>
+                    <DropdownMenuSeparator className="bg-border mytick-theme" />
+                    <DropdownMenuItem 
+                      onClick={() => onRemoveTab(tab.id)}
+                      className="flex items-center gap-3 px-3 py-2 cursor-pointer text-destructive hover:bg-destructive hover:text-destructive-foreground focus:text-destructive mytick-theme"
+                    >
+                      <X className="w-4 h-4 mytick-theme" />
+                      <span className="mytick-theme">Remove Tab</span>
                     </DropdownMenuItem>
                   </>
                 )}
-                {tab.id === "kanban" && (
-                  <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Board Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Add Column</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Customize Colors</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {tab.id === "form" && (
-                  <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Form Builder</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Form Settings</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {tab.id === "add-ticket" && (
-                  <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Form Preferences</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Template Settings</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                {tab.id === "chart" && (
-                  <>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Chart Settings</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Data Filters</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-foreground hover:bg-accent hover:text-accent-foreground">
-                      <span className="text-foreground">Export Options</span>
-                    </DropdownMenuItem>
-                  </>
-                )}
-              </DropdownMenuGroup>
-              
-              {/* Remove Tab option - only show if more than one tab exists */}
-              {canRemoveTab && (
-                <>
-                  <DropdownMenuSeparator className="bg-border" />
-                  <DropdownMenuItem 
-                    onClick={() => onRemoveTab(tab.id)}
-                    className="flex items-center gap-3 px-3 py-2 cursor-pointer text-destructive hover:bg-destructive hover:text-destructive-foreground focus:text-destructive"
-                  >
-                    <X className="w-4 h-4" />
-                    <span>Remove Tab</span>
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </ConditionalTooltip>
         </div>
       ) : (
         /* Inactive tab - regular button */
-        <button
-          onClick={() => onTabChange(tab.id)}
-          className={`px-4 py-2 rounded-md transition-all duration-200 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground cursor-grab active:cursor-grabbing ${isDragging ? 'shadow-lg' : ''}`}
+        <ConditionalTooltip
+          content={
+            <div className="mytick-theme">
+              <p className="font-medium mytick-theme">{tab.label}</p>
+              <p className="text-sm mt-1 mytick-theme">Click to switch to this tab or drag to reorder</p>
+            </div>
+          }
         >
-          <span>{tab.label}</span>
-        </button>
+          <button
+            onClick={() => onTabChange(tab.id)}
+            className={`px-4 py-2 rounded-md transition-all duration-200 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent hover:text-accent-foreground cursor-grab active:cursor-grabbing mytick-theme ${isDragging ? 'shadow-lg' : ''}`}
+          >
+            <span className="mytick-theme">{tab.label}</span>
+          </button>
+        </ConditionalTooltip>
       )}
     </div>
   );

@@ -1,13 +1,14 @@
-import { createContext, useContext, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
 export type Theme = {
-  mode: "light" | "dark";
+  mode: "light" | "dark" | "system";
   accent: "default" | "blue" | "orange" | "green";
 };
 
 export interface ThemeContextValue {
   theme: Theme;
   getThemeClasses: () => string;
+  getActualMode: () => "light" | "dark";
 }
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);
@@ -26,11 +27,47 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ theme, children }: ThemeProviderProps) {
+  const [systemPreference, setSystemPreference] = useState<"light" | "dark">(() => {
+    // Detect initial system preference
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return 'light';
+  });
+
+  // Listen for system preference changes
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setSystemPreference(e.matches ? 'dark' : 'light');
+    };
+
+    // Add listener
+    mediaQuery.addEventListener('change', handleChange);
+
+    // Cleanup
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+
+  // Get the actual mode (resolving "system" to actual preference)
+  const getActualMode = (): "light" | "dark" => {
+    if (theme.mode === "system") {
+      return systemPreference;
+    }
+    return theme.mode;
+  };
+
   const getThemeClasses = () => {
     let classes = "";
+    const actualMode = getActualMode();
 
     // Apply dark mode class
-    if (theme.mode === "dark") {
+    if (actualMode === "dark") {
       classes += " dark";
     }
 
@@ -96,10 +133,10 @@ export function ThemeProvider({ theme, children }: ThemeProviderProps) {
         }
       });
     }, 0);
-  }, [theme.mode, theme.accent]);
+  }, [theme.mode, theme.accent, systemPreference]);
 
   return (
-    <ThemeContext.Provider value={{ theme, getThemeClasses }}>
+    <ThemeContext.Provider value={{ theme, getThemeClasses, getActualMode }}>
       <div className={`min-h-screen transition-colors duration-300 mytick-app ${getThemeClasses()}`}>
         {children}
       </div>
