@@ -784,8 +784,51 @@ class FrappeApiService {
     }
   }
 
-  // Get all tickets with enhanced error handling
-  async getTickets(): Promise<FrappeTicket[]> {
+  // Get total ticket count from server
+  async getTotalTicketCount(): Promise<number> {
+    try {
+      console.log("📊 Fetching total ticket count from Frappe...");
+
+      // First check if Ticket DocType exists
+      const ticketInfo = await this.checkDocType("Ticket");
+      let docTypeName = "Ticket";
+
+      if (!ticketInfo.exists && this.config.fallbackMode) {
+        console.warn(
+          "⚠️ Ticket DocType not found, checking alternatives for count...",
+        );
+
+        // Try Issue DocType as fallback
+        const issueInfo = await this.checkDocType("Issue");
+        if (issueInfo.exists) {
+          console.log("🔄 Using Issue DocType as fallback for count");
+          docTypeName = "Issue";
+        } else {
+          // Try Task DocType as fallback
+          const taskInfo = await this.checkDocType("Task");
+          if (taskInfo.exists) {
+            console.log("🔄 Using Task DocType as fallback for count");
+            docTypeName = "Task";
+          }
+        }
+      }
+
+      const response = await this.makeRequest<{ message: number }>(
+        `/api/method/frappe.client.get_count?doctype=${docTypeName}`
+      );
+
+      const count = response.message || 0;
+      console.log(`✅ Retrieved total count: ${count} from DocType: ${docTypeName}`);
+
+      return count;
+    } catch (error) {
+      console.error("❌ Error fetching total ticket count:", error);
+      throw error;
+    }
+  }
+
+  // Get tickets with pagination support
+  async getTickets(limit?: number, offset?: number): Promise<FrappeTicket[]> {
     try {
       console.log("📋 Fetching tickets from Frappe...");
 
@@ -815,14 +858,23 @@ class FrappeApiService {
       const fieldsParam = `[${this.config.fields.map((field) => `"${field}"`).join(", ")}]`;
       const encodedFields = encodeURIComponent(fieldsParam);
 
+      // Build URL with pagination parameters
+      let url = `${this.config.endpoint}?fields=${encodedFields}`;
+      if (limit !== undefined) {
+        url += `&limit=${limit}`;
+      }
+      if (offset !== undefined) {
+        url += `&offset=${offset}`;
+      }
+
       const response = await this.makeRequest<
         FrappeListResponse<FrappeTicket>
-      >(`${this.config.endpoint}?fields=${encodedFields}`);
+      >(url);
 
       // Handle the response and ensure proper typing
       const tickets = response.data || [];
       console.log(
-        `✅ Retrieved ${tickets.length} tickets from Frappe`,
+        `✅ Retrieved ${tickets.length} tickets from Frappe${limit ? ` (limit: ${limit}, offset: ${offset || 0})` : ''}`,
       );
 
       // Clean up and normalize the data
