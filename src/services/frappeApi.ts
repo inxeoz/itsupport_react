@@ -1,4 +1,4 @@
-// Frappe API Configuration with API Token Only
+// Frappe API Configuration with Enhanced CSRF Token Handling
 export interface ApiConfig {
   baseUrl: string;
   token: string;
@@ -6,9 +6,19 @@ export interface ApiConfig {
   fields: string[];
   timeout: number;
   retries: number;
+  allowCookies: boolean;
+  customCookies: string;
+  // Enhanced auth options
+  username?: string;
+  password?: string;
+  apiKey?: string;
+  apiSecret?: string;
+  skipCSRF?: boolean; // Option to skip CSRF for API-only access
   // DocType validation options
   validateDocTypes?: boolean;
   fallbackMode?: boolean;
+  // CORS and Cookie options
+  forceCookies?: boolean; // Force cookies even for cross-origin (may cause SameSite issues)
 }
 
 import { API_TOKEN, BASE_URL } from "../env";
@@ -22,6 +32,7 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
     "amended_from",
     "ticket_id",
     "user_name",
+    "department",
     "contact_email",
     "contact_phone",
     "title",
@@ -47,6 +58,9 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
   ],
   timeout: 15000,
   retries: 3,
+  allowCookies: false, // Disable cookies by default for cross-origin requests
+  customCookies: "", // Remove custom cookies to avoid SameSite issues
+  skipCSRF: true, // Skip CSRF by default to avoid token issues
   validateDocTypes: true,
   fallbackMode: true,
 };
@@ -87,6 +101,18 @@ export interface FrappeListResponse<T> {
 
 export interface FrappeDocResponse<T> {
   data: T;
+}
+
+export interface FrappeAuthResponse {
+  message: string;
+  home_page?: string;
+  full_name?: string;
+  csrf_token?: string;
+  session_id?: string;
+}
+
+export interface FrappeCSRFResponse {
+  csrf_token: string;
 }
 
 export interface DocTypeInfo {
@@ -163,21 +189,93 @@ export interface BulkCreateResult {
   successfulTickets: FrappeTicket[];
 }
 
+// Enhanced CSRF Token Detection and Fetching
+export const extractCSRFToken = (): string | null => {
+  try {
+    // 1. Check meta tag (most common in Frappe)
+    const metaTag = document.querySelector(
+      'meta[name="csrf-token"]',
+    );
+    const metaToken = metaTag?.getAttribute("content");
+    if (metaToken) return metaToken;
+
+    // 2. Check Frappe global object
+    const frappeToken =
+      (window as any).frappe?.csrf_token ||
+      (window as any).csrf_token;
+    if (frappeToken) return frappeToken;
+
+    // 3. Check cookies
+    const cookies = document.cookie.split(";");
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split("=");
+      if (name === "csrf_token" || name === "csrftoken") {
+        return decodeURIComponent(value);
+      }
+    }
+
+    // 4. Check localStorage as fallback
+    const localStorageToken =
+      localStorage.getItem("csrf_token") ||
+      localStorage.getItem("frappe_csrf_token");
+    if (localStorageToken) return localStorageToken;
+
+    return null;
+  } catch (error) {
+    console.warn("Error extracting CSRF token:", error);
+    return null;
+  }
+};
+
 class FrappeApiService {
   private config: ApiConfig;
+  private csrfToken: string | null = null;
+  private sessionCookies: string | null = null;
+  private lastCSRFError: number = 0;
   private docTypeCache: Map<string, DocTypeInfo> = new Map();
   private systemInfo: SystemInfo | null = null;
+  private isCrossOrigin: boolean = false;
+  private hasShownCookieWarning: boolean = false;
 
   constructor(initialConfig: ApiConfig = DEFAULT_API_CONFIG) {
     this.config = { ...initialConfig };
+    this.checkCrossOrigin();
+  }
+
+  // Check if the request will be cross-origin
+  private checkCrossOrigin() {
+    try {
+      const currentOrigin = window.location.origin;
+      const apiUrl = new URL(this.config.baseUrl);
+      const apiOrigin = apiUrl.origin;
+      
+      this.isCrossOrigin = currentOrigin !== apiOrigin;
+      
+      if (this.isCrossOrigin) {
+        console.info(
+          `🌐 Cross-origin detected: ${currentOrigin} → ${apiOrigin}. Cookies will be disabled for SameSite compatibility.`
+        );
+      } else {
+        console.info(
+          `🏠 Same-origin detected: ${currentOrigin}. Cookies can be used if configured.`
+        );
+      }
+    } catch (error) {
+      console.warn("⚠️ Failed to determine origin, assuming cross-origin for safety:", error);
+      this.isCrossOrigin = true;
+    }
   }
 
   // Update configuration
   updateConfig(newConfig: ApiConfig) {
     this.config = { ...newConfig };
-    // Reset cache when config changes
+    // Reset tokens and cache when config changes
+    this.csrfToken = null;
+    this.sessionCookies = null;
     this.docTypeCache.clear();
     this.systemInfo = null;
+    // Re-check cross-origin status
+    this.checkCrossOrigin();
   }
 
   // Get current configuration
@@ -276,8 +374,8 @@ class FrappeApiService {
     console.log("🔍 Gathering system information...");
 
     // Define required and optional DocTypes
-    const requiredDocTypes = ["Ticket", "Issue", "Task"];
-    const optionalDocTypes = ["Department", "Employee", "User"];
+    const requiredDocTypes = ["Ticket"];
+    const fallbackDocTypes = ["Issue", "Task"];
     const docTypes: DocTypeInfo[] = [];
 
     // Check required DocTypes with full logging
@@ -286,8 +384,8 @@ class FrappeApiService {
       docTypes.push(info);
     }
 
-    // Check optional DocTypes silently
-    for (const docType of optionalDocTypes) {
+    // Check fallback DocTypes
+    for (const docType of fallbackDocTypes) {
       const info = await this.checkDocType(docType, true);
       docTypes.push(info);
     }
@@ -329,16 +427,8 @@ class FrappeApiService {
           "Consider using the Task DocType as an alternative endpoint.",
         );
       }
-    }
-
-    const departmentDocType = docTypes.find(
-      (dt) => dt.name === "Department",
-    );
-    if (!departmentDocType?.exists) {
-      // Only add this as an info message, not a warning
-      fallbacksAvailable.push(
-        "Department fields will be stored as plain text (Department DocType not available)",
-      );
+    } else {
+      console.log("✅ Ticket DocType is available and accessible");
     }
 
     this.systemInfo = {
@@ -354,23 +444,162 @@ class FrappeApiService {
     return this.systemInfo;
   }
 
-  private async getHeaders(): Promise<HeadersInit> {
-    return {
+  // Fetch CSRF token directly from Frappe server
+  private async fetchCSRFToken(): Promise<string | null> {
+    try {
+      console.log(
+        "🔄 Fetching CSRF token from Frappe server...",
+      );
+
+      const response = await fetch(
+        `${this.config.baseUrl}/api/method/frappe.sessions.get_csrf_token`,
+        {
+          method: "GET",
+          headers: {
+            Authorization: `token ${this.config.token}`,
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          credentials: "omit",
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const token = data.message || data.csrf_token;
+
+        if (token) {
+          console.log(
+            "✅ CSRF token fetched:",
+            token.substring(0, 8) + "...",
+          );
+          this.csrfToken = token;
+          localStorage.setItem("frappe_csrf_token", token);
+          return token;
+        }
+      }
+    } catch (error) {
+      console.warn("⚠️ Failed to fetch CSRF token:", error);
+    }
+
+    return null;
+  }
+
+  // Get CSRF token with multiple fallback methods
+  private async getCSRFToken(): Promise<string | null> {
+    // Skip CSRF if configured
+    if (this.config.skipCSRF) {
+      return null;
+    }
+
+    // 1. Try cached token
+    if (this.csrfToken) {
+      return this.csrfToken;
+    }
+
+    // 2. Try extracting from environment
+    const envToken = extractCSRFToken();
+    if (envToken) {
+      console.log(
+        "✅ CSRF token found from environment:",
+        envToken.substring(0, 8) + "...",
+      );
+      this.csrfToken = envToken;
+      return envToken;
+    }
+
+    // 3. Try fetching directly from server (if not in rate limit)
+    const now = Date.now();
+    if (now - this.lastCSRFError > 30000) {
+      // Wait 30 seconds between attempts
+      const fetchedToken = await this.fetchCSRFToken();
+      if (fetchedToken) {
+        return fetchedToken;
+      }
+      this.lastCSRFError = now;
+    }
+
+    console.warn(
+      "⚠️ No CSRF token available. Proceeding without CSRF protection.",
+    );
+    return null;
+  }
+
+  private async getHeaders(
+    includeCSRF: boolean = false,
+  ): Promise<HeadersInit> {
+    const headers: HeadersInit = {
       Authorization: `token ${this.config.token}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     };
+
+    // Handle cookie inclusion based on origin and configuration
+    const shouldIncludeCookies = (!this.isCrossOrigin || this.config.forceCookies) && 
+                                (this.sessionCookies || (this.config.allowCookies && this.config.customCookies));
+
+    if (shouldIncludeCookies) {
+      const cookies = [];
+
+      if (this.sessionCookies) {
+        cookies.push(this.sessionCookies);
+      }
+
+      if (
+        this.config.allowCookies &&
+        this.config.customCookies?.trim()
+      ) {
+        cookies.push(this.config.customCookies.trim());
+      }
+
+      if (cookies.length > 0) {
+        headers["Cookie"] = cookies.join("; ");
+        if (!this.isCrossOrigin) {
+          console.log("🍪 Including cookies for same-origin request");
+        } else {
+          console.warn("⚠️ Force-including cookies for cross-origin request (may cause SameSite issues)");
+        }
+      }
+    } else if (this.isCrossOrigin && (this.sessionCookies || this.config.customCookies)) {
+      // Only show this info message once per session to avoid spam
+      if (!this.hasShownCookieWarning) {
+        console.info("🚫 Skipping cookies for cross-origin request to avoid SameSite issues. Using Authorization token only.");
+        this.hasShownCookieWarning = true;
+      }
+    }
+
+    // Include CSRF token for POST/PUT/DELETE requests (only for same-origin)
+    if (includeCSRF && !this.config.skipCSRF && !this.isCrossOrigin) {
+      const csrfToken = await this.getCSRFToken();
+      if (csrfToken) {
+        headers["X-Frappe-CSRF-Token"] = csrfToken;
+        console.log(
+          "🛡️ Using CSRF token:",
+          csrfToken.substring(0, 8) + "...",
+        );
+      }
+    }
+
+    return headers;
   }
 
   private async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {},
     customConfig?: Partial<ApiConfig>,
+    skipCSRFRetry: boolean = false,
   ): Promise<T> {
     const config = customConfig
       ? { ...this.config, ...customConfig }
       : this.config;
     const url = `${config.baseUrl}${endpoint}`;
+
+    // Determine if we need CSRF token
+    const method = options.method || "GET";
+    const needsCSRF =
+      ["POST", "PUT", "DELETE", "PATCH"].includes(
+        method.toUpperCase(),
+      ) && !config.skipCSRF;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(
@@ -379,9 +608,9 @@ class FrappeApiService {
     );
 
     try {
-      const headers = await this.getHeaders();
+      const headers = await this.getHeaders(needsCSRF);
 
-      console.log(`📡 ${options.method || 'GET'} ${url}`);
+      console.log(`📡 ${method} ${url}`);
 
       const response = await fetch(url, {
         ...options,
@@ -390,7 +619,8 @@ class FrappeApiService {
           ...options.headers,
         },
         signal: controller.signal,
-        credentials: "omit", // Always omit cookies for API token usage
+        // Always omit credentials to ensure API token is used instead of cookies
+        credentials: "omit",
       });
 
       clearTimeout(timeoutId);
@@ -425,34 +655,6 @@ class FrappeApiService {
           // Ignore parsing errors
         }
 
-        // Handle specific Frappe errors
-        if (frappeError) {
-          if (
-            frappeError.includes("DocType") &&
-            frappeError.includes("not found")
-          ) {
-            const docTypeName = frappeError.match(
-              /DocType (\w+) not found/,
-            )?.[1];
-            if (docTypeName) {
-              // Don't throw errors for optional DocTypes like Department
-              if (["Department", "Employee", "User"].includes(docTypeName)) {
-                console.info(
-                  `ℹ️ Optional DocType '${docTypeName}' not found - this is expected and the application will work normally.`,
-                );
-                // Return a minimal response instead of throwing
-                return { data: [] } as T;
-              }
-              throw new Error(
-                `DocType '${docTypeName}' does not exist in your ERPNext instance. Please create the ${docTypeName} DocType or remove references to it.`,
-              );
-            }
-            throw new Error(
-              `DocType not found: ${frappeError}`,
-            );
-          }
-        }
-
         // Handle authentication errors
         if (response.status === 401) {
           throw new Error(
@@ -472,6 +674,7 @@ class FrappeApiService {
               "The Ticket DocType does not exist in your ERPNext instance. Please create the Ticket DocType first, or use an alternative DocType like Issue or Task.",
             );
           }
+          
           throw new Error(
             `Resource not found: ${endpoint}. Please check if the required DocTypes exist in your ERPNext instance.`,
           );
@@ -540,6 +743,7 @@ class FrappeApiService {
           "/api/method/ping",
           { method: "GET" },
           config,
+          true,
         );
 
         // If basic connection works, get system info
@@ -583,6 +787,7 @@ class FrappeApiService {
               "Check if your Frappe server is running and accessible",
               "Verify your API token is correct and has proper permissions",
               "Ensure the required DocTypes exist in your ERPNext instance",
+              "Check if CORS is properly configured for cross-origin requests",
             ],
           };
         }
@@ -648,10 +853,12 @@ class FrappeApiService {
   // Get tickets with pagination support
   async getTickets(limit?: number, offset?: number): Promise<FrappeTicket[]> {
     try {
-      console.log("📋 Fetching tickets from Frappe...");
+      console.log(`📋 Fetching tickets from Frappe (limit: ${limit || 'all'}, offset: ${offset || 0})...`);
 
       // First check if Ticket DocType exists (required check, not silent)
       const ticketInfo = await this.checkDocType("Ticket", false);
+      let endpoint = this.config.endpoint;
+      
       if (!ticketInfo.exists && this.config.fallbackMode) {
         console.warn(
           "⚠️ Ticket DocType not found, checking alternatives...",
@@ -661,506 +868,268 @@ class FrappeApiService {
         const issueInfo = await this.checkDocType("Issue", false);
         if (issueInfo.exists) {
           console.log("🔄 Using Issue DocType as fallback");
-          this.config.endpoint = "/api/resource/Issue";
+          endpoint = "/api/resource/Issue";
         } else {
           // Try Task DocType as fallback
           const taskInfo = await this.checkDocType("Task", false);
           if (taskInfo.exists) {
             console.log("🔄 Using Task DocType as fallback");
-            this.config.endpoint = "/api/resource/Task";
+            endpoint = "/api/resource/Task";
           }
         }
       }
 
-      // Build fields parameter from configuration
-      const fieldsParam = `[${this.config.fields.map((field) => `"${field}"`).join(", ")}]`;
-      const encodedFields = encodeURIComponent(fieldsParam);
-
-      // Build URL with pagination parameters
-      let url = `${this.config.endpoint}?fields=${encodedFields}`;
-      if (limit !== undefined) {
-        url += `&limit=${limit}`;
+      // Build pagination parameters
+      const params = new URLSearchParams();
+      
+      // Add fields parameter as JSON array string (required by Frappe)
+      if (this.config.fields && this.config.fields.length > 0) {
+        const fieldsJson = JSON.stringify(this.config.fields);
+        params.append('fields', fieldsJson);
+        console.log(`🔧 Fields parameter: ${fieldsJson}`);
       }
-      if (offset !== undefined) {
-        url += `&offset=${offset}`;
+      
+      // Add pagination parameters if provided
+      if (limit) {
+        params.append('limit_page_length', limit.toString());
       }
+      if (offset) {
+        params.append('limit_start', offset.toString());
+      }
+      
+      // Add ordering to ensure consistent pagination
+      params.append('order_by', 'creation desc');
 
-      const response = await this.makeRequest<
-        FrappeListResponse<FrappeTicket>
-      >(url);
+      const url = `${endpoint}?${params.toString()}`;
+      console.log(`🔗 Request URL: ${url}`);
 
-      // Handle the response and ensure proper typing
+      const response = await this.makeRequest<FrappeListResponse<FrappeTicket>>(url);
+
       const tickets = response.data || [];
-      console.log(
-        `✅ Retrieved ${tickets.length} tickets from Frappe${limit ? ` (limit: ${limit}, offset: ${offset || 0})` : ''}`,
-      );
+      console.log(`✅ Retrieved ${tickets.length} tickets (batch: ${offset || 0}-${(offset || 0) + tickets.length})`);
 
-      // Clean up and normalize the data
-      return tickets.map((ticket) => ({
-        name: ticket.name || "Unknown",
-        amended_from: ticket.amended_from || null,
-        ticket_id: ticket.ticket_id || null,
-        user_name: ticket.user_name || null,
-        department: ticket.department || null,
-        contact_email: ticket.contact_email || null,
-        contact_phone: ticket.contact_phone || null,
-        title: ticket.title || null,
-        description: ticket.description || null,
-        category: ticket.category || null,
-        subcategory: ticket.subcategory || null,
-        priority: ticket.priority || null,
-        impact: ticket.impact || null,
-        status: ticket.status || null,
-        assignee: ticket.assignee || null,
-        created_datetime: ticket.created_datetime || null,
-        due_datetime: ticket.due_datetime || null,
-        resolution_datetime: ticket.resolution_datetime || null,
-        resolution_summary: ticket.resolution_summary || null,
-        root_cause: ticket.root_cause || null,
-        requester_confirmation:
-          ticket.requester_confirmation || null,
-        time_spent: ticket.time_spent || null,
-        attachments: ticket.attachments || null,
-        tags: ticket.tags || null,
-        creation: ticket.creation || null,
-        modified: ticket.modified || null,
-        docstatus: ticket.docstatus ?? 0,
-      }));
+      return tickets;
     } catch (error) {
       console.error("❌ Error fetching tickets:", error);
       throw error;
     }
   }
 
-  // Sanitize ticket data to remove fields that reference non-existent DocTypes
-  private async sanitizeTicketData(
-    ticket: Partial<FrappeTicket>,
-  ): Promise<Partial<FrappeTicket>> {
-    const sanitizedTicket = { ...ticket };
-
-    // Check if Department DocType exists (silent check) - only log once per session
-    const departmentInfo =
-      await this.checkDocType("Department", true);
-    if (!departmentInfo.exists) {
-      // Keep the department field as it will be treated as plain text
-      // No need to log this repeatedly since it's expected behavior
-    }
-
-    // Remove any null or undefined values that might cause issues
-    Object.keys(sanitizedTicket).forEach((key) => {
-      const value = sanitizedTicket[key as keyof FrappeTicket];
-      if (value === undefined) {
-        delete sanitizedTicket[key as keyof FrappeTicket];
-      }
-    });
-
-    return sanitizedTicket;
-  }
-
-  // Create a new ticket with enhanced logging and DocType validation
-  async createTicket(
-    ticket: Partial<FrappeTicket>,
-  ): Promise<FrappeTicket> {
+  // Create a new ticket
+  async createTicket(ticketData: Partial<FrappeTicket>): Promise<FrappeTicket> {
     try {
-      console.log("📝 Creating ticket with data:", ticket);
+      console.log("📝 Creating new ticket...");
 
-      // Sanitize ticket data first
-      const sanitizedTicket =
-        await this.sanitizeTicketData(ticket);
-      console.log("🧹 Sanitized ticket data:", sanitizedTicket);
-
-      // Check if the primary endpoint exists
-      const ticketInfo = await this.checkDocType("Ticket");
-      let endpoint = this.config.endpoint;
-
-      if (!ticketInfo.exists && this.config.fallbackMode) {
-        console.warn(
-          "⚠️ Ticket DocType not found, trying alternatives...",
-        );
-
-        // Try Issue DocType as fallback
-        const issueInfo = await this.checkDocType("Issue");
-        if (issueInfo.exists) {
-          console.log("🔄 Using Issue DocType as fallback");
-          endpoint = "/api/resource/Issue";
-        } else {
-          // Try Task DocType as fallback
-          const taskInfo = await this.checkDocType("Task");
-          if (taskInfo.exists) {
-            console.log("🔄 Using Task DocType as fallback");
-            endpoint = "/api/resource/Task";
-          } else {
-            throw new Error(
-              "No suitable DocType found. Please create a Ticket, Issue, or Task DocType in your ERPNext instance.",
-            );
-          }
+      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
+        this.config.endpoint,
+        {
+          method: "POST",
+          body: JSON.stringify(ticketData),
         }
-      }
-
-      const requestBody = {
-        title: sanitizedTicket.title || "New Ticket",
-        user_name: sanitizedTicket.user_name || "Unknown User",
-        description:
-          sanitizedTicket.description || "No description",
-        category: sanitizedTicket.category || "Other",
-        priority: sanitizedTicket.priority || "Medium",
-        impact: sanitizedTicket.impact || "Single User",
-        status: sanitizedTicket.status || "New",
-        contact_email: sanitizedTicket.contact_email || null,
-        contact_phone: sanitizedTicket.contact_phone || null,
-        subcategory: sanitizedTicket.subcategory || null,
-        assignee: sanitizedTicket.assignee || null,
-        due_datetime: sanitizedTicket.due_datetime || null,
-        tags: sanitizedTicket.tags || null,
-        docstatus: sanitizedTicket.docstatus ?? 0,
-        // Only include department if it exists in sanitized data
-        ...(sanitizedTicket.department && {
-          department: sanitizedTicket.department,
-        }),
-      };
-
-      console.log("📤 Request body:", requestBody);
-      console.log("🎯 Using endpoint:", endpoint);
-
-      const response = await this.makeRequest<
-        FrappeDocResponse<FrappeTicket>
-      >(endpoint, {
-        method: "POST",
-        body: JSON.stringify(requestBody),
-      });
-
-      console.log(
-        "✅ Ticket created successfully:",
-        response.data,
       );
+
+      console.log("✅ Ticket created successfully:", response.data.name);
       return response.data;
     } catch (error) {
       console.error("❌ Error creating ticket:", error);
-
-      // Provide more specific error messages
-      if (error instanceof Error) {
-        if (
-          error.message.includes("DocType") &&
-          error.message.includes("not found")
-        ) {
-          throw new Error(
-            "DocType missing: " +
-              error.message +
-              " Please create the required DocTypes in your ERPNext instance or enable fallback mode.",
-          );
-        } else if (error.message.includes("CSRF")) {
-          throw new Error(
-            "CSRF token error. Try refreshing the page or contact your administrator.",
-          );
-        } else if (error.message.includes("403")) {
-          throw new Error(
-            "Permission denied. Your API credentials don't have permission to create tickets.",
-          );
-        } else if (error.message.includes("401")) {
-          throw new Error(
-            "Authentication failed. Please check your API token.",
-          );
-        } else if (error.message.includes("400")) {
-          throw new Error(
-            "Bad request. Please check the ticket data format and ensure all required DocTypes exist.",
-          );
-        }
-      }
-
       throw error;
     }
   }
 
-  // NEW: Create tickets in bulk using the single createTicket method
-  async create_ticket_in_bulk(
-    tickets: Partial<FrappeTicket>[],
-    config: BulkCreateConfig = {},
+  // Submit a ticket (change docstatus from 0 to 1)
+  async submitTicket(ticketName: string): Promise<FrappeTicket> {
+    try {
+      console.log(`📤 Submitting ticket: ${ticketName}`);
+
+      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
+        `${this.config.endpoint}/${ticketName}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ docstatus: 1 }),
+        }
+      );
+
+      console.log("✅ Ticket submitted successfully:", ticketName);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Error submitting ticket:", error);
+      throw error;
+    }
+  }
+
+  // Cancel a ticket (change docstatus to 2)
+  async cancelTicket(ticketName: string): Promise<FrappeTicket> {
+    try {
+      console.log(`❌ Cancelling ticket: ${ticketName}`);
+
+      const response = await this.makeRequest<FrappeDocResponse<FrappeTicket>>(
+        `${this.config.endpoint}/${ticketName}`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ docstatus: 2 }),
+        }
+      );
+
+      console.log("✅ Ticket cancelled successfully:", ticketName);
+      return response.data;
+    } catch (error) {
+      console.error("❌ Error cancelling ticket:", error);
+      throw error;
+    }
+  }
+
+  // Bulk create tickets with progress tracking
+  async bulkCreateTickets(
+    ticketsData: Partial<FrappeTicket>[],
+    config?: BulkCreateConfig
   ): Promise<BulkCreateResult> {
+    const defaultConfig: BulkCreateConfig = {
+      batchSize: 5,
+      delayBetweenRequests: 200,
+      delayBetweenBatches: 1000,
+      stopOnError: false,
+      maxRetries: 2,
+    };
+
+    const finalConfig = { ...defaultConfig, ...config };
     const startTime = new Date();
-    console.log(
-      `🚀 Starting bulk ticket creation for ${tickets.length} tickets`,
-    );
-
-    // Get system info first to understand what's available
-    const systemInfo = await this.getSystemInfo();
-    console.log(
-      "📊 System analysis for bulk creation:",
-      systemInfo,
-    );
-
-    // Default configuration
-    const {
-      batchSize = 5,
-      delayBetweenRequests = 2000,
-      delayBetweenBatches = 3000,
-      stopOnError = false,
-      maxRetries = 3,
-      onProgress,
-      onBatchComplete,
-    } = config;
-
-    // Initialize tracking variables
     const results: BulkCreateTicketResult[] = [];
     const batchResults: BulkCreateBatchResult[] = [];
     const errors: string[] = [];
-    const successfulTickets: FrappeTicket[] = [];
-    let totalCompleted = 0;
-    let totalFailed = 0;
+    let completed = 0;
+    let failed = 0;
     let totalRetries = 0;
 
-    const totalBatches = Math.ceil(tickets.length / batchSize);
+    console.log(`🚀 Starting bulk creation of ${ticketsData.length} tickets...`);
 
-    // Helper function to delay execution
-    const delay = (ms: number) =>
-      new Promise((resolve) => setTimeout(resolve, ms));
+    // Calculate batches
+    const totalBatches = Math.ceil(ticketsData.length / finalConfig.batchSize!);
 
-    // Helper function to calculate estimated time remaining
-    const calculateETA = (
-      completed: number,
-      total: number,
-      elapsed: number,
-    ): number => {
-      if (completed === 0) return 0;
-      const avgTimePerTicket = elapsed / completed;
-      const remaining = total - completed;
-      return Math.round((remaining * avgTimePerTicket) / 1000); // Return in seconds
-    };
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      const batchStart = batchIndex * finalConfig.batchSize!;
+      const batchEnd = Math.min(batchStart + finalConfig.batchSize!, ticketsData.length);
+      const batchData = ticketsData.slice(batchStart, batchEnd);
 
-    // Helper function to create a single ticket with retry logic
-    const createTicketWithRetry = async (
-      ticketData: Partial<FrappeTicket>,
-      index: number,
-      maxAttempts: number = maxRetries,
-    ): Promise<BulkCreateTicketResult> => {
-      let lastError: Error | null = null;
+      console.log(`📦 Processing batch ${batchIndex + 1}/${totalBatches} (${batchData.length} tickets)`);
 
-      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-        try {
-          console.log(
-            `📝 Creating ticket ${index + 1}/${tickets.length} (attempt ${attempt}/${maxAttempts})`,
-          );
-
-          const createdTicket =
-            await this.createTicket(ticketData);
-
-          return {
-            index,
-            success: true,
-            ticket: createdTicket,
-            originalData: ticketData,
-            attempts: attempt,
-          };
-        } catch (error) {
-          lastError =
-            error instanceof Error
-              ? error
-              : new Error("Unknown error");
-          console.error(
-            `❌ Attempt ${attempt} failed for ticket ${index + 1}:`,
-            lastError.message,
-          );
-
-          // If it's a DocType error and we have system info, stop retrying
-          if (
-            lastError.message.includes("DocType") &&
-            lastError.message.includes("not found")
-          ) {
-            console.error(
-              "🛑 DocType error detected, stopping retries for this ticket",
-            );
-            break;
-          }
-
-          if (attempt < maxAttempts) {
-            // Exponential backoff: 2s, 4s, 8s
-            const retryDelay = Math.pow(2, attempt) * 1000;
-            console.log(`⏳ Retrying in ${retryDelay}ms...`);
-            await delay(retryDelay);
-            totalRetries++;
-          }
-        }
-      }
-
-      // All attempts failed
-      return {
-        index,
-        success: false,
-        error: lastError?.message || "Unknown error",
-        originalData: ticketData,
-        attempts: maxAttempts,
+      const batchResult: BulkCreateBatchResult = {
+        batchIndex,
+        batchStart,
+        batchEnd,
+        results: [],
+        completed: 0,
+        failed: 0,
       };
-    };
 
-    try {
-      // Process tickets in batches
-      for (
-        let batchIndex = 0;
-        batchIndex < totalBatches;
-        batchIndex++
-      ) {
-        const batchStart = batchIndex * batchSize;
-        const batchEnd = Math.min(
-          batchStart + batchSize,
-          tickets.length,
-        );
-        const batchTickets = tickets.slice(
-          batchStart,
-          batchEnd,
-        );
+      // Process tickets in current batch
+      for (let i = 0; i < batchData.length; i++) {
+        const ticketIndex = batchStart + i;
+        const ticketData = batchData[i];
+        let attempts = 0;
+        let success = false;
+        let ticket: FrappeTicket | undefined;
+        let error: string | undefined;
 
-        console.log(
-          `🔄 Processing batch ${batchIndex + 1}/${totalBatches}: tickets ${batchStart + 1}-${batchEnd}`,
-        );
+        // Update progress
+        if (finalConfig.onProgress) {
+          const estimatedTimeRemaining = completed > 0 
+            ? ((Date.now() - startTime.getTime()) / completed) * (ticketsData.length - completed - 1)
+            : undefined;
 
-        const batchResults_current: BulkCreateTicketResult[] =
-          [];
-        let batchCompleted = 0;
-        let batchFailed = 0;
+          finalConfig.onProgress({
+            total: ticketsData.length,
+            completed,
+            failed,
+            currentBatch: batchIndex + 1,
+            totalBatches,
+            currentTicketIndex: ticketIndex,
+            currentTicketTitle: ticketData.title || `Ticket ${ticketIndex + 1}`,
+            retries: totalRetries,
+            startTime,
+            estimatedTimeRemaining,
+          });
+        }
 
-        // Process each ticket in the current batch
-        for (let i = 0; i < batchTickets.length; i++) {
-          const globalIndex = batchStart + i;
-          const ticketData = batchTickets[i];
-
-          // Update progress
-          if (onProgress) {
-            const elapsed = Date.now() - startTime.getTime();
-            const progress: BulkCreateProgress = {
-              total: tickets.length,
-              completed: totalCompleted,
-              failed: totalFailed,
-              currentBatch: batchIndex + 1,
-              totalBatches,
-              currentTicketIndex: globalIndex + 1,
-              currentTicketTitle: ticketData.title,
-              retries: totalRetries,
-              startTime,
-              estimatedTimeRemaining: calculateETA(
-                totalCompleted + totalFailed,
-                tickets.length,
-                elapsed,
-              ),
-            };
-            onProgress(progress);
-          }
-
-          // Create the ticket with retry logic
-          const result = await createTicketWithRetry(
-            ticketData,
-            globalIndex,
-          );
-
-          batchResults_current.push(result);
-          results.push(result);
-
-          if (result.success) {
-            totalCompleted++;
-            batchCompleted++;
-            if (result.ticket) {
-              successfulTickets.push(result.ticket);
-            }
-            console.log(
-              `✅ Ticket ${globalIndex + 1} created successfully`,
-            );
-          } else {
-            totalFailed++;
-            batchFailed++;
-            if (result.error) {
-              errors.push(
-                `Ticket ${globalIndex + 1}: ${result.error}`,
-              );
-            }
-            console.error(
-              `❌ Ticket ${globalIndex + 1} failed: ${result.error}`,
-            );
-
-            // Stop on error if configured
-            if (stopOnError) {
-              console.warn(
-                "🛑 Stopping bulk creation due to error (stopOnError = true)",
-              );
-              break;
+        // Retry logic
+        while (attempts <= finalConfig.maxRetries! && !success) {
+          attempts++;
+          
+          try {
+            ticket = await this.createTicket(ticketData);
+            success = true;
+            completed++;
+            batchResult.completed++;
+          } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+            error = errorMessage;
+            
+            if (attempts <= finalConfig.maxRetries!) {
+              totalRetries++;
+              console.warn(`⚠️ Retry ${attempts}/${finalConfig.maxRetries!} for ticket ${ticketIndex + 1}: ${errorMessage}`);
+              
+              // Wait before retry
+              await new Promise(resolve => setTimeout(resolve, finalConfig.delayBetweenRequests!));
+            } else {
+              failed++;
+              batchResult.failed++;
+              errors.push(`Ticket ${ticketIndex + 1}: ${errorMessage}`);
+              console.error(`❌ Failed to create ticket ${ticketIndex + 1} after ${finalConfig.maxRetries!} retries: ${errorMessage}`);
+              
+              if (finalConfig.stopOnError) {
+                console.log("🛑 Stopping bulk creation due to error");
+                break;
+              }
             }
           }
-
-          // Add delay between requests (except for the last ticket in batch)
-          if (i < batchTickets.length - 1) {
-            console.log(
-              `⏳ Waiting ${delayBetweenRequests}ms before next request...`,
-            );
-            await delay(delayBetweenRequests);
+          
+          // Delay between requests (except for retries)
+          if (attempts === 1 && i < batchData.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, finalConfig.delayBetweenRequests!));
           }
         }
 
-        // Store batch results
-        const batchResult: BulkCreateBatchResult = {
-          batchIndex,
-          batchStart,
-          batchEnd: batchEnd - 1,
-          results: batchResults_current,
-          completed: batchCompleted,
-          failed: batchFailed,
+        const ticketResult: BulkCreateTicketResult = {
+          index: ticketIndex,
+          success,
+          ticket,
+          error,
+          originalData: ticketData,
+          attempts,
         };
-        batchResults.push(batchResult);
 
-        // Call batch completion callback
-        if (onBatchComplete) {
-          onBatchComplete(batchResult);
-        }
+        results.push(ticketResult);
+        batchResult.results.push(ticketResult);
 
-        console.log(
-          `✅ Batch ${batchIndex + 1} completed: ${batchCompleted} success, ${batchFailed} failed`,
-        );
-
-        // Stop processing if stopOnError is true and we have failures
-        if (stopOnError && batchFailed > 0) {
+        if (finalConfig.stopOnError && !success) {
           break;
         }
-
-        // Add delay between batches (except for the last batch)
-        if (batchIndex < totalBatches - 1) {
-          console.log(
-            `⏳ Waiting ${delayBetweenBatches}ms before next batch...`,
-          );
-          await delay(delayBetweenBatches);
-        }
       }
-    } catch (error) {
-      console.error(
-        "💥 Critical error during bulk creation:",
-        error,
-      );
-      errors.push(
-        `Critical error: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+
+      batchResults.push(batchResult);
+
+      // Call batch completion callback
+      if (finalConfig.onBatchComplete) {
+        finalConfig.onBatchComplete(batchResult);
+      }
+
+      // Delay between batches (except for the last batch)
+      if (batchIndex < totalBatches - 1) {
+        await new Promise(resolve => setTimeout(resolve, finalConfig.delayBetweenBatches!));
+      }
+
+      if (finalConfig.stopOnError && batchResult.failed > 0) {
+        break;
+      }
     }
 
-    const endTime = new Date();
-    const duration = Math.round(
-      (endTime.getTime() - startTime.getTime()) / 1000,
-    );
-
-    // Final progress update
-    if (onProgress) {
-      const finalProgress: BulkCreateProgress = {
-        total: tickets.length,
-        completed: totalCompleted,
-        failed: totalFailed,
-        currentBatch: totalBatches,
-        totalBatches,
-        currentTicketIndex: tickets.length,
-        retries: totalRetries,
-        startTime,
-        estimatedTimeRemaining: 0,
-      };
-      onProgress(finalProgress);
-    }
+    const duration = Date.now() - startTime.getTime();
+    const successfulTickets = results.filter(r => r.success).map(r => r.ticket!);
 
     const finalResult: BulkCreateResult = {
-      success: totalFailed === 0,
-      total: tickets.length,
-      completed: totalCompleted,
-      failed: totalFailed,
+      success: failed === 0,
+      total: ticketsData.length,
+      completed,
+      failed,
       retries: totalRetries,
       duration,
       results,
@@ -1169,182 +1138,184 @@ class FrappeApiService {
       successfulTickets,
     };
 
-    console.log(`🏁 Bulk creation completed:`, {
-      total: tickets.length,
-      completed: totalCompleted,
-      failed: totalFailed,
-      retries: totalRetries,
-      duration: `${duration}s`,
-      successRate: `${Math.round((totalCompleted / tickets.length) * 100)}%`,
-    });
+    console.log(`🎯 Bulk creation completed: ${completed}/${ticketsData.length} successful, ${failed} failed, ${totalRetries} retries, ${duration}ms total`);
 
     return finalResult;
   }
-
-  // Update a ticket
-  async updateTicket(
-    ticketId: string,
-    updates: Partial<FrappeTicket>,
-  ): Promise<FrappeTicket> {
-    try {
-      console.log(
-        `📝 Updating ticket ${ticketId} with:`,
-        updates,
-      );
-
-      // Sanitize updates first
-      const sanitizedUpdates =
-        await this.sanitizeTicketData(updates);
-
-      const response = await this.makeRequest<
-        FrappeDocResponse<FrappeTicket>
-      >(`${this.config.endpoint}/${ticketId}`, {
-        method: "PUT",
-        body: JSON.stringify(sanitizedUpdates),
-      });
-
-      console.log(`✅ Ticket ${ticketId} updated successfully`);
-      return response.data;
-    } catch (error) {
-      console.error(
-        `❌ Error updating ticket ${ticketId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  // Delete a ticket
-  async deleteTicket(ticketId: string): Promise<void> {
-    try {
-      console.log(`🗑️ Deleting ticket ${ticketId}`);
-
-      await this.makeRequest<void>(
-        `${this.config.endpoint}/${ticketId}`,
-        {
-          method: "DELETE",
-        },
-      );
-
-      console.log(`✅ Ticket ${ticketId} deleted successfully`);
-    } catch (error) {
-      console.error(
-        `❌ Error deleting ticket ${ticketId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  // Submit a ticket (change docstatus to 1)
-  async submitTicket(ticketId: string): Promise<FrappeTicket> {
-    try {
-      const response = await this.makeRequest<
-        FrappeDocResponse<FrappeTicket>
-      >(`${this.config.endpoint}/${ticketId}`, {
-        method: "PUT",
-        body: JSON.stringify({ docstatus: 1 }),
-      });
-      return response.data;
-    } catch (error) {
-      console.error(
-        `❌ Error submitting ticket ${ticketId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  // Cancel a ticket (change docstatus to 2)
-  async cancelTicket(ticketId: string): Promise<FrappeTicket> {
-    try {
-      const response = await this.makeRequest<
-        FrappeDocResponse<FrappeTicket>
-      >(`${this.config.endpoint}/${ticketId}`, {
-        method: "PUT",
-        body: JSON.stringify({ docstatus: 2 }),
-      });
-      return response.data;
-    } catch (error) {
-      console.error(
-        `❌ Error cancelling ticket ${ticketId}:`,
-        error,
-      );
-      throw error;
-    }
-  }
-
-  // Get comprehensive debug information
-  getDebugInfo() {
-    return {
-      config: {
-        baseUrl: this.config.baseUrl,
-        endpoint: this.config.endpoint,
-        hasToken: !!this.config.token,
-        tokenPreview: this.config.token
-          ? this.config.token.substring(0, 10) + "..."
-          : "None",
-        timeout: this.config.timeout,
-        validateDocTypes: this.config.validateDocTypes,
-        fallbackMode: this.config.fallbackMode,
-      },
-      docTypes: Object.fromEntries(this.docTypeCache),
-      systemInfo: this.systemInfo,
-      environment: {
-        userAgent:
-          typeof navigator !== "undefined"
-            ? navigator.userAgent
-            : "N/A",
-        url:
-          typeof window !== "undefined"
-            ? window.location.href
-            : "N/A",
-        timestamp: new Date().toISOString(),
-      },
-    };
-  }
-
-  // Clear all cached data
-  clearSession() {
-    this.docTypeCache.clear();
-    this.systemInfo = null;
-    console.log("🧹 Cache cleared");
-  }
 }
 
-// Export singleton instance
+// Create and export the singleton instance
 export const frappeApi = new FrappeApiService();
 
-// Export comprehensive mock data (unchanged from original)
+// Mock data for testing/demo purposes
 export const mockTickets: FrappeTicket[] = [
   {
-    name: "TICK-2025-001",
-    ticket_id: "TKT-001-2025",
-    title: "Unable to Access Customer Portal",
-    user_name: "Alice Johnson",
-    department: "Sales",
-    contact_email: "alice.johnson@company.com",
-    contact_phone: "+1-555-0101",
-    description:
-      "Customer cannot log into the portal after password reset. Getting 'Account temporarily locked' message even with correct credentials. This is affecting their ability to view order history and make new purchases.",
-    category: "Software",
-    subcategory: "Authentication",
+    name: "TICK-001",
+    ticket_id: "TICK-001",
+    user_name: "John Doe",
+    department: "IT",
+    contact_email: "john.doe@company.com",
+    contact_phone: "+1-555-0123",
+    title: "Computer won't start",
+    description: "My computer won't turn on after the weekend. The power button doesn't respond.",
+    category: "Hardware",
+    subcategory: "Desktop",
     priority: "High",
-    impact: "Multiple Users",
+    impact: "Single User",
     status: "New",
-    assignee: "tech.support@company.com",
-    created_datetime: "2025-01-15 09:30:00.000000",
-    due_datetime: "2025-01-16 17:00:00.000000",
+    assignee: "Tech Support",
+    created_datetime: "2024-01-15T09:30:00Z",
+    due_datetime: "2024-01-16T17:00:00Z",
     resolution_datetime: null,
     resolution_summary: null,
     root_cause: null,
     requester_confirmation: null,
     time_spent: null,
     attachments: null,
-    tags: "authentication,portal,access",
-    creation: "2025-01-15 09:30:00.000000",
-    modified: "2025-01-15 14:45:00.000000",
+    tags: "hardware,desktop,urgent",
+    creation: "2024-01-15T09:30:00Z",
+    modified: "2024-01-15T09:30:00Z",
     docstatus: 0,
   },
-  // ... (rest of mock tickets remain the same)
+  {
+    name: "TICK-002",
+    ticket_id: "TICK-002", 
+    user_name: "Jane Smith",
+    department: "Marketing",
+    contact_email: "jane.smith@company.com",
+    contact_phone: "+1-555-0124",
+    title: "Email not syncing",
+    description: "My Outlook email hasn't been syncing since yesterday. I'm missing important client emails.",
+    category: "Software",
+    subcategory: "Email",
+    priority: "Medium",
+    impact: "Single User",
+    status: "In Progress",
+    assignee: "Email Admin",
+    created_datetime: "2024-01-15T10:15:00Z",
+    due_datetime: "2024-01-17T17:00:00Z",
+    resolution_datetime: null,
+    resolution_summary: null,
+    root_cause: null,
+    requester_confirmation: null,
+    time_spent: 45,
+    attachments: null,
+    tags: "software,email,outlook",
+    creation: "2024-01-15T10:15:00Z",
+    modified: "2024-01-15T11:30:00Z", 
+    docstatus: 0,
+  },
+  {
+    name: "TICK-003",
+    ticket_id: "TICK-003",
+    user_name: "Mike Johnson",
+    department: "Finance",
+    contact_email: "mike.johnson@company.com",
+    contact_phone: "+1-555-0125",
+    title: "VPN connection issues",
+    description: "Cannot connect to company VPN from home. Getting authentication errors.",
+    category: "Network",
+    subcategory: "VPN",
+    priority: "High",
+    impact: "Single User",
+    status: "Resolved",
+    assignee: "Network Team",
+    created_datetime: "2024-01-14T14:20:00Z",
+    due_datetime: "2024-01-15T17:00:00Z",
+    resolution_datetime: "2024-01-15T16:45:00Z",
+    resolution_summary: "Reset VPN credentials and updated client configuration",
+    root_cause: "Expired VPN certificate",
+    requester_confirmation: "Yes",
+    time_spent: 120,
+    attachments: null,
+    tags: "network,vpn,remote-access",
+    creation: "2024-01-14T14:20:00Z",
+    modified: "2024-01-15T16:45:00Z",
+    docstatus: 1,
+  },
+  {
+    name: "TICK-004",
+    ticket_id: "TICK-004",
+    user_name: "Sarah Wilson", 
+    department: "HR",
+    contact_email: "sarah.wilson@company.com",
+    contact_phone: "+1-555-0126",
+    title: "Printer not working",
+    description: "Office printer is showing paper jam error but there's no paper stuck.",
+    category: "Hardware",
+    subcategory: "Printer",
+    priority: "Low",
+    impact: "Multiple Users",
+    status: "New",
+    assignee: null,
+    created_datetime: "2024-01-15T13:45:00Z",
+    due_datetime: "2024-01-18T17:00:00Z",
+    resolution_datetime: null,
+    resolution_summary: null,
+    root_cause: null,
+    requester_confirmation: null,
+    time_spent: null,
+    attachments: null,
+    tags: "hardware,printer,paper-jam",
+    creation: "2024-01-15T13:45:00Z",
+    modified: "2024-01-15T13:45:00Z",
+    docstatus: 0,
+  },
+  {
+    name: "TICK-005",
+    ticket_id: "TICK-005",
+    user_name: "David Brown",
+    department: "Sales", 
+    contact_email: "david.brown@company.com",
+    contact_phone: "+1-555-0127",
+    title: "Software license expired",
+    description: "Adobe Creative Suite license has expired and I need it for client presentations.",
+    category: "Software",
+    subcategory: "Licensing",
+    priority: "Critical",
+    impact: "Single User",
+    status: "In Progress",
+    assignee: "License Manager",
+    created_datetime: "2024-01-15T08:00:00Z",
+    due_datetime: "2024-01-15T12:00:00Z",
+    resolution_datetime: null,
+    resolution_summary: null,
+    root_cause: null,
+    requester_confirmation: null,
+    time_spent: 30,
+    attachments: null,
+    tags: "software,license,adobe,critical",
+    creation: "2024-01-15T08:00:00Z",
+    modified: "2024-01-15T09:15:00Z",
+    docstatus: 0,
+  },
+  // Additional mock tickets for testing pagination
+  ...Array.from({ length: 45 }, (_, i) => ({
+    name: `TICK-${String(i + 6).padStart(3, '0')}`,
+    ticket_id: `TICK-${String(i + 6).padStart(3, '0')}`,
+    user_name: `User ${i + 6}`,
+    department: ["IT", "Marketing", "Finance", "HR", "Sales"][i % 5],
+    contact_email: `user${i + 6}@company.com`,
+    contact_phone: `+1-555-${String(i + 128).padStart(4, '0')}`,
+    title: `Sample ticket ${i + 6}`,
+    description: `This is a sample ticket description for testing purposes ${i + 6}`,
+    category: ["Hardware", "Software", "Network", "Access Request", "Other"][i % 5],
+    subcategory: ["Desktop", "Laptop", "Server", "Email", "Database", "VPN"][i % 6],
+    priority: ["Low", "Medium", "High", "Critical"][i % 4],
+    impact: ["Single User", "Multiple Users", "Entire Department", "Organization-wide"][i % 4],
+    status: ["New", "In Progress", "Waiting for Info", "Resolved", "Closed"][i % 5],
+    assignee: i % 3 === 0 ? null : `Assignee ${(i % 5) + 1}`,
+    created_datetime: new Date(Date.now() - (i * 86400000)).toISOString(),
+    due_datetime: new Date(Date.now() + ((7 - i % 7) * 86400000)).toISOString(),
+    resolution_datetime: i % 5 === 3 ? new Date(Date.now() - ((i % 3) * 86400000)).toISOString() : null,
+    resolution_summary: i % 5 === 3 ? `Resolved issue ${i + 6}` : null,
+    root_cause: i % 5 === 3 ? `Root cause ${i + 6}` : null,
+    requester_confirmation: i % 5 === 3 ? ["Yes", "No"][i % 2] : null,
+    time_spent: i % 3 === 0 ? null : (i % 120) + 30,
+    attachments: null,
+    tags: `tag${i % 3 + 1},sample,test`,
+    creation: new Date(Date.now() - (i * 86400000)).toISOString(),
+    modified: new Date(Date.now() - (i * 86400000)).toISOString(),
+    docstatus: i % 5 === 3 ? 1 : 0,
+  }))
 ];

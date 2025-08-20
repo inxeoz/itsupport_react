@@ -15,7 +15,6 @@ import { HackerProDashboard } from "./components/HackerProDashboard";
 import { TesterDashboard } from "./components/TesterDashboard";
 import { Toaster } from "./components/ui/sonner";
 import { ThemeProvider, type Theme } from "./components/ThemeProvider";
-import {TestTicketButton} from "./test/Test";
 
 interface AppContentProps {
   activeTab: string;
@@ -65,8 +64,6 @@ function AppContent({
         return <DeveloperDashboard />;
       case "hacker-pro":
         return <HackerProDashboard />;
-      case "apitest":
-        return <TestTicketButton />;
       case "tester":
         return <TesterDashboard />;
       default:

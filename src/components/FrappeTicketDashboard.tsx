@@ -718,6 +718,9 @@ export function FrappeTicketDashboard() {
       const newPage = currentPage - 1;
       setCurrentPage(newPage);
       fetchTickets(false, newPage);
+      toast.success(`Loading page ${newPage}`, {
+        description: `Fetching batch ${(newPage - 1) * pageSize + 1}-${newPage * pageSize} of ${totalTicketCount || 'N/A'} tickets`,
+      });
     }
   };
 
@@ -726,6 +729,9 @@ export function FrappeTicketDashboard() {
       const newPage = currentPage + 1;
       setCurrentPage(newPage);
       fetchTickets(false, newPage);
+      toast.success(`Loading page ${newPage}`, {
+        description: `Fetching batch ${(newPage - 1) * pageSize + 1}-${Math.min(newPage * pageSize, totalTicketCount || newPage * pageSize)} of ${totalTicketCount || 'N/A'} tickets`,
+      });
     }
   };
 
@@ -733,7 +739,41 @@ export function FrappeTicketDashboard() {
     if (page >= 1 && page <= totalPages && page !== currentPage) {
       setCurrentPage(page);
       fetchTickets(false, page);
+      toast.success(`Loading page ${page}`, {
+        description: `Fetching batch ${(page - 1) * pageSize + 1}-${Math.min(page * pageSize, totalTicketCount || page * pageSize)} of ${totalTicketCount || 'N/A'} tickets`,
+      });
     }
+  };
+
+  // Get pagination range - show 5 pages around current page
+  const getPaginationRange = () => {
+    const delta = 2; // Show 2 pages before and after current page
+    const range = [];
+    const rangeStart = Math.max(1, currentPage - delta);
+    const rangeEnd = Math.min(totalPages, currentPage + delta);
+
+    // Always show first page
+    if (rangeStart > 1) {
+      range.push(1);
+      if (rangeStart > 2) {
+        range.push('...');
+      }
+    }
+
+    // Add pages around current page
+    for (let i = rangeStart; i <= rangeEnd; i++) {
+      range.push(i);
+    }
+
+    // Always show last page
+    if (rangeEnd < totalPages) {
+      if (rangeEnd < totalPages - 1) {
+        range.push('...');
+      }
+      range.push(totalPages);
+    }
+
+    return range;
   };
 
   // Generic filter handler

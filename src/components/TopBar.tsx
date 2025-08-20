@@ -154,6 +154,7 @@ export function TopBar({
           'Authorization': `token ${config.token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'omit',
         signal: AbortSignal.timeout(config.timeout),
       });
 
@@ -208,14 +209,6 @@ export function TopBar({
       label: "API Tester",
       icon: TestTube,
       badge: "Test",
-      description: "Comprehensive API testing suite with live results",
-    },
-
-      {
-      id: "apitest",
-      label: "apitest",
-      icon: TestTube,
-      badge: "apitest",
       description: "Comprehensive API testing suite with live results",
     },
   ];
