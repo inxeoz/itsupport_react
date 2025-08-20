@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { API_TOKEN, BASE_URL } from "../env";
 
 const ticketData = {
   doctype: "Ticket",
@@ -31,11 +32,11 @@ export const TestTicketButton: React.FC = () => {
     setLoading(true);
     setResponse(null);
     try {
-      const res = await fetch("http://10.120.9.21:8000/api/resource/Ticket", {
+      const res = await fetch(`${BASE_URL}/api/resource/Ticket`, {
         method: "POST",
-        credentials: "omit" ,
+        credentials: "omit",
         headers: {
-          "Authorization": "token 1212:1212",
+          "Authorization": `token ${API_TOKEN}`,
           "Content-Type": "application/json",
 
           // Do NOT send Cookie header here!
