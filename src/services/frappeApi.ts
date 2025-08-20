@@ -1,4 +1,4 @@
-// Frappe API Configuration with Enhanced CSRF Token Handling
+// Frappe API Configuration with API Token Only
 export interface ApiConfig {
   baseUrl: string;
   token: string;
@@ -6,19 +6,9 @@ export interface ApiConfig {
   fields: string[];
   timeout: number;
   retries: number;
-  allowCookies: boolean;
-  customCookies: string;
-  // Enhanced auth options
-  username?: string;
-  password?: string;
-  apiKey?: string;
-  apiSecret?: string;
-  skipCSRF?: boolean; // Option to skip CSRF for API-only access
   // DocType validation options
   validateDocTypes?: boolean;
   fallbackMode?: boolean;
-  // CORS and Cookie options
-  forceCookies?: boolean; // Force cookies even for cross-origin (may cause SameSite issues)
 }
 
 import { API_TOKEN, BASE_URL } from "../env";
@@ -57,9 +47,6 @@ export const DEFAULT_API_CONFIG: ApiConfig = {
   ],
   timeout: 15000,
   retries: 3,
-  allowCookies: false, // Disable cookies by default for cross-origin requests
-  customCookies: "", // Remove custom cookies to avoid SameSite issues
-  skipCSRF: true, // Skip CSRF by default to avoid token issues
   validateDocTypes: true,
   fallbackMode: true,
 };
@@ -100,18 +87,6 @@ export interface FrappeListResponse<T> {
 
 export interface FrappeDocResponse<T> {
   data: T;
-}
-
-export interface FrappeAuthResponse {
-  message: string;
-  home_page?: string;
-  full_name?: string;
-  csrf_token?: string;
-  session_id?: string;
-}
-
-export interface FrappeCSRFResponse {
-  csrf_token: string;
 }
 
 export interface DocTypeInfo {
@@ -188,93 +163,21 @@ export interface BulkCreateResult {
   successfulTickets: FrappeTicket[];
 }
 
-// Enhanced CSRF Token Detection and Fetching
-export const extractCSRFToken = (): string | null => {
-  try {
-    // 1. Check meta tag (most common in Frappe)
-    const metaTag = document.querySelector(
-      'meta[name="csrf-token"]',
-    );
-    const metaToken = metaTag?.getAttribute("content");
-    if (metaToken) return metaToken;
-
-    // 2. Check Frappe global object
-    const frappeToken =
-      (window as any).frappe?.csrf_token ||
-      (window as any).csrf_token;
-    if (frappeToken) return frappeToken;
-
-    // 3. Check cookies
-    const cookies = document.cookie.split(";");
-    for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split("=");
-      if (name === "csrf_token" || name === "csrftoken") {
-        return decodeURIComponent(value);
-      }
-    }
-
-    // 4. Check localStorage as fallback
-    const localStorageToken =
-      localStorage.getItem("csrf_token") ||
-      localStorage.getItem("frappe_csrf_token");
-    if (localStorageToken) return localStorageToken;
-
-    return null;
-  } catch (error) {
-    console.warn("Error extracting CSRF token:", error);
-    return null;
-  }
-};
-
 class FrappeApiService {
   private config: ApiConfig;
-  private csrfToken: string | null = null;
-  private sessionCookies: string | null = null;
-  private lastCSRFError: number = 0;
   private docTypeCache: Map<string, DocTypeInfo> = new Map();
   private systemInfo: SystemInfo | null = null;
-  private isCrossOrigin: boolean = false;
-  private hasShownCookieWarning: boolean = false;
 
   constructor(initialConfig: ApiConfig = DEFAULT_API_CONFIG) {
     this.config = { ...initialConfig };
-    this.checkCrossOrigin();
-  }
-
-  // Check if the request will be cross-origin
-  private checkCrossOrigin() {
-    try {
-      const currentOrigin = window.location.origin;
-      const apiUrl = new URL(this.config.baseUrl);
-      const apiOrigin = apiUrl.origin;
-      
-      this.isCrossOrigin = currentOrigin !== apiOrigin;
-      
-      if (this.isCrossOrigin) {
-        console.info(
-          `🌐 Cross-origin detected: ${currentOrigin} → ${apiOrigin}. Cookies will be disabled for SameSite compatibility.`
-        );
-      } else {
-        console.info(
-          `🏠 Same-origin detected: ${currentOrigin}. Cookies can be used if configured.`
-        );
-      }
-    } catch (error) {
-      console.warn("⚠️ Failed to determine origin, assuming cross-origin for safety:", error);
-      this.isCrossOrigin = true;
-    }
   }
 
   // Update configuration
   updateConfig(newConfig: ApiConfig) {
     this.config = { ...newConfig };
-    // Reset tokens and cache when config changes
-    this.csrfToken = null;
-    this.sessionCookies = null;
+    // Reset cache when config changes
     this.docTypeCache.clear();
     this.systemInfo = null;
-    // Re-check cross-origin status
-    this.checkCrossOrigin();
   }
 
   // Get current configuration
@@ -451,162 +354,23 @@ class FrappeApiService {
     return this.systemInfo;
   }
 
-  // Fetch CSRF token directly from Frappe server
-  private async fetchCSRFToken(): Promise<string | null> {
-    try {
-      console.log(
-        "🔄 Fetching CSRF token from Frappe server...",
-      );
-
-      const response = await fetch(
-        `${this.config.baseUrl}/api/method/frappe.sessions.get_csrf_token`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `token ${this.config.token}`,
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        },
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const token = data.message || data.csrf_token;
-
-        if (token) {
-          console.log(
-            "✅ CSRF token fetched:",
-            token.substring(0, 8) + "...",
-          );
-          this.csrfToken = token;
-          localStorage.setItem("frappe_csrf_token", token);
-          return token;
-        }
-      }
-    } catch (error) {
-      console.warn("⚠️ Failed to fetch CSRF token:", error);
-    }
-
-    return null;
-  }
-
-  // Get CSRF token with multiple fallback methods
-  private async getCSRFToken(): Promise<string | null> {
-    // Skip CSRF if configured
-    if (this.config.skipCSRF) {
-      return null;
-    }
-
-    // 1. Try cached token
-    if (this.csrfToken) {
-      return this.csrfToken;
-    }
-
-    // 2. Try extracting from environment
-    const envToken = extractCSRFToken();
-    if (envToken) {
-      console.log(
-        "✅ CSRF token found from environment:",
-        envToken.substring(0, 8) + "...",
-      );
-      this.csrfToken = envToken;
-      return envToken;
-    }
-
-    // 3. Try fetching directly from server (if not in rate limit)
-    const now = Date.now();
-    if (now - this.lastCSRFError > 30000) {
-      // Wait 30 seconds between attempts
-      const fetchedToken = await this.fetchCSRFToken();
-      if (fetchedToken) {
-        return fetchedToken;
-      }
-      this.lastCSRFError = now;
-    }
-
-    console.warn(
-      "⚠️ No CSRF token available. Proceeding without CSRF protection.",
-    );
-    return null;
-  }
-
-  private async getHeaders(
-    includeCSRF: boolean = false,
-  ): Promise<HeadersInit> {
-    const headers: HeadersInit = {
+  private async getHeaders(): Promise<HeadersInit> {
+    return {
       Authorization: `token ${this.config.token}`,
       "Content-Type": "application/json",
       Accept: "application/json",
     };
-
-    // Handle cookie inclusion based on origin and configuration
-    const shouldIncludeCookies = (!this.isCrossOrigin || this.config.forceCookies) && 
-                                (this.sessionCookies || (this.config.allowCookies && this.config.customCookies));
-
-    if (shouldIncludeCookies) {
-      const cookies = [];
-
-      if (this.sessionCookies) {
-        cookies.push(this.sessionCookies);
-      }
-
-      if (
-        this.config.allowCookies &&
-        this.config.customCookies?.trim()
-      ) {
-        cookies.push(this.config.customCookies.trim());
-      }
-
-      if (cookies.length > 0) {
-        headers["Cookie"] = cookies.join("; ");
-        if (!this.isCrossOrigin) {
-          console.log("🍪 Including cookies for same-origin request");
-        } else {
-          console.warn("⚠️ Force-including cookies for cross-origin request (may cause SameSite issues)");
-        }
-      }
-    } else if (this.isCrossOrigin && (this.sessionCookies || this.config.customCookies)) {
-      // Only show this info message once per session to avoid spam
-      if (!this.hasShownCookieWarning) {
-        console.info("🚫 Skipping cookies for cross-origin request to avoid SameSite issues. Using Authorization token only.");
-        this.hasShownCookieWarning = true;
-      }
-    }
-
-    // Include CSRF token for POST/PUT/DELETE requests (only for same-origin)
-    if (includeCSRF && !this.config.skipCSRF && !this.isCrossOrigin) {
-      const csrfToken = await this.getCSRFToken();
-      if (csrfToken) {
-        headers["X-Frappe-CSRF-Token"] = csrfToken;
-        console.log(
-          "🛡️ Using CSRF token:",
-          csrfToken.substring(0, 8) + "...",
-        );
-      }
-    }
-
-    return headers;
   }
 
   private async makeRequest<T>(
     endpoint: string,
     options: RequestInit = {},
     customConfig?: Partial<ApiConfig>,
-    skipCSRFRetry: boolean = false,
   ): Promise<T> {
     const config = customConfig
       ? { ...this.config, ...customConfig }
       : this.config;
     const url = `${config.baseUrl}${endpoint}`;
-
-    // Determine if we need CSRF token
-    const method = options.method || "GET";
-    const needsCSRF =
-      ["POST", "PUT", "DELETE", "PATCH"].includes(
-        method.toUpperCase(),
-      ) && !config.skipCSRF;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(
@@ -615,9 +379,9 @@ class FrappeApiService {
     );
 
     try {
-      const headers = await this.getHeaders(needsCSRF);
+      const headers = await this.getHeaders();
 
-      console.log(`📡 ${method} ${url}`);
+      console.log(`📡 ${options.method || 'GET'} ${url}`);
 
       const response = await fetch(url, {
         ...options,
@@ -626,10 +390,7 @@ class FrappeApiService {
           ...options.headers,
         },
         signal: controller.signal,
-        // Use appropriate credentials policy based on origin and configuration
-        credentials: this.isCrossOrigin && !config.forceCookies
-          ? "omit" 
-          : (config.allowCookies ? "include" : "same-origin"),
+        credentials: "omit", // Always omit cookies for API token usage
       });
 
       clearTimeout(timeoutId);
@@ -779,7 +540,6 @@ class FrappeApiService {
           "/api/method/ping",
           { method: "GET" },
           config,
-          true,
         );
 
         // If basic connection works, get system info
@@ -823,7 +583,6 @@ class FrappeApiService {
               "Check if your Frappe server is running and accessible",
               "Verify your API token is correct and has proper permissions",
               "Ensure the required DocTypes exist in your ERPNext instance",
-              "Check if CORS is properly configured for cross-origin requests",
             ],
           };
         }
@@ -1526,18 +1285,8 @@ class FrappeApiService {
           ? this.config.token.substring(0, 10) + "..."
           : "None",
         timeout: this.config.timeout,
-        allowCookies: this.config.allowCookies,
-        skipCSRF: this.config.skipCSRF,
         validateDocTypes: this.config.validateDocTypes,
         fallbackMode: this.config.fallbackMode,
-      },
-      session: {
-        hasCSRFToken: !!this.csrfToken,
-        csrfTokenPreview: this.csrfToken
-          ? this.csrfToken.substring(0, 8) + "..."
-          : null,
-        hasSessionCookies: !!this.sessionCookies,
-        lastCSRFError: this.lastCSRFError,
       },
       docTypes: Object.fromEntries(this.docTypeCache),
       systemInfo: this.systemInfo,
@@ -1551,31 +1300,15 @@ class FrappeApiService {
             ? window.location.href
             : "N/A",
         timestamp: new Date().toISOString(),
-        localStorage:
-          typeof localStorage !== "undefined"
-            ? "Available"
-            : "Not available",
-        cookies:
-          typeof document !== "undefined"
-            ? "Available"
-            : "Not available",
       },
     };
   }
 
-  // Clear all cached tokens and session data
+  // Clear all cached data
   clearSession() {
-    this.csrfToken = null;
-    this.sessionCookies = null;
-    this.lastCSRFError = 0;
     this.docTypeCache.clear();
     this.systemInfo = null;
-
-    if (typeof localStorage !== "undefined") {
-      localStorage.removeItem("frappe_csrf_token");
-    }
-
-    console.log("🧹 Session data cleared");
+    console.log("🧹 Cache cleared");
   }
 }
 

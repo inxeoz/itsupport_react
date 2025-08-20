@@ -210,6 +210,14 @@ export function TopBar({
       badge: "Test",
       description: "Comprehensive API testing suite with live results",
     },
+
+      {
+      id: "apitest",
+      label: "apitest",
+      icon: TestTube,
+      badge: "apitest",
+      description: "Comprehensive API testing suite with live results",
+    },
   ];
 
   const themeOptions = [

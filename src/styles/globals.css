@@ -1,7 +1,7 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 @custom-variant dark (&:is(.dark *));
 @custom-variant blue-theme (&:is(.blue-theme *));
 @custom-variant orange-theme (&:is(.orange-theme *));
