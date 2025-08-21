@@ -1,10 +1,4 @@
-import {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -145,32 +139,20 @@ interface ResizeState {
 
 export function FrappeTicketDashboard() {
   const [tickets, setTickets] = useState<FrappeTicket[]>([]);
-  const [totalTicketCount, setTotalTicketCount] = useState<
-    number | null
-  >(null);
+  const [totalTicketCount, setTotalTicketCount] = useState<number | null>(null);
   const [countLoading, setCountLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState<
-    string | null
-  >(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<
     "connected" | "disconnected" | "testing"
   >("testing");
-  const [apiConfig, setApiConfig] = useState<ApiConfig>(
-    DEFAULT_API_CONFIG,
-  );
-  const [configDialogOpen, setConfigDialogOpen] =
+  const [apiConfig, setApiConfig] = useState<ApiConfig>(DEFAULT_API_CONFIG);
+  const [configDialogOpen, setConfigDialogOpen] = useState(false);
+  const [newTicketDialogOpen, setNewTicketDialogOpen] = useState(false);
+  const [columnSettingsDialogOpen, setColumnSettingsDialogOpen] =
     useState(false);
-  const [newTicketDialogOpen, setNewTicketDialogOpen] =
-    useState(false);
-  const [
-    columnSettingsDialogOpen,
-    setColumnSettingsDialogOpen,
-  ] = useState(false);
-  const [sortCriteria, setSortCriteria] = useState<
-    SortCriteria[]
-  >([]);
+  const [sortCriteria, setSortCriteria] = useState<SortCriteria[]>([]);
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -179,78 +161,70 @@ export function FrappeTicketDashboard() {
 
   // Search and Filter States - Separate pending and applied states
   const [searchQuery, setSearchQuery] = useState("");
-  const [appliedSearchQuery, setAppliedSearchQuery] =
-    useState("");
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState("");
 
-  const [pendingFilters, setPendingFilters] =
-    useState<FilterState>({
-      status: [],
-      priority: [],
-      category: [],
-      impact: [],
-      users: [],
-      assignees: [],
-      departments: [],
-      dateRange: "all",
-    });
+  const [pendingFilters, setPendingFilters] = useState<FilterState>({
+    status: [],
+    priority: [],
+    category: [],
+    impact: [],
+    users: [],
+    assignees: [],
+    departments: [],
+    dateRange: "all",
+  });
 
-  const [appliedFilters, setAppliedFilters] =
-    useState<FilterState>({
-      status: [],
-      priority: [],
-      category: [],
-      impact: [],
-      users: [],
-      assignees: [],
-      departments: [],
-      dateRange: "all",
-    });
+  const [appliedFilters, setAppliedFilters] = useState<FilterState>({
+    status: [],
+    priority: [],
+    category: [],
+    impact: [],
+    users: [],
+    assignees: [],
+    departments: [],
+    dateRange: "all",
+  });
 
-  const [selectedTickets, setSelectedTickets] = useState<
-    string[]
-  >([]);
+  const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
 
   // Ticket Details Popover State
-  const [selectedTicket, setSelectedTicket] =
-    useState<FrappeTicket | null>(null);
-  const [detailsPopoverOpen, setDetailsPopoverOpen] =
-    useState(false);
+  const [selectedTicket, setSelectedTicket] = useState<FrappeTicket | null>(
+    null,
+  );
+  const [detailsPopoverOpen, setDetailsPopoverOpen] = useState(false);
 
   // Column management state
-  const [columnWidths, setColumnWidths] =
-    useState<ColumnWidths>({
-      select: 50,
-      ticket_id: 120,
-      title: 200,
-      user_name: 150,
-      department: 130,
-      priority: 100,
-      status: 120,
-      category: 110,
-      created_datetime: 160,
-      due_datetime: 160,
-      assignee: 130,
-      actions: 100,
-    });
+  const [columnWidths, setColumnWidths] = useState<ColumnWidths>({
+    select: 50,
+    ticket_id: 120,
+    title: 200,
+    user_name: 150,
+    department: 130,
+    priority: 100,
+    status: 120,
+    category: 110,
+    created_datetime: 160,
+    due_datetime: 160,
+    assignee: 130,
+    actions: 100,
+  });
 
-  const [columnVisibility, setColumnVisibility] =
-    useState<ColumnVisibility>({
-      select: true,
-      ticket_id: true,
-      title: true,
-      user_name: true,
-      department: true,
-      priority: true,
-      status: true,
-      category: true,
-      created_datetime: true,
-      due_datetime: true,
-      assignee: true,
-      actions: true,
-    });
+  const [columnVisibility, setColumnVisibility] = useState<ColumnVisibility>({
+    select: true,
+    ticket_id: true,
+    title: true,
+    user_name: true,
+    department: true,
+    priority: true,
+    status: true,
+    category: true,
+    created_datetime: true,
+    due_datetime: true,
+    assignee: true,
+    actions: true,
+  });
 
-  const [resizeState, setResizeState] =
-    useState<ResizeState | null>(null);
+  const [resizeState, setResizeState] = useState<ResizeState | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
 
   // Default column widths
@@ -288,9 +262,7 @@ export function FrappeTicketDashboard() {
   // Load column settings from localStorage on mount
   useEffect(() => {
     // Load column widths
-    const savedWidths = localStorage.getItem(
-      "frappe-dashboard-column-widths",
-    );
+    const savedWidths = localStorage.getItem("frappe-dashboard-column-widths");
     if (savedWidths) {
       try {
         const parsed = JSON.parse(savedWidths);
@@ -299,10 +271,7 @@ export function FrappeTicketDashboard() {
           ...parsed,
         });
       } catch (error) {
-        console.error(
-          "Failed to parse saved column widths:",
-          error,
-        );
+        console.error("Failed to parse saved column widths:", error);
       }
     }
 
@@ -318,35 +287,26 @@ export function FrappeTicketDashboard() {
           ...parsed,
         });
       } catch (error) {
-        console.error(
-          "Failed to parse saved column visibility:",
-          error,
-        );
+        console.error("Failed to parse saved column visibility:", error);
       }
     }
   }, []);
 
   // Save column widths to localStorage
-  const saveColumnWidths = useCallback(
-    (widths: ColumnWidths) => {
-      localStorage.setItem(
-        "frappe-dashboard-column-widths",
-        JSON.stringify(widths),
-      );
-    },
-    [],
-  );
+  const saveColumnWidths = useCallback((widths: ColumnWidths) => {
+    localStorage.setItem(
+      "frappe-dashboard-column-widths",
+      JSON.stringify(widths),
+    );
+  }, []);
 
   // Save column visibility to localStorage
-  const saveColumnVisibility = useCallback(
-    (visibility: ColumnVisibility) => {
-      localStorage.setItem(
-        "frappe-dashboard-column-visibility",
-        JSON.stringify(visibility),
-      );
-    },
-    [],
-  );
+  const saveColumnVisibility = useCallback((visibility: ColumnVisibility) => {
+    localStorage.setItem(
+      "frappe-dashboard-column-visibility",
+      JSON.stringify(visibility),
+    );
+  }, []);
 
   // Handle column visibility change
   const handleColumnVisibilityChange = useCallback(
@@ -389,9 +349,7 @@ export function FrappeTicketDashboard() {
 
       const startX = e.clientX;
       const startWidth =
-        columnWidths[columnId] ||
-        DEFAULT_COLUMN_WIDTHS[columnId] ||
-        100;
+        columnWidths[columnId] || DEFAULT_COLUMN_WIDTHS[columnId] || 100;
 
       setResizeState({
         isResizing: true,
@@ -412,10 +370,7 @@ export function FrappeTicketDashboard() {
       if (!resizeState || !resizeState.isResizing) return;
 
       const deltaX = e.clientX - resizeState.startX;
-      const newWidth = Math.max(
-        50,
-        resizeState.startWidth + deltaX,
-      ); // Minimum width of 50px
+      const newWidth = Math.max(50, resizeState.startWidth + deltaX); // Minimum width of 50px
 
       setColumnWidths((prev) => ({
         ...prev,
@@ -442,14 +397,8 @@ export function FrappeTicketDashboard() {
       document.addEventListener("mouseup", handleResizeEnd);
 
       return () => {
-        document.removeEventListener(
-          "mousemove",
-          handleResizeMove,
-        );
-        document.removeEventListener(
-          "mouseup",
-          handleResizeEnd,
-        );
+        document.removeEventListener("mousemove", handleResizeMove);
+        document.removeEventListener("mouseup", handleResizeEnd);
       };
     }
   }, [resizeState, handleResizeMove, handleResizeEnd]);
@@ -473,10 +422,7 @@ export function FrappeTicketDashboard() {
     }
   };
 
-  const fetchTickets = async (
-    showLoading = true,
-    page = currentPage,
-  ) => {
+  const fetchTickets = async (showLoading = true, page = currentPage) => {
     if (showLoading) {
       setLoading(true);
     } else {
@@ -498,14 +444,9 @@ export function FrappeTicketDashboard() {
       // Fetch total count after successful ticket fetch
       fetchTotalCount();
     } catch (err) {
-      console.error(
-        "Error fetching tickets from Frappe API:",
-        err,
-      );
+      console.error("Error fetching tickets from Frappe API:", err);
       const errorMessage =
-        err instanceof Error
-          ? err.message
-          : "Failed to connect to Frappe API";
+        err instanceof Error ? err.message : "Failed to connect to Frappe API";
       setError(errorMessage);
       setConnectionStatus("disconnected");
 
@@ -518,10 +459,7 @@ export function FrappeTicketDashboard() {
       // For mock data, simulate pagination
       const startIndex = (page - 1) * pageSize;
       const endIndex = startIndex + pageSize;
-      const paginatedMockTickets = mockTickets.slice(
-        startIndex,
-        endIndex,
-      );
+      const paginatedMockTickets = mockTickets.slice(startIndex, endIndex);
       setTickets(paginatedMockTickets);
     } finally {
       setLoading(false);
@@ -534,10 +472,7 @@ export function FrappeTicketDashboard() {
     frappeApi.updateConfig(newConfig);
 
     // Store in localStorage for persistence
-    localStorage.setItem(
-      "frappe-api-config",
-      JSON.stringify(newConfig),
-    );
+    localStorage.setItem("frappe-api-config", JSON.stringify(newConfig));
 
     // Reset pagination and total count when config changes
     setCurrentPage(1);
@@ -549,9 +484,7 @@ export function FrappeTicketDashboard() {
     }, 100);
   };
 
-  const handleTestConnection = async (
-    testConfig: ApiConfig,
-  ) => {
+  const handleTestConnection = async (testConfig: ApiConfig) => {
     try {
       // Call the frappeApi testConnection method which returns the full result object
       const result = await frappeApi.testConnection(testConfig);
@@ -562,9 +495,7 @@ export function FrappeTicketDashboard() {
       return {
         success: false,
         message:
-          error instanceof Error
-            ? error.message
-            : "Connection test failed",
+          error instanceof Error ? error.message : "Connection test failed",
         details: error,
         suggestions: [
           "Check your network connection",
@@ -620,10 +551,7 @@ export function FrappeTicketDashboard() {
     } catch (err) {
       console.error("Error submitting ticket:", err);
       toast.error("Failed to submit ticket", {
-        description:
-          err instanceof Error
-            ? err.message
-            : "Please try again.",
+        description: err instanceof Error ? err.message : "Please try again.",
       });
 
       // Fallback to local state update
@@ -674,10 +602,7 @@ export function FrappeTicketDashboard() {
     } catch (err) {
       console.error("Error cancelling ticket:", err);
       toast.error("Failed to cancel ticket", {
-        description:
-          err instanceof Error
-            ? err.message
-            : "Please try again.",
+        description: err instanceof Error ? err.message : "Please try again.",
       });
 
       // Fallback to local state update
@@ -705,41 +630,25 @@ export function FrappeTicketDashboard() {
 
   // Enhanced sorting functions for new fields
   const sortFunctions = {
-    name: (
-      a: FrappeTicket,
-      b: FrappeTicket,
-      direction: SortDirection,
-    ) => {
+    name: (a: FrappeTicket, b: FrappeTicket, direction: SortDirection) => {
       const aVal = (a.name || "").toLowerCase();
       const bVal = (b.name || "").toLowerCase();
       const result = aVal.localeCompare(bVal);
       return direction === "asc" ? result : -result;
     },
-    ticket_id: (
-      a: FrappeTicket,
-      b: FrappeTicket,
-      direction: SortDirection,
-    ) => {
+    ticket_id: (a: FrappeTicket, b: FrappeTicket, direction: SortDirection) => {
       const aVal = (a.ticket_id || a.name || "").toLowerCase();
       const bVal = (b.ticket_id || b.name || "").toLowerCase();
       const result = aVal.localeCompare(bVal);
       return direction === "asc" ? result : -result;
     },
-    title: (
-      a: FrappeTicket,
-      b: FrappeTicket,
-      direction: SortDirection,
-    ) => {
+    title: (a: FrappeTicket, b: FrappeTicket, direction: SortDirection) => {
       const aVal = (a.title || "").toLowerCase();
       const bVal = (b.title || "").toLowerCase();
       const result = aVal.localeCompare(bVal);
       return direction === "asc" ? result : -result;
     },
-    user_name: (
-      a: FrappeTicket,
-      b: FrappeTicket,
-      direction: SortDirection,
-    ) => {
+    user_name: (a: FrappeTicket, b: FrappeTicket, direction: SortDirection) => {
       const aVal = (a.user_name || "").toLowerCase();
       const bVal = (b.user_name || "").toLowerCase();
       const result = aVal.localeCompare(bVal);
@@ -755,43 +664,25 @@ export function FrappeTicketDashboard() {
       const result = aVal.localeCompare(bVal);
       return direction === "asc" ? result : -result;
     },
-    priority: (
-      a: FrappeTicket,
-      b: FrappeTicket,
-      direction: SortDirection,
-    ) => {
+    priority: (a: FrappeTicket, b: FrappeTicket, direction: SortDirection) => {
       const priorityOrder = {
         Critical: 4,
         High: 3,
         Medium: 2,
         Low: 1,
       };
-      const aVal =
-        priorityOrder[
-          a.priority as keyof typeof priorityOrder
-        ] || 0;
-      const bVal =
-        priorityOrder[
-          b.priority as keyof typeof priorityOrder
-        ] || 0;
+      const aVal = priorityOrder[a.priority as keyof typeof priorityOrder] || 0;
+      const bVal = priorityOrder[b.priority as keyof typeof priorityOrder] || 0;
       const result = aVal - bVal;
       return direction === "asc" ? result : -result;
     },
-    status: (
-      a: FrappeTicket,
-      b: FrappeTicket,
-      direction: SortDirection,
-    ) => {
+    status: (a: FrappeTicket, b: FrappeTicket, direction: SortDirection) => {
       const aVal = (a.status || "").toLowerCase();
       const bVal = (b.status || "").toLowerCase();
       const result = aVal.localeCompare(bVal);
       return direction === "asc" ? result : -result;
     },
-    category: (
-      a: FrappeTicket,
-      b: FrappeTicket,
-      direction: SortDirection,
-    ) => {
+    category: (a: FrappeTicket, b: FrappeTicket, direction: SortDirection) => {
       const aVal = (a.category || "").toLowerCase();
       const bVal = (b.category || "").toLowerCase();
       const result = aVal.localeCompare(bVal);
@@ -816,20 +707,12 @@ export function FrappeTicketDashboard() {
       b: FrappeTicket,
       direction: SortDirection,
     ) => {
-      const aVal = a.due_datetime
-        ? new Date(a.due_datetime).getTime()
-        : 0;
-      const bVal = b.due_datetime
-        ? new Date(b.due_datetime).getTime()
-        : 0;
+      const aVal = a.due_datetime ? new Date(a.due_datetime).getTime() : 0;
+      const bVal = b.due_datetime ? new Date(b.due_datetime).getTime() : 0;
       const result = aVal - bVal;
       return direction === "asc" ? result : -result;
     },
-    assignee: (
-      a: FrappeTicket,
-      b: FrappeTicket,
-      direction: SortDirection,
-    ) => {
+    assignee: (a: FrappeTicket, b: FrappeTicket, direction: SortDirection) => {
       const aVal = (a.assignee || "").toLowerCase();
       const bVal = (b.assignee || "").toLowerCase();
       const result = aVal.localeCompare(bVal);
@@ -871,9 +754,7 @@ export function FrappeTicketDashboard() {
 
   // Get sort indicator for a column - Enhanced with larger, more visible icons
   const getSortIndicator = (field: SortField) => {
-    const criteria = sortCriteria.find(
-      (c) => c.field === field,
-    );
+    const criteria = sortCriteria.find((c) => c.field === field);
     if (!criteria) {
       return (
         <div className="flex items-center justify-center w-6 h-6 rounded hover:bg-muted/80 transition-colors">
@@ -882,9 +763,7 @@ export function FrappeTicketDashboard() {
       );
     }
 
-    const index = sortCriteria.findIndex(
-      (c) => c.field === field,
-    );
+    const index = sortCriteria.findIndex((c) => c.field === field);
     const priority = sortCriteria.length > 1 ? index + 1 : null;
 
     return (
@@ -909,53 +788,25 @@ export function FrappeTicketDashboard() {
   const uniqueValues = useMemo(() => {
     return {
       statuses: [
-        ...new Set(
-          tickets
-            .map((ticket) => ticket.status)
-            .filter(Boolean),
-        ),
+        ...new Set(tickets.map((ticket) => ticket.status).filter(Boolean)),
       ].sort(),
       priorities: [
-        ...new Set(
-          tickets
-            .map((ticket) => ticket.priority)
-            .filter(Boolean),
-        ),
+        ...new Set(tickets.map((ticket) => ticket.priority).filter(Boolean)),
       ].sort(),
       categories: [
-        ...new Set(
-          tickets
-            .map((ticket) => ticket.category)
-            .filter(Boolean),
-        ),
+        ...new Set(tickets.map((ticket) => ticket.category).filter(Boolean)),
       ].sort(),
       impacts: [
-        ...new Set(
-          tickets
-            .map((ticket) => ticket.impact)
-            .filter(Boolean),
-        ),
+        ...new Set(tickets.map((ticket) => ticket.impact).filter(Boolean)),
       ].sort(),
       users: [
-        ...new Set(
-          tickets
-            .map((ticket) => ticket.user_name)
-            .filter(Boolean),
-        ),
+        ...new Set(tickets.map((ticket) => ticket.user_name).filter(Boolean)),
       ].sort(),
       assignees: [
-        ...new Set(
-          tickets
-            .map((ticket) => ticket.assignee)
-            .filter(Boolean),
-        ),
+        ...new Set(tickets.map((ticket) => ticket.assignee).filter(Boolean)),
       ].sort(),
       departments: [
-        ...new Set(
-          tickets
-            .map((ticket) => ticket.department)
-            .filter(Boolean),
-        ),
+        ...new Set(tickets.map((ticket) => ticket.department).filter(Boolean)),
       ].sort(),
     };
   }, [tickets]);
@@ -984,48 +835,42 @@ export function FrappeTicketDashboard() {
     if (appliedFilters.status.length > 0) {
       filtered = filtered.filter(
         (ticket) =>
-          ticket.status &&
-          appliedFilters.status.includes(ticket.status),
+          ticket.status && appliedFilters.status.includes(ticket.status),
       );
     }
 
     if (appliedFilters.priority.length > 0) {
       filtered = filtered.filter(
         (ticket) =>
-          ticket.priority &&
-          appliedFilters.priority.includes(ticket.priority),
+          ticket.priority && appliedFilters.priority.includes(ticket.priority),
       );
     }
 
     if (appliedFilters.category.length > 0) {
       filtered = filtered.filter(
         (ticket) =>
-          ticket.category &&
-          appliedFilters.category.includes(ticket.category),
+          ticket.category && appliedFilters.category.includes(ticket.category),
       );
     }
 
     if (appliedFilters.impact.length > 0) {
       filtered = filtered.filter(
         (ticket) =>
-          ticket.impact &&
-          appliedFilters.impact.includes(ticket.impact),
+          ticket.impact && appliedFilters.impact.includes(ticket.impact),
       );
     }
 
     if (appliedFilters.users.length > 0) {
       filtered = filtered.filter(
         (ticket) =>
-          ticket.user_name &&
-          appliedFilters.users.includes(ticket.user_name),
+          ticket.user_name && appliedFilters.users.includes(ticket.user_name),
       );
     }
 
     if (appliedFilters.assignees.length > 0) {
       filtered = filtered.filter(
         (ticket) =>
-          ticket.assignee &&
-          appliedFilters.assignees.includes(ticket.assignee),
+          ticket.assignee && appliedFilters.assignees.includes(ticket.assignee),
       );
     }
 
@@ -1033,9 +878,7 @@ export function FrappeTicketDashboard() {
       filtered = filtered.filter(
         (ticket) =>
           ticket.department &&
-          appliedFilters.departments.includes(
-            ticket.department,
-          ),
+          appliedFilters.departments.includes(ticket.department),
       );
     }
 
@@ -1046,19 +889,13 @@ export function FrappeTicketDashboard() {
 
       switch (appliedFilters.dateRange) {
         case "7days":
-          dateThreshold = new Date(
-            now.getTime() - 7 * 24 * 60 * 60 * 1000,
-          );
+          dateThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
         case "30days":
-          dateThreshold = new Date(
-            now.getTime() - 30 * 24 * 60 * 60 * 1000,
-          );
+          dateThreshold = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
           break;
         case "90days":
-          dateThreshold = new Date(
-            now.getTime() - 90 * 24 * 60 * 60 * 1000,
-          );
+          dateThreshold = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
           break;
         default:
           dateThreshold = new Date(0);
@@ -1086,11 +923,7 @@ export function FrappeTicketDashboard() {
     return [...filteredTickets].sort((a, b) => {
       // Apply each sort criteria in order
       for (const criteria of sortCriteria) {
-        const result = sortFunctions[criteria.field](
-          a,
-          b,
-          criteria.direction,
-        );
+        const result = sortFunctions[criteria.field](a, b, criteria.direction);
         if (result !== 0) {
           return result;
         }
@@ -1114,26 +947,20 @@ export function FrappeTicketDashboard() {
     const openTickets = currentPageTickets.filter(
       (ticket) =>
         ticket.status &&
-        ["New", "In Progress", "Waiting for Info"].includes(
-          ticket.status,
-        ),
+        ["New", "In Progress", "Waiting for Info"].includes(ticket.status),
     ).length;
 
     const criticalPriorityTickets = currentPageTickets.filter(
       (ticket) => ticket.priority === "Critical",
     ).length;
 
-    const resolvedTodayTickets = currentPageTickets.filter(
-      (ticket) => {
-        if (ticket.resolution_datetime) {
-          const resolutionDate = new Date(
-            ticket.resolution_datetime,
-          );
-          return resolutionDate >= todayStart;
-        }
-        return false;
-      },
-    ).length;
+    const resolvedTodayTickets = currentPageTickets.filter((ticket) => {
+      if (ticket.resolution_datetime) {
+        const resolutionDate = new Date(ticket.resolution_datetime);
+        return resolutionDate >= todayStart;
+      }
+      return false;
+    }).length;
 
     return {
       totalTickets:
@@ -1171,9 +998,7 @@ export function FrappeTicketDashboard() {
       ...pendingFilters.users,
       ...pendingFilters.assignees,
       ...pendingFilters.departments,
-      ...(pendingFilters.dateRange !== "all"
-        ? [pendingFilters.dateRange]
-        : []),
+      ...(pendingFilters.dateRange !== "all" ? [pendingFilters.dateRange] : []),
     ].length;
 
     const searchActive = searchQuery.trim().length > 0;
@@ -1219,16 +1044,10 @@ export function FrappeTicketDashboard() {
   // Check if there are unapplied changes
   const hasUnappliedChanges = useMemo(() => {
     const filtersChanged =
-      JSON.stringify(pendingFilters) !==
-      JSON.stringify(appliedFilters);
+      JSON.stringify(pendingFilters) !== JSON.stringify(appliedFilters);
     const searchChanged = searchQuery !== appliedSearchQuery;
     return filtersChanged || searchChanged;
-  }, [
-    pendingFilters,
-    appliedFilters,
-    searchQuery,
-    appliedSearchQuery,
-  ]);
+  }, [pendingFilters, appliedFilters, searchQuery, appliedSearchQuery]);
 
   // Count active filters for display
   const activeFilterCount = useMemo(() => {
@@ -1278,11 +1097,7 @@ export function FrappeTicketDashboard() {
   };
 
   const handlePageChange = (page: number) => {
-    if (
-      page >= 1 &&
-      page <= totalPages &&
-      page !== currentPage
-    ) {
+    if (page >= 1 && page <= totalPages && page !== currentPage) {
       setCurrentPage(page);
       fetchTickets(false, page);
       toast.success(`Loading page ${page}`, {
@@ -1332,9 +1147,7 @@ export function FrappeTicketDashboard() {
       ...prev,
       [filterType]: checked
         ? [...(prev[filterType] as string[]), value]
-        : (prev[filterType] as string[]).filter(
-            (item) => item !== value,
-          ),
+        : (prev[filterType] as string[]).filter((item) => item !== value),
     }));
   };
 
@@ -1345,9 +1158,7 @@ export function FrappeTicketDashboard() {
       return;
     }
 
-    toast.success(
-      `Submitting ${selectedTickets.length} tickets...`,
-    );
+    toast.success(`Submitting ${selectedTickets.length} tickets...`);
     setSelectedTickets([]);
   };
 
@@ -1357,9 +1168,7 @@ export function FrappeTicketDashboard() {
       return;
     }
 
-    toast.success(
-      `Archiving ${selectedTickets.length} tickets...`,
-    );
+    toast.success(`Archiving ${selectedTickets.length} tickets...`);
     setSelectedTickets([]);
   };
 
@@ -1370,8 +1179,7 @@ export function FrappeTicketDashboard() {
 
     if (count === 0) {
       toast.error("No data to export", {
-        description:
-          "Apply filters to get data or check your search criteria.",
+        description: "Apply filters to get data or check your search criteria.",
       });
       return;
     }
@@ -1402,14 +1210,10 @@ export function FrappeTicketDashboard() {
             ticket.status || "",
             ticket.category || "",
             ticket.created_datetime
-              ? new Date(
-                  ticket.created_datetime,
-                ).toLocaleDateString()
+              ? new Date(ticket.created_datetime).toLocaleDateString()
               : "",
             ticket.due_datetime
-              ? new Date(
-                  ticket.due_datetime,
-                ).toLocaleDateString()
+              ? new Date(ticket.due_datetime).toLocaleDateString()
               : "",
             ticket.assignee || "",
           ].join(","),
@@ -1445,19 +1249,14 @@ export function FrappeTicketDashboard() {
 
   // Load saved config from localStorage on mount
   useEffect(() => {
-    const savedConfig = localStorage.getItem(
-      "frappe-api-config",
-    );
+    const savedConfig = localStorage.getItem("frappe-api-config");
     if (savedConfig) {
       try {
         const parsed = JSON.parse(savedConfig);
         setApiConfig(parsed);
         frappeApi.updateConfig(parsed);
       } catch (error) {
-        console.error(
-          "Failed to parse saved API config:",
-          error,
-        );
+        console.error("Failed to parse saved API config:", error);
       }
     }
 
@@ -1537,9 +1336,7 @@ export function FrappeTicketDashboard() {
                 {connectionStatus === "disconnected" && (
                   <div className="flex items-center gap-1 text-red-600">
                     <WifiOff className="w-4 h-4" />
-                    <span className="text-sm">
-                      Offline Mode
-                    </span>
+                    <span className="text-sm">Offline Mode</span>
                   </div>
                 )}
                 {connectionStatus === "testing" && (
@@ -1553,8 +1350,7 @@ export function FrappeTicketDashboard() {
 
             <div className="flex items-center gap-2">
               {/* Active Filter Indicator */}
-              {(activeFilterCount > 0 ||
-                sortCriteria.length > 0) && (
+              {(activeFilterCount > 0 || sortCriteria.length > 0) && (
                 <div className="flex items-center gap-2">
                   {activeFilterCount > 0 && (
                     <Badge
@@ -1588,9 +1384,7 @@ export function FrappeTicketDashboard() {
                     : mockTickets.length}{" "}
                   tickets
                 </span>
-                {countLoading && (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                )}
+                {countLoading && <Loader2 className="w-3 h-3 animate-spin" />}
               </div>
 
               <Button
@@ -1629,8 +1423,7 @@ export function FrappeTicketDashboard() {
           </div>
 
           <CardDescription className="text-muted-foreground">
-            Manage and track support tickets from your
-            Frappe/ERPNext instance
+            Manage and track support tickets from your Frappe/ERPNext instance
           </CardDescription>
         </CardHeader>
       </Card>
@@ -1646,9 +1439,7 @@ export function FrappeTicketDashboard() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <List className="w-5 h-5" />
-                      <span className="text-sm font-medium">
-                        Total Tickets
-                      </span>
+                      <span className="text-sm font-medium">Total Tickets</span>
                     </div>
                   </div>
                   <div className="mt-2">
@@ -1680,9 +1471,7 @@ export function FrappeTicketDashboard() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Clock className="w-5 h-5" />
-                      <span className="text-sm font-medium">
-                        Open Tickets
-                      </span>
+                      <span className="text-sm font-medium">Open Tickets</span>
                     </div>
                   </div>
                   <div className="mt-2">
@@ -1764,8 +1553,8 @@ export function FrappeTicketDashboard() {
             <strong>Connection Error:</strong> {error}
             <br />
             <span className="text-sm opacity-90">
-              Currently showing demo data. Check your API
-              configuration and try refreshing.
+              Currently showing demo data. Check your API configuration and try
+              refreshing.
             </span>
           </AlertDescription>
         </Alert>
@@ -1821,15 +1610,9 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.statuses.map((status) => (
                     <DropdownMenuCheckboxItem
                       key={status}
-                      checked={pendingFilters.status.includes(
-                        status,
-                      )}
+                      checked={pendingFilters.status.includes(status)}
                       onCheckedChange={(checked) =>
-                        handleFilterChange(
-                          "status",
-                          status,
-                          checked,
-                        )
+                        handleFilterChange("status", status, checked)
                       }
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1862,15 +1645,9 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.priorities.map((priority) => (
                     <DropdownMenuCheckboxItem
                       key={priority}
-                      checked={pendingFilters.priority.includes(
-                        priority,
-                      )}
+                      checked={pendingFilters.priority.includes(priority)}
                       onCheckedChange={(checked) =>
-                        handleFilterChange(
-                          "priority",
-                          priority,
-                          checked,
-                        )
+                        handleFilterChange("priority", priority, checked)
                       }
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1903,15 +1680,9 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.categories.map((category) => (
                     <DropdownMenuCheckboxItem
                       key={category}
-                      checked={pendingFilters.category.includes(
-                        category,
-                      )}
+                      checked={pendingFilters.category.includes(category)}
                       onCheckedChange={(checked) =>
-                        handleFilterChange(
-                          "category",
-                          category,
-                          checked,
-                        )
+                        handleFilterChange("category", category, checked)
                       }
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1944,15 +1715,9 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.users.map((user) => (
                     <DropdownMenuCheckboxItem
                       key={user}
-                      checked={pendingFilters.users.includes(
-                        user,
-                      )}
+                      checked={pendingFilters.users.includes(user)}
                       onCheckedChange={(checked) =>
-                        handleFilterChange(
-                          "users",
-                          user,
-                          checked,
-                        )
+                        handleFilterChange("users", user, checked)
                       }
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1985,15 +1750,9 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.assignees.map((assignee) => (
                     <DropdownMenuCheckboxItem
                       key={assignee}
-                      checked={pendingFilters.assignees.includes(
-                        assignee,
-                      )}
+                      checked={pendingFilters.assignees.includes(assignee)}
                       onCheckedChange={(checked) =>
-                        handleFilterChange(
-                          "assignees",
-                          assignee,
-                          checked,
-                        )
+                        handleFilterChange("assignees", assignee, checked)
                       }
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -2023,26 +1782,18 @@ export function FrappeTicketDashboard() {
                     Filter by Department
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator className="bg-border" />
-                  {uniqueValues.departments.map(
-                    (department) => (
-                      <DropdownMenuCheckboxItem
-                        key={department}
-                        checked={pendingFilters.departments.includes(
-                          department,
-                        )}
-                        onCheckedChange={(checked) =>
-                          handleFilterChange(
-                            "departments",
-                            department,
-                            checked,
-                          )
-                        }
-                        className="text-popover-foreground hover:bg-accent"
-                      >
-                        {department}
-                      </DropdownMenuCheckboxItem>
-                    ),
-                  )}
+                  {uniqueValues.departments.map((department) => (
+                    <DropdownMenuCheckboxItem
+                      key={department}
+                      checked={pendingFilters.departments.includes(department)}
+                      onCheckedChange={(checked) =>
+                        handleFilterChange("departments", department, checked)
+                      }
+                      className="text-popover-foreground hover:bg-accent"
+                    >
+                      {department}
+                    </DropdownMenuCheckboxItem>
+                  ))}
                 </DropdownMenuContent>
               </DropdownMenu>
 
@@ -2160,23 +1911,18 @@ export function FrappeTicketDashboard() {
                     >
                       {
                         [
-                          ...Object.values(
-                            pendingFilters,
-                          ).flat(),
+                          ...Object.values(pendingFilters).flat(),
                           ...(pendingFilters.dateRange !== "all"
                             ? [pendingFilters.dateRange]
                             : []),
-                          ...(searchQuery.trim()
-                            ? ["search"]
-                            : []),
+                          ...(searchQuery.trim() ? ["search"] : []),
                         ].length
                       }
                     </Badge>
                   )}
                 </Button>
 
-                {(activeFilterCount > 0 ||
-                  appliedSearchQuery) && (
+                {(activeFilterCount > 0 || appliedSearchQuery) && (
                   <Button
                     variant="outline"
                     onClick={clearAllFilters}
@@ -2208,9 +1954,7 @@ export function FrappeTicketDashboard() {
                         ...(pendingFilters.dateRange !== "all"
                           ? [pendingFilters.dateRange]
                           : []),
-                        ...(searchQuery.trim()
-                          ? ["search"]
-                          : []),
+                        ...(searchQuery.trim() ? ["search"] : []),
                       ].length
                     }{" "}
                     unapplied changes
@@ -2232,23 +1976,73 @@ export function FrappeTicketDashboard() {
                 ` of ${tickets.length}`}
               )
             </CardTitle>
+
             <div className="flex items-center gap-2">
+              {/* next prev button for betch records fetching*/}
+
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePreviousPage}
+                  disabled={!canGoPrevious || isPageLoading}
+                  className="border-border text-foreground hover:bg-accent"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  Previous
+                </Button>
+
+                {/* Page Numbers */}
+                <div className="flex items-center gap-1">
+                  {getPaginationRange().map((page, index) => (
+                    <div key={index}>
+                      {page === "..." ? (
+                        <span className="px-2 py-1 text-muted-foreground">
+                          ...
+                        </span>
+                      ) : (
+                        <Button
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handlePageChange(page as number)}
+                          disabled={isPageLoading}
+                          className={
+                            currentPage === page
+                              ? "bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground"
+                              : "border-border text-foreground hover:bg-accent"
+                          }
+                        >
+                          {page}
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleNextPage}
+                  disabled={!canGoNext || isPageLoading}
+                  className="border-border text-foreground hover:bg-accent"
+                >
+                  Next
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>
                   Page {currentPage} of {totalPages}
                 </span>
-                {isPageLoading && (
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                )}
+                {isPageLoading && <Loader2 className="w-3 h-3 animate-spin" />}
               </div>
 
               {/* Column Settings Button */}
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() =>
-                  setColumnSettingsDialogOpen(true)
-                }
+                onClick={() => setColumnSettingsDialogOpen(true)}
                 className="border-border text-foreground hover:bg-accent"
               >
                 <Columns className="w-4 h-4 mr-2" />
@@ -2279,9 +2073,7 @@ export function FrappeTicketDashboard() {
                 className="overflow-x-auto"
                 style={{
                   maxWidth: "100%",
-                  userSelect: resizeState?.isResizing
-                    ? "none"
-                    : "auto",
+                  userSelect: resizeState?.isResizing ? "none" : "auto",
                 }}
               >
                 <Table>
@@ -2299,16 +2091,13 @@ export function FrappeTicketDashboard() {
                           <input
                             type="checkbox"
                             checked={
-                              selectedTickets.length ===
-                                sortedTickets.length &&
+                              selectedTickets.length === sortedTickets.length &&
                               sortedTickets.length > 0
                             }
                             onChange={(e) => {
                               if (e.target.checked) {
                                 setSelectedTickets(
-                                  sortedTickets.map(
-                                    (t) => t.name,
-                                  ),
+                                  sortedTickets.map((t) => t.name),
                                 );
                               } else {
                                 setSelectedTickets([]);
@@ -2318,9 +2107,7 @@ export function FrappeTicketDashboard() {
                           />
                           <div
                             className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent"
-                            onMouseDown={(e) =>
-                              handleResizeStart(e, "select")
-                            }
+                            onMouseDown={(e) => handleResizeStart(e, "select")}
                           />
                         </TableHead>
                       )}
@@ -2333,9 +2120,7 @@ export function FrappeTicketDashboard() {
                             width: columnWidths.ticket_id,
                             minWidth: 120,
                           }}
-                          onClick={() =>
-                            handleSort("ticket_id")
-                          }
+                          onClick={() => handleSort("ticket_id")}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span>Ticket ID</span>
@@ -2367,9 +2152,7 @@ export function FrappeTicketDashboard() {
                           </div>
                           <div
                             className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                            onMouseDown={(e) =>
-                              handleResizeStart(e, "title")
-                            }
+                            onMouseDown={(e) => handleResizeStart(e, "title")}
                             onClick={(e) => e.stopPropagation()}
                           />
                         </TableHead>
@@ -2383,9 +2166,7 @@ export function FrappeTicketDashboard() {
                             width: columnWidths.user_name,
                             minWidth: 150,
                           }}
-                          onClick={() =>
-                            handleSort("user_name")
-                          }
+                          onClick={() => handleSort("user_name")}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span>User</span>
@@ -2409,9 +2190,7 @@ export function FrappeTicketDashboard() {
                             width: columnWidths.department,
                             minWidth: 130,
                           }}
-                          onClick={() =>
-                            handleSort("department")
-                          }
+                          onClick={() => handleSort("department")}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span>Department</span>
@@ -2467,9 +2246,7 @@ export function FrappeTicketDashboard() {
                           </div>
                           <div
                             className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                            onMouseDown={(e) =>
-                              handleResizeStart(e, "status")
-                            }
+                            onMouseDown={(e) => handleResizeStart(e, "status")}
                             onClick={(e) => e.stopPropagation()}
                           />
                         </TableHead>
@@ -2504,27 +2281,19 @@ export function FrappeTicketDashboard() {
                         <TableHead
                           className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
                           style={{
-                            width:
-                              columnWidths.created_datetime,
+                            width: columnWidths.created_datetime,
                             minWidth: 160,
                           }}
-                          onClick={() =>
-                            handleSort("created_datetime")
-                          }
+                          onClick={() => handleSort("created_datetime")}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span>Created</span>
-                            {getSortIndicator(
-                              "created_datetime",
-                            )}
+                            {getSortIndicator("created_datetime")}
                           </div>
                           <div
                             className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
                             onMouseDown={(e) =>
-                              handleResizeStart(
-                                e,
-                                "created_datetime",
-                              )
+                              handleResizeStart(e, "created_datetime")
                             }
                             onClick={(e) => e.stopPropagation()}
                           />
@@ -2539,9 +2308,7 @@ export function FrappeTicketDashboard() {
                             width: columnWidths.due_datetime,
                             minWidth: 160,
                           }}
-                          onClick={() =>
-                            handleSort("due_datetime")
-                          }
+                          onClick={() => handleSort("due_datetime")}
                         >
                           <div className="flex items-center justify-between gap-2">
                             <span>Due Date</span>
@@ -2550,10 +2317,7 @@ export function FrappeTicketDashboard() {
                           <div
                             className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
                             onMouseDown={(e) =>
-                              handleResizeStart(
-                                e,
-                                "due_datetime",
-                              )
+                              handleResizeStart(e, "due_datetime")
                             }
                             onClick={(e) => e.stopPropagation()}
                           />
@@ -2610,9 +2374,7 @@ export function FrappeTicketDashboard() {
                                 className="bg-popover border-border"
                               >
                                 <DropdownMenuItem
-                                  onClick={
-                                    handleResetColumnSettings
-                                  }
+                                  onClick={handleResetColumnSettings}
                                   className="text-popover-foreground hover:bg-accent"
                                 >
                                   Reset All Column Settings
@@ -2632,14 +2394,10 @@ export function FrappeTicketDashboard() {
                           colSpan={visibleColumns.length}
                           className="text-center py-8 text-muted-foreground"
                         >
-                          {appliedSearchQuery ||
-                          activeFilterCount > 0 ? (
+                          {appliedSearchQuery || activeFilterCount > 0 ? (
                             <div className="flex flex-col items-center gap-2">
                               <Search className="w-8 h-8 text-muted-foreground/50" />
-                              <p>
-                                No tickets match your search
-                                criteria
-                              </p>
+                              <p>No tickets match your search criteria</p>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -2662,37 +2420,26 @@ export function FrappeTicketDashboard() {
                         <TableRow
                           key={ticket.name}
                           className="border-border hover:bg-muted/50 cursor-pointer"
-                          onClick={() =>
-                            handleTicketClick(ticket)
-                          }
+                          onClick={() => handleTicketClick(ticket)}
                         >
                           {/* Select Cell */}
                           {columnVisibility.select && (
                             <TableCell
                               className="border-r border-border py-2 px-3"
-                              onClick={(e) =>
-                                e.stopPropagation()
-                              }
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <input
                                 type="checkbox"
-                                checked={selectedTickets.includes(
-                                  ticket.name,
-                                )}
+                                checked={selectedTickets.includes(ticket.name)}
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setSelectedTickets(
-                                      (prev) => [
-                                        ...prev,
-                                        ticket.name,
-                                      ],
-                                    );
+                                    setSelectedTickets((prev) => [
+                                      ...prev,
+                                      ticket.name,
+                                    ]);
                                   } else {
                                     setSelectedTickets((prev) =>
-                                      prev.filter(
-                                        (id) =>
-                                          id !== ticket.name,
-                                      ),
+                                      prev.filter((id) => id !== ticket.name),
                                     );
                                   }
                                 }}
@@ -2705,8 +2452,7 @@ export function FrappeTicketDashboard() {
                           {columnVisibility.ticket_id && (
                             <TableCell className="border-r border-border py-2 px-3">
                               <div className="font-mono text-sm">
-                                {ticket.ticket_id ||
-                                  ticket.name}
+                                {ticket.ticket_id || ticket.name}
                               </div>
                             </TableCell>
                           )}
@@ -2717,9 +2463,7 @@ export function FrappeTicketDashboard() {
                               <div className="max-w-full">
                                 <div
                                   className="truncate"
-                                  title={
-                                    ticket.title || "No title"
-                                  }
+                                  title={ticket.title || "No title"}
                                 >
                                   {ticket.title || "No title"}
                                 </div>
@@ -2734,13 +2478,9 @@ export function FrappeTicketDashboard() {
                                 <User className="w-4 h-4 text-muted-foreground" />
                                 <span
                                   className="truncate"
-                                  title={
-                                    ticket.user_name ||
-                                    "Unassigned"
-                                  }
+                                  title={ticket.user_name || "Unassigned"}
                                 >
-                                  {ticket.user_name ||
-                                    "Unassigned"}
+                                  {ticket.user_name || "Unassigned"}
                                 </span>
                               </div>
                             </TableCell>
@@ -2753,9 +2493,7 @@ export function FrappeTicketDashboard() {
                                 <Building className="w-4 h-4 text-muted-foreground" />
                                 <span
                                   className="truncate"
-                                  title={
-                                    ticket.department || "N/A"
-                                  }
+                                  title={ticket.department || "N/A"}
                                 >
                                   {ticket.department || "N/A"}
                                 </span>
@@ -2794,9 +2532,7 @@ export function FrappeTicketDashboard() {
                                 <Tag className="w-4 h-4 text-muted-foreground" />
                                 <span
                                   className="truncate"
-                                  title={
-                                    ticket.category || "None"
-                                  }
+                                  title={ticket.category || "None"}
                                 >
                                   {ticket.category || "None"}
                                 </span>
@@ -2811,8 +2547,7 @@ export function FrappeTicketDashboard() {
                                 <Calendar className="w-4 h-4" />
                                 <span>
                                   {formatDateTime(
-                                    ticket.created_datetime ||
-                                      ticket.creation,
+                                    ticket.created_datetime || ticket.creation,
                                   )}
                                 </span>
                               </div>
@@ -2825,9 +2560,7 @@ export function FrappeTicketDashboard() {
                               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Clock className="w-4 h-4" />
                                 <span>
-                                  {formatDateTime(
-                                    ticket.due_datetime,
-                                  )}
+                                  {formatDateTime(ticket.due_datetime)}
                                 </span>
                               </div>
                             </TableCell>
@@ -2840,13 +2573,9 @@ export function FrappeTicketDashboard() {
                                 <UserCheck className="w-4 h-4 text-muted-foreground" />
                                 <span
                                   className="truncate"
-                                  title={
-                                    ticket.assignee ||
-                                    "Unassigned"
-                                  }
+                                  title={ticket.assignee || "Unassigned"}
                                 >
-                                  {ticket.assignee ||
-                                    "Unassigned"}
+                                  {ticket.assignee || "Unassigned"}
                                 </span>
                               </div>
                             </TableCell>
@@ -2856,17 +2585,13 @@ export function FrappeTicketDashboard() {
                           {columnVisibility.actions && (
                             <TableCell
                               className="py-2 px-3"
-                              onClick={(e) =>
-                                e.stopPropagation()
-                              }
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <div className="flex items-center gap-1">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() =>
-                                    handleTicketClick(ticket)
-                                  }
+                                  onClick={() => handleTicketClick(ticket)}
                                   className="h-8 w-8 p-0 hover:bg-muted"
                                 >
                                   <Eye className="w-4 h-4" />
@@ -2877,18 +2602,12 @@ export function FrappeTicketDashboard() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() =>
-                                      handleSubmitTicket(
-                                        ticket.name,
-                                      )
+                                      handleSubmitTicket(ticket.name)
                                     }
-                                    disabled={
-                                      actionLoading ===
-                                      ticket.name
-                                    }
+                                    disabled={actionLoading === ticket.name}
                                     className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
                                   >
-                                    {actionLoading ===
-                                    ticket.name ? (
+                                    {actionLoading === ticket.name ? (
                                       <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : (
                                       <CheckCircle className="w-4 h-4" />
@@ -2901,18 +2620,12 @@ export function FrappeTicketDashboard() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() =>
-                                      handleCancelTicket(
-                                        ticket.name,
-                                      )
+                                      handleCancelTicket(ticket.name)
                                     }
-                                    disabled={
-                                      actionLoading ===
-                                      ticket.name
-                                    }
+                                    disabled={actionLoading === ticket.name}
                                     className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
                                   >
-                                    {actionLoading ===
-                                    ticket.name ? (
+                                    {actionLoading === ticket.name ? (
                                       <Loader2 className="w-4 h-4 animate-spin" />
                                     ) : (
                                       <XCircle className="w-4 h-4" />
@@ -2941,8 +2654,7 @@ export function FrappeTicketDashboard() {
               <div className="text-sm text-muted-foreground">
                 Showing page {currentPage} of {totalPages}(
                 {sortedTickets.length} of{" "}
-                {totalTicketCount || mockTickets.length}{" "}
-                tickets)
+                {totalTicketCount || mockTickets.length} tickets)
               </div>
 
               <div className="flex items-center gap-2">
@@ -2967,15 +2679,9 @@ export function FrappeTicketDashboard() {
                         </span>
                       ) : (
                         <Button
-                          variant={
-                            currentPage === page
-                              ? "default"
-                              : "outline"
-                          }
+                          variant={currentPage === page ? "default" : "outline"}
                           size="sm"
-                          onClick={() =>
-                            handlePageChange(page as number)
-                          }
+                          onClick={() => handlePageChange(page as number)}
                           disabled={isPageLoading}
                           className={
                             currentPage === page
