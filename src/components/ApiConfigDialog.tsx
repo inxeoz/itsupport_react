@@ -23,20 +23,12 @@ export interface ApiConfig {
   customCookies: string;
 }
 
-interface TestConnectionResult {
-  success: boolean;
-  message: string;
-  details?: any;
-  suggestions?: string[];
-  systemInfo?: any;
-}
-
 interface ApiConfigDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   config: ApiConfig;
   onConfigChange: (config: ApiConfig) => void;
-  onTestConnection: (config: ApiConfig) => Promise<TestConnectionResult>;
+  onTestConnection: (config: ApiConfig) => Promise<boolean>;
 }
 
 export function ApiConfigDialog({ 
@@ -92,27 +84,13 @@ export function ApiConfigDialog({
 
   // Update local config when prop config changes
   useEffect(() => {
-    if (config && config.baseUrl) {
-      setLocalConfig(config);
-    } else {
-      // If config is undefined or incomplete, use default
-      setLocalConfig(defaultConfig);
-    }
+    setLocalConfig(config);
   }, [config]);
 
-  // Initialize localConfig with defaultConfig if it's undefined
-  useEffect(() => {
-    if (!localConfig || !localConfig.baseUrl) {
-      setLocalConfig(defaultConfig);
-    }
-  }, []);
-
   const handleSave = () => {
-    if (localConfig && localConfig.baseUrl) {
-      onConfigChange(localConfig);
-      onOpenChange(false);
-      setTestStatus('idle');
-    }
+    onConfigChange(localConfig);
+    onOpenChange(false);
+    setTestStatus('idle');
   };
 
   const handleReset = () => {
@@ -121,23 +99,17 @@ export function ApiConfigDialog({
   };
 
   const handleTestConnection = async () => {
-    if (!localConfig || !localConfig.baseUrl) {
-      setTestStatus('error');
-      setTestMessage('Configuration is incomplete. Please check all required fields.');
-      return;
-    }
-
     setTestStatus('testing');
     setTestMessage('');
     
     try {
-      const result = await onTestConnection(localConfig);
-      if (result.success) {
+      const isConnected = await onTestConnection(localConfig);
+      if (isConnected) {
         setTestStatus('success');
-        setTestMessage(result.message || 'Successfully connected to Frappe API!');
+        setTestMessage('Successfully connected to Frappe API!');
       } else {
         setTestStatus('error');
-        setTestMessage(result.message || 'Failed to connect to Frappe API. Check your configuration.');
+        setTestMessage('Failed to connect to Frappe API. Check your configuration.');
       }
     } catch (error) {
       setTestStatus('error');
@@ -189,11 +161,6 @@ export function ApiConfigDialog({
 
   const alertStyles = getAlertStyles();
 
-  // Ensure localConfig is valid before rendering
-  if (!localConfig || !localConfig.baseUrl) {
-    return null;
-  }
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={`max-w-2xl max-h-[90vh] overflow-y-auto bg-popover border-border ${getThemeClasses()}`}>
@@ -220,7 +187,7 @@ export function ApiConfigDialog({
                   <Label htmlFor="baseUrl" className="text-foreground">Base URL</Label>
                   <Input
                     id="baseUrl"
-                    value={localConfig.baseUrl || ''}
+                    value={localConfig.baseUrl}
                     onChange={(e) => setLocalConfig(prev => ({ ...prev, baseUrl: e.target.value }))}
                     placeholder="https://itsupport.inxeoz.com"
                     className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground"
@@ -236,7 +203,7 @@ export function ApiConfigDialog({
                     <Input
                       id="token"
                       type={showToken ? "text" : "password"}
-                      value={localConfig.token || ''}
+                      value={localConfig.token}
                       onChange={(e) => setLocalConfig(prev => ({ ...prev, token: e.target.value }))}
                       placeholder="api_key:api_secret"
                       className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground pr-10"
@@ -267,7 +234,7 @@ export function ApiConfigDialog({
                   <Label htmlFor="endpoint" className="text-foreground">API Endpoint</Label>
                   <Input
                     id="endpoint"
-                    value={localConfig.endpoint || ''}
+                    value={localConfig.endpoint}
                     onChange={(e) => setLocalConfig(prev => ({ ...prev, endpoint: e.target.value }))}
                     placeholder="/api/resource/Ticket"
                     className="font-mono text-sm bg-input border-border text-foreground placeholder:text-muted-foreground"
@@ -291,7 +258,7 @@ export function ApiConfigDialog({
                 <Label htmlFor="fields" className="text-foreground">Fields to Fetch</Label>
                 <Textarea
                   id="fields"
-                  value={(localConfig.fields || []).join(', ')}
+                  value={localConfig.fields.join(', ')}
                   onChange={(e) => handleFieldsChange(e.target.value)}
                   placeholder="name, title, user_name, description, creation, modified, docstatus"
                   className="font-mono text-sm min-h-[80px] bg-input border-border text-foreground placeholder:text-muted-foreground"
@@ -302,7 +269,7 @@ export function ApiConfigDialog({
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {(localConfig.fields || []).map((field, index) => (
+                {localConfig.fields.map((field, index) => (
                   <Badge key={index} variant="secondary" className="text-xs bg-secondary text-secondary-foreground">
                     {field}
                   </Badge>
@@ -324,7 +291,7 @@ export function ApiConfigDialog({
                   <Input
                     id="timeout"
                     type="number"
-                    value={localConfig.timeout || 10000}
+                    value={localConfig.timeout}
                     onChange={(e) => setLocalConfig(prev => ({ ...prev, timeout: parseInt(e.target.value) || 10000 }))}
                     placeholder="10000"
                     min="1000"
@@ -339,7 +306,7 @@ export function ApiConfigDialog({
                   <Input
                     id="retries"
                     type="number"
-                    value={localConfig.retries || 3}
+                    value={localConfig.retries}
                     onChange={(e) => setLocalConfig(prev => ({ ...prev, retries: parseInt(e.target.value) || 3 }))}
                     placeholder="3"
                     min="0"
@@ -358,7 +325,7 @@ export function ApiConfigDialog({
                 </div>
                 <Switch
                   id="allowCookies"
-                  checked={localConfig.allowCookies || false}
+                  checked={localConfig.allowCookies}
                   onCheckedChange={(checked) => setLocalConfig(prev => ({ ...prev, allowCookies: checked }))}
                   className="data-[state=checked]:bg-theme-accent"
                 />
@@ -369,7 +336,7 @@ export function ApiConfigDialog({
                   <Label htmlFor="customCookies" className="text-foreground">Custom Cookie Header</Label>
                   <Textarea
                     id="customCookies"
-                    value={localConfig.customCookies || ''}
+                    value={localConfig.customCookies}
                     onChange={(e) => setLocalConfig(prev => ({ ...prev, customCookies: e.target.value }))}
                     placeholder="full_name=Guest; sid=Guest; system_user=no; user_id=Guest; user_lang=en"
                     className="font-mono text-sm min-h-[80px] bg-input border-border text-foreground placeholder:text-muted-foreground"
@@ -428,11 +395,11 @@ export function ApiConfigDialog({
               <div className="bg-muted p-3 rounded-md font-mono text-sm border border-border">
                 <div className="text-muted-foreground">URL:</div>
                 <div className="break-all mb-2 text-foreground">
-                  {localConfig.baseUrl}{localConfig.endpoint}?fields=[ {(localConfig.fields || []).map(f => `"${f}"`).join(', ')} ]
+                  {localConfig.baseUrl}{localConfig.endpoint}?fields=[ {localConfig.fields.map(f => `"${f}"`).join(', ')} ]
                 </div>
                 
                 <div className="text-muted-foreground">Headers:</div>
-                <div className="text-foreground">Authorization: token {(localConfig.token || '').split(':')[0]}:***</div>
+                <div className="text-foreground">Authorization: token {localConfig.token.split(':')[0]}:***</div>
                 <div className="text-foreground">Content-Type: application/json</div>
                 {localConfig.allowCookies && localConfig.customCookies && (
                   <div className="text-foreground">Cookie: {localConfig.customCookies.substring(0, 50)}{localConfig.customCookies.length > 50 ? '...' : ''}</div>
@@ -440,8 +407,8 @@ export function ApiConfigDialog({
                 
                 <div className="text-muted-foreground mt-2">Options:</div>
                 <div className="text-foreground">Credentials: {localConfig.allowCookies ? 'include' : 'same-origin'}</div>
-                <div className="text-foreground">Timeout: {localConfig.timeout || 10000}ms</div>
-                <div className="text-foreground">Max Retries: {localConfig.retries || 3}</div>
+                <div className="text-foreground">Timeout: {localConfig.timeout}ms</div>
+                <div className="text-foreground">Max Retries: {localConfig.retries}</div>
               </div>
             </CardContent>
           </Card>

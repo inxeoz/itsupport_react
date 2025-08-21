@@ -51,12 +51,7 @@ import {
   UserCheck,
   GripVertical,
   ChevronLeft,
-  ChevronRight,
-  FilterX,
-  Check,
-  TrendingUp,
-  List,
-  CheckCircle2
+  ChevronRight
 } from 'lucide-react';
 import { Alert, AlertDescription } from './ui/alert';
 import { frappeApi, mockTickets, type FrappeTicket, DEFAULT_API_CONFIG, type ApiConfig } from '../services/frappeApi';
@@ -113,11 +108,9 @@ export function FrappeTicketDashboard() {
   const [pageSize] = useState(20);
   const [isPageLoading, setIsPageLoading] = useState(false);
   
-  // Search and Filter States - Separate pending and applied states
+  // Search and Filter States
   const [searchQuery, setSearchQuery] = useState('');
-  const [appliedSearchQuery, setAppliedSearchQuery] = useState('');
-  
-  const [pendingFilters, setPendingFilters] = useState<FilterState>({
+  const [filters, setFilters] = useState<FilterState>({
     status: [],
     priority: [],
     category: [],
@@ -127,18 +120,6 @@ export function FrappeTicketDashboard() {
     departments: [],
     dateRange: 'all'
   });
-  
-  const [appliedFilters, setAppliedFilters] = useState<FilterState>({
-    status: [],
-    priority: [],
-    category: [],
-    impact: [],
-    users: [],
-    assignees: [],
-    departments: [],
-    dateRange: 'all'
-  });
-  
   const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
 
   // Ticket Details Popover State
@@ -341,25 +322,12 @@ export function FrappeTicketDashboard() {
     }, 100);
   };
 
-  const handleTestConnection = async (testConfig: ApiConfig) => {
+  const handleTestConnection = async (testConfig: ApiConfig): Promise<boolean> => {
     try {
-      // Call the frappeApi testConnection method which returns the full result object
-      const result = await frappeApi.testConnection(testConfig);
-      return result;
+      return await frappeApi.testConnection(testConfig);
     } catch (error) {
       console.error('Connection test error:', error);
-      // Return a properly formatted error result
-      return {
-        success: false,
-        message: error instanceof Error ? error.message : 'Connection test failed',
-        details: error,
-        suggestions: [
-          'Check your network connection',
-          'Verify the base URL is correct',
-          'Ensure your API token is valid',
-          'Check if the Frappe server is running'
-        ]
-      };
+      return false;
     }
   };
 
@@ -590,7 +558,7 @@ export function FrappeTicketDashboard() {
     );
   };
 
-  // Get unique values for filter dropdowns (based on current ticket data)
+  // Get unique values for filter dropdowns
   const uniqueValues = useMemo(() => {
     return {
       statuses: [...new Set(tickets.map(ticket => ticket.status).filter(Boolean))].sort(),
@@ -603,13 +571,13 @@ export function FrappeTicketDashboard() {
     };
   }, [tickets]);
 
-  // Enhanced filtering for new fields (using applied filters, not pending)
+  // Enhanced filtering for new fields
   const filteredTickets = useMemo(() => {
     let filtered = tickets;
 
-    // Apply search filter across multiple fields (using applied search query)
-    if (appliedSearchQuery.trim()) {
-      const query = appliedSearchQuery.toLowerCase().trim();
+    // Apply search filter across multiple fields
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
       filtered = filtered.filter(ticket => 
         (ticket.name?.toLowerCase().includes(query)) ||
         (ticket.ticket_id?.toLowerCase().includes(query)) ||
@@ -622,55 +590,55 @@ export function FrappeTicketDashboard() {
       );
     }
 
-    // Apply all filters (using applied filters, not pending)
-    if (appliedFilters.status.length > 0) {
+    // Apply all filters
+    if (filters.status.length > 0) {
       filtered = filtered.filter(ticket => 
-        ticket.status && appliedFilters.status.includes(ticket.status)
+        ticket.status && filters.status.includes(ticket.status)
       );
     }
 
-    if (appliedFilters.priority.length > 0) {
+    if (filters.priority.length > 0) {
       filtered = filtered.filter(ticket => 
-        ticket.priority && appliedFilters.priority.includes(ticket.priority)
+        ticket.priority && filters.priority.includes(ticket.priority)
       );
     }
 
-    if (appliedFilters.category.length > 0) {
+    if (filters.category.length > 0) {
       filtered = filtered.filter(ticket => 
-        ticket.category && appliedFilters.category.includes(ticket.category)
+        ticket.category && filters.category.includes(ticket.category)
       );
     }
 
-    if (appliedFilters.impact.length > 0) {
+    if (filters.impact.length > 0) {
       filtered = filtered.filter(ticket => 
-        ticket.impact && appliedFilters.impact.includes(ticket.impact)
+        ticket.impact && filters.impact.includes(ticket.impact)
       );
     }
 
-    if (appliedFilters.users.length > 0) {
+    if (filters.users.length > 0) {
       filtered = filtered.filter(ticket => 
-        ticket.user_name && appliedFilters.users.includes(ticket.user_name)
+        ticket.user_name && filters.users.includes(ticket.user_name)
       );
     }
 
-    if (appliedFilters.assignees.length > 0) {
+    if (filters.assignees.length > 0) {
       filtered = filtered.filter(ticket => 
-        ticket.assignee && appliedFilters.assignees.includes(ticket.assignee)
+        ticket.assignee && filters.assignees.includes(ticket.assignee)
       );
     }
 
-    if (appliedFilters.departments.length > 0) {
+    if (filters.departments.length > 0) {
       filtered = filtered.filter(ticket => 
-        ticket.department && appliedFilters.departments.includes(ticket.department)
+        ticket.department && filters.departments.includes(ticket.department)
       );
     }
 
     // Apply date range filter
-    if (appliedFilters.dateRange !== 'all') {
+    if (filters.dateRange !== 'all') {
       const now = new Date();
       let dateThreshold: Date;
       
-      switch (appliedFilters.dateRange) {
+      switch (filters.dateRange) {
         case '7days':
           dateThreshold = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
           break;
@@ -692,7 +660,7 @@ export function FrappeTicketDashboard() {
     }
 
     return filtered;
-  }, [tickets, appliedSearchQuery, appliedFilters]);
+  }, [tickets, searchQuery, filters]);
 
   // Sort filtered tickets based on current criteria
   const sortedTickets = useMemo(() => {
@@ -712,38 +680,6 @@ export function FrappeTicketDashboard() {
     });
   }, [filteredTickets, sortCriteria]);
 
-  // Calculate overview stats
-  const overviewStats = useMemo(() => {
-    const today = new Date();
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    
-    // Use all available tickets for current page stats, not just filtered ones
-    const currentPageTickets = tickets;
-    
-    const openTickets = currentPageTickets.filter(ticket => 
-      ticket.status && ['New', 'In Progress', 'Waiting for Info'].includes(ticket.status)
-    ).length;
-    
-    const criticalPriorityTickets = currentPageTickets.filter(ticket => 
-      ticket.priority === 'Critical'
-    ).length;
-    
-    const resolvedTodayTickets = currentPageTickets.filter(ticket => {
-      if (ticket.resolution_datetime) {
-        const resolutionDate = new Date(ticket.resolution_datetime);
-        return resolutionDate >= todayStart;
-      }
-      return false;
-    }).length;
-    
-    return {
-      totalTickets: totalTicketCount !== null ? totalTicketCount : (connectionStatus === 'disconnected' ? mockTickets.length : 0),
-      openTickets,
-      criticalPriorityTickets,
-      resolvedTodayTickets
-    };
-  }, [tickets, totalTicketCount, connectionStatus]);
-
   // Clear all sorting
   const clearAllSorting = () => {
     setSortCriteria([]);
@@ -752,43 +688,10 @@ export function FrappeTicketDashboard() {
     });
   };
 
-  // Apply filters and search - this is the main function that applies pending changes
-  const applyFilters = () => {
-    setAppliedFilters({ ...pendingFilters });
-    setAppliedSearchQuery(searchQuery);
-    setCurrentPage(1); // Reset to first page when applying filters
-    
-    // Count applied filters for toast message
-    const totalActiveFilters = [
-      ...pendingFilters.status,
-      ...pendingFilters.priority,
-      ...pendingFilters.category,
-      ...pendingFilters.impact,
-      ...pendingFilters.users,
-      ...pendingFilters.assignees,
-      ...pendingFilters.departments,
-      ...(pendingFilters.dateRange !== 'all' ? [pendingFilters.dateRange] : [])
-    ].length;
-    
-    const searchActive = searchQuery.trim().length > 0;
-    
-    let description = '';
-    if (totalActiveFilters > 0 && searchActive) {
-      description = `Applied ${totalActiveFilters} filters and search query`;
-    } else if (totalActiveFilters > 0) {
-      description = `Applied ${totalActiveFilters} active filters`;
-    } else if (searchActive) {
-      description = `Applied search query: "${searchQuery.trim()}"`;
-    } else {
-      description = "Showing all tickets";
-    }
-    
-    toast.success("Filters applied", { description });
-  };
-
   // Clear all filters and search
   const clearAllFilters = () => {
-    const clearedFilters = {
+    setSearchQuery('');
+    setFilters({
       status: [],
       priority: [],
       category: [],
@@ -797,39 +700,13 @@ export function FrappeTicketDashboard() {
       assignees: [],
       departments: [],
       dateRange: 'all'
-    };
-    
-    setSearchQuery('');
-    setPendingFilters(clearedFilters);
-    setAppliedFilters(clearedFilters);
-    setAppliedSearchQuery('');
-    setCurrentPage(1); // Reset to first page when clearing filters
-    
+    });
+    // Reset to first page when clearing filters
+    setCurrentPage(1);
     toast.success("Filters cleared", {
       description: "All filters and search have been reset.",
     });
   };
-
-  // Check if there are unapplied changes
-  const hasUnappliedChanges = useMemo(() => {
-    const filtersChanged = JSON.stringify(pendingFilters) !== JSON.stringify(appliedFilters);
-    const searchChanged = searchQuery !== appliedSearchQuery;
-    return filtersChanged || searchChanged;
-  }, [pendingFilters, appliedFilters, searchQuery, appliedSearchQuery]);
-
-  // Count active filters for display
-  const activeFilterCount = useMemo(() => {
-    return [
-      ...appliedFilters.status,
-      ...appliedFilters.priority,
-      ...appliedFilters.category,
-      ...appliedFilters.impact,
-      ...appliedFilters.users,
-      ...appliedFilters.assignees,
-      ...appliedFilters.departments,
-      ...(appliedFilters.dateRange !== 'all' ? [appliedFilters.dateRange] : [])
-    ].length + (appliedSearchQuery.trim() ? 1 : 0);
-  }, [appliedFilters, appliedSearchQuery]);
 
   // Pagination helpers
   const totalPages = totalTicketCount ? Math.ceil(totalTicketCount / pageSize) : Math.ceil(mockTickets.length / pageSize);
@@ -899,9 +776,9 @@ export function FrappeTicketDashboard() {
     return range;
   };
 
-  // Generic filter handler (updates pending filters)
+  // Generic filter handler
   const handleFilterChange = (filterType: keyof FilterState, value: string, checked: boolean) => {
-    setPendingFilters(prev => ({
+    setFilters(prev => ({
       ...prev,
       [filterType]: checked 
         ? [...(prev[filterType] as string[]), value]
@@ -926,350 +803,361 @@ export function FrappeTicketDashboard() {
       return;
     }
     
-    toast.success(`Archiving ${selectedTickets.length} tickets...`);
+    toast.success(`Cancelling ${selectedTickets.length} tickets...`);
     setSelectedTickets([]);
   };
 
-  // Export functions
-  const handleExport = (format: 'csv' | 'excel') => {
-    const dataToExport = sortedTickets;
-    const count = dataToExport.length;
-    
-    if (count === 0) {
-      toast.error("No data to export", {
-        description: "Apply filters to get data or check your search criteria."
-      });
-      return;
-    }
-    
-    // Create CSV content
-    if (format === 'csv') {
-      const headers = ['Ticket ID', 'Title', 'User', 'Department', 'Priority', 'Status', 'Category', 'Created', 'Due Date', 'Assignee'];
-      const csvContent = [
-        headers.join(','),
-        ...dataToExport.map(ticket => [
-          ticket.ticket_id || ticket.name || '',
-          `"${(ticket.title || '').replace(/"/g, '""')}"`,
-          ticket.user_name || '',
-          ticket.department || '',
-          ticket.priority || '',
-          ticket.status || '',
-          ticket.category || '',
-          ticket.created_datetime ? new Date(ticket.created_datetime).toLocaleDateString() : '',
-          ticket.due_datetime ? new Date(ticket.due_datetime).toLocaleDateString() : '',
-          ticket.assignee || ''
-        ].join(','))
-      ].join('\n');
-      
-      // Download CSV
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `tickets_${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      toast.success(`Exported ${count} tickets to CSV`, {
-        description: `File saved as tickets_${new Date().toISOString().split('T')[0]}.csv`
-      });
-    } else {
-      toast.info("Excel export not implemented", {
-        description: "Excel export feature will be available in a future update."
-      });
-    }
+  const handleExport = (format: string) => {
+    const totalCount = connectionStatus === 'connected' && totalTicketCount !== null ? totalTicketCount : mockTickets.length;
+    toast.success(`Exporting ${totalCount} tickets as ${format.toUpperCase()}...`);
   };
 
-  // Load saved config from localStorage on mount
-  useEffect(() => {
-    const savedConfig = localStorage.getItem('frappe-api-config');
-    if (savedConfig) {
-      try {
-        const parsed = JSON.parse(savedConfig);
-        setApiConfig(parsed);
-        frappeApi.updateConfig(parsed);
-      } catch (error) {
-        console.error('Failed to parse saved API config:', error);
-      }
+  // Get active filters count
+  const activeFiltersCount = Object.values(filters).reduce((count, filter) => {
+    if (Array.isArray(filter)) {
+      return count + filter.length;
     }
+    return count + (filter !== 'all' ? 1 : 0);
+  }, 0) + (searchQuery.trim() ? 1 : 0);
+
+  // Priority badge helper
+  const getPriorityBadge = (priority: string | null) => {
+    if (!priority) return null;
     
-    // Initial fetch
-    fetchTickets();
-  }, []);
-
-  // Get priority badge color
-  const getPriorityColor = (priority: string | null) => {
-    switch (priority?.toLowerCase()) {
-      case 'critical':
-        return 'bg-red-500 hover:bg-red-600 text-white';
-      case 'high':
-        return 'bg-orange-500 hover:bg-orange-600 text-white';
-      case 'medium':
-        return 'bg-yellow-500 hover:bg-yellow-600 text-white';
-      case 'low':
-        return 'bg-green-500 hover:bg-green-600 text-white';
-      default:
-        return 'bg-secondary text-secondary-foreground hover:bg-secondary/80';
-    }
+    const priorityConfig = {
+      'Critical': { bg: 'bg-destructive/20 text-destructive border-destructive/20', icon: AlertTriangle },
+      'High': { bg: 'bg-theme-accent/20 text-theme-accent border-theme-accent/20', icon: AlertTriangle },
+      'Medium': { bg: 'bg-muted text-muted-foreground border-border', icon: Clock },
+      'Low': { bg: 'bg-theme-accent/10 text-theme-accent border-theme-accent/10', icon: CheckCircle },
+    };
+    
+    const config = priorityConfig[priority as keyof typeof priorityConfig];
+    if (!config) return <Badge variant="outline" className="text-foreground border-border">{priority}</Badge>;
+    
+    const IconComponent = config.icon;
+    
+    return (
+      <Badge variant="secondary" className={`${config.bg} flex items-center gap-1 border`}>
+        <IconComponent className="w-3 h-3" />
+        <span>{priority}</span>
+      </Badge>
+    );
   };
 
-  // Get status badge color
-  const getStatusColor = (status: string | null) => {
-    switch (status?.toLowerCase()) {
-      case 'new':
-        return 'bg-blue-500 hover:bg-blue-600 text-white';
-      case 'in progress':
-        return 'bg-orange-500 hover:bg-orange-600 text-white';
-      case 'waiting for info':
-        return 'bg-yellow-500 hover:bg-yellow-600 text-black';
-      case 'resolved':
-        return 'bg-green-500 hover:bg-green-600 text-white';
-      case 'closed':
-        return 'bg-gray-500 hover:bg-gray-600 text-white';
-      default:
-        return 'bg-secondary text-secondary-foreground hover:bg-secondary/80';
-    }
+  // Status badge helper
+  const getStatusBadge = (status: string | null) => {
+    if (!status) return <Badge variant="outline" className="text-foreground border-border">Unknown</Badge>;
+    
+    const statusConfig = {
+      'New': { bg: 'bg-theme-accent/20 text-theme-accent border-theme-accent/20', icon: FileText },
+      'In Progress': { bg: 'bg-muted text-muted-foreground border-border', icon: Clock },
+      'Waiting for Info': { bg: 'bg-secondary text-secondary-foreground border-border', icon: AlertCircle },
+      'Resolved': { bg: 'bg-theme-accent/10 text-theme-accent border-theme-accent/10', icon: CheckCircle },
+      'Closed': { bg: 'bg-muted/50 text-muted-foreground border-border', icon: XCircle },
+    };
+    
+    const config = statusConfig[status as keyof typeof statusConfig];
+    if (!config) return <Badge variant="outline" className="text-foreground border-border">{status}</Badge>;
+    
+    const IconComponent = config.icon;
+    
+    return (
+      <Badge variant="secondary" className={`${config.bg} flex items-center gap-1 border`}>
+        <IconComponent className="w-3 h-3" />
+        <span>{status}</span>
+      </Badge>
+    );
   };
 
-  const formatDateTime = (dateTime: string | null) => {
-    if (!dateTime) return 'N/A';
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return <span className="text-muted-foreground">No date</span>;
+    
     try {
-      return new Date(dateTime).toLocaleString('en-US', {
+      const date = new Date(dateString);
+      return <span className="text-foreground">{date.toLocaleString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      });
-    } catch {
-      return 'Invalid Date';
+      })}</span>;
+    } catch (error) {
+      return <span className="text-muted-foreground">Invalid date</span>;
     }
   };
 
-  return (
-    <div className="space-y-6 bg-background text-foreground mytick-theme">
-      {/* Header */}
-      <Card className="bg-card border-border mytick-theme">
-        <CardHeader className="pb-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                <FileText className="w-6 h-6 text-theme-accent" />
-                <CardTitle className="text-card-foreground">Frappe Ticket Dashboard</CardTitle>
-              </div>
-              <div className="flex items-center gap-2">
-                {connectionStatus === 'connected' && (
-                  <div className="flex items-center gap-1 text-green-600">
-                    <Wifi className="w-4 h-4" />
-                    <span className="text-sm">Connected</span>
-                  </div>
-                )}
-                {connectionStatus === 'disconnected' && (
-                  <div className="flex items-center gap-1 text-red-600">
-                    <WifiOff className="w-4 h-4" />
-                    <span className="text-sm">Offline Mode</span>
-                  </div>
-                )}
-                {connectionStatus === 'testing' && (
-                  <div className="flex items-center gap-1 text-yellow-600">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Testing...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {/* Active Filter Indicator */}
-              {(activeFilterCount > 0 || sortCriteria.length > 0) && (
-                <div className="flex items-center gap-2">
-                  {activeFilterCount > 0 && (
-                    <Badge variant="secondary" className="bg-theme-accent/10 text-theme-accent border-theme-accent/20">
-                      <Filter className="w-3 h-3 mr-1" />
-                      {activeFilterCount} Filter{activeFilterCount > 1 ? 's' : ''}
-                    </Badge>
-                  )}
-                  {sortCriteria.length > 0 && (
-                    <Badge variant="secondary" className="bg-theme-accent/10 text-theme-accent border-theme-accent/20">
-                      <ArrowUpDown className="w-3 h-3 mr-1" />
-                      {sortCriteria.length} Sort{sortCriteria.length > 1 ? 's' : ''}
-                    </Badge>
-                  )}
-                </div>
-              )}
-              
-              {/* Ticket Count Display */}
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>
-                  Showing {sortedTickets.length} of {totalTicketCount !== null ? totalTicketCount : mockTickets.length} tickets
-                </span>
-                {countLoading && <Loader2 className="w-3 h-3 animate-spin" />}
-              </div>
+  const truncateText = (text: string | null, maxLength: number = 50) => {
+    if (!text) return <span className="text-muted-foreground">No content</span>;
+    const truncated = text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    return <span className="text-foreground">{truncated}</span>;
+  };
 
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => fetchTickets()}
-                disabled={loading}
-                className="border-border text-foreground hover:bg-accent"
-              >
-                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setNewTicketDialogOpen(true)}
-                className="border-border text-foreground hover:bg-accent"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Ticket
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setConfigDialogOpen(true)}
-                className="border-border text-foreground hover:bg-accent"
-              >
-                <Settings className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
-          
-          <CardDescription className="text-muted-foreground">
-            Manage and track support tickets from your Frappe/ERPNext instance
-          </CardDescription>
-        </CardHeader>
-      </Card>
+  const getConnectionIcon = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return <Wifi className="w-4 h-4 text-theme-accent" />;
+      case 'disconnected':
+        return <WifiOff className="w-4 h-4 text-destructive" />;
+      case 'testing':
+        return <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />;
+    }
+  };
 
-      {/* Overview Stats Section - Theme Aware */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Tickets - Primary Theme Card */}
-        <Card className="bg-theme-accent/5 border-theme-accent/20 mytick-theme">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="w-full">
-                <div className="bg-theme-accent text-theme-accent-foreground rounded-lg p-3 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <List className="w-5 h-5" />
-                      <span className="text-sm font-medium">Total Tickets</span>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-2xl font-bold">
-                      {countLoading ? (
-                        <Loader2 className="w-6 h-6 animate-spin" />
-                      ) : (
-                        overviewStats.totalTickets
-                      )}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {connectionStatus === 'connected' ? 'Server: total ticket count' : 'Showing 50 of 31'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+  useEffect(() => {
+    // Load saved configuration from localStorage
+    const savedConfig = localStorage.getItem('frappe-api-config');
+    if (savedConfig) {
+      try {
+        const config = JSON.parse(savedConfig) as ApiConfig;
+        setApiConfig(config);
+        frappeApi.updateConfig(config);
+      } catch (error) {
+        console.error('Failed to parse saved API config:', error);
+      }
+    }
+    
+    fetchTickets(true, 1);
+  }, []);
 
-        {/* Open Tickets - Secondary Theme Card */}
-        <Card className="bg-secondary/50 border-secondary mytick-theme">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="w-full">
-                <div className="bg-secondary text-secondary-foreground rounded-lg p-3 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-5 h-5" />
-                      <span className="text-sm font-medium">Open Tickets</span>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-2xl font-bold">
-                      {overviewStats.openTickets}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Active support requests [current page]
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Critical Priority - Destructive Theme Card */}
-        <Card className="bg-destructive/5 border-destructive/20 mytick-theme">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="w-full">
-                <div className="bg-destructive text-destructive-foreground rounded-lg p-3 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5" />
-                      <span className="text-sm font-medium">Critical Priority</span>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-2xl font-bold">
-                      {overviewStats.criticalPriorityTickets}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Requires immediate attention [current page]
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Resolved Today - Success Theme Card */}
-        <Card className="bg-muted/50 border-muted mytick-theme">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="w-full">
-                <div className="bg-muted text-muted-foreground rounded-lg p-3 mb-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span className="text-sm font-medium">Resolved Today</span>
-                    </div>
-                  </div>
-                  <div className="mt-2">
-                    <span className="text-2xl font-bold">
-                      {overviewStats.resolvedTodayTickets}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Completed support tickets [current page]
-                </p>
-              </div>
+  if (loading) {
+    return (
+      <div className="p-6 bg-background">
+        <Card className="border-border bg-card">
+          <CardContent className="flex items-center justify-center py-12 bg-card">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-theme-accent" />
+              <p className="text-muted-foreground">Connecting to Frappe API...</p>
+              <p className="text-sm text-muted-foreground">{apiConfig.baseUrl}{apiConfig.endpoint}</p>
             </div>
           </CardContent>
         </Card>
       </div>
+    );
+  }
 
-      {/* Error Alert */}
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold text-foreground">Support Ticket Management</h1>
+            <div className="flex items-center gap-2">
+              {getConnectionIcon()}
+              <span className="text-sm text-muted-foreground">
+                {connectionStatus === 'connected' ? 'Live Data' : 
+                 connectionStatus === 'disconnected' ? 'Demo Data' : 'Connecting...'}
+              </span>
+            </div>
+          </div>
+          <p className="text-muted-foreground">
+            {connectionStatus === 'connected' 
+              ? 'Real-time data from your Frappe ERPNext system'
+              : 'Demo data with comprehensive ticket management features'
+            }
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button 
+            onClick={() => {
+              fetchTickets(true, currentPage);
+              if (connectionStatus === 'connected') {
+                fetchTotalCount();
+              }
+            }} 
+            variant="outline" 
+            disabled={loading || countLoading || isPageLoading} 
+            className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 text-muted-foreground ${loading || countLoading || isPageLoading ? 'animate-spin' : ''}`} />
+            <span className="text-foreground">Refresh</span>
+          </Button>
+          <Button 
+            onClick={() => setNewTicketDialogOpen(true)}
+            className="bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            <span>New Ticket</span>
+          </Button>
+        </div>
+      </div>
+
+      {/* Connection Status Alert */}
       {error && (
-        <Alert className="border-red-200 bg-red-50 text-red-900 mytick-theme">
-          <AlertCircle className="w-4 h-4" />
-          <AlertDescription>
-            <strong>Connection Error:</strong> {error}
+        <Alert className={connectionStatus === 'disconnected' 
+          ? "border-secondary bg-secondary/10"
+          : "border-destructive bg-destructive/10"
+        }>
+          <AlertCircle className={`h-4 w-4 ${connectionStatus === 'disconnected' 
+            ? 'text-secondary-foreground' 
+            : 'text-destructive'}`} />
+          <AlertDescription className={connectionStatus === 'disconnected' 
+            ? 'text-secondary-foreground'
+            : 'text-destructive'
+          }>
+            <strong className="text-foreground">API Status:</strong> <span className="text-foreground">{error}</span>
             <br />
-            <span className="text-sm opacity-90">Currently showing demo data. Check your API configuration and try refreshing.</span>
+            <span className="text-sm text-muted-foreground">
+              {connectionStatus === 'disconnected' 
+                ? 'Currently showing comprehensive demo data with all new ticket management features.'
+                : 'Unable to connect to Frappe API.'}
+            </span>
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Search and Filters */}
-      <Card className="bg-card border-border mytick-theme">
+      {/* Enhanced Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="hover:shadow-md transition-shadow group">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-card-foreground">Total Tickets</CardTitle>
+            <div className="flex items-center gap-2">
+              {connectionStatus === 'connected' && (
+                <Button
+                  onClick={fetchTotalCount}
+                  variant="ghost"
+                  size="sm"
+                  disabled={countLoading}
+                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent"
+                  title="Refresh total count"
+                >
+                  <RefreshCw className={`h-3 w-3 ${countLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              )}
+              {countLoading && connectionStatus === 'connected' && (
+                <Loader2 className="h-3 w-3 animate-spin text-theme-accent" />
+              )}
+              <FileText className="h-4 w-4 text-theme-accent" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-card-foreground">
+              {connectionStatus === 'connected' && totalTicketCount !== null 
+                ? totalTicketCount 
+                : sortedTickets.length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {connectionStatus === 'connected' 
+                ? (totalTicketCount !== null 
+                    ? 'Server total count' 
+                    : 'Local count (server count unavailable)') 
+                : 'Demo data count'}
+            </p>
+            {connectionStatus === 'connected' && totalTicketCount !== null && sortedTickets.length !== totalTicketCount && (
+              <p className="text-xs text-theme-accent mt-1">
+                Showing {sortedTickets.length} of {totalTicketCount}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-card-foreground">Open Tickets</CardTitle>
+            <AlertCircle className="h-4 w-4 text-theme-accent" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-card-foreground">
+              {tickets.filter(t => t.status && !['Resolved', 'Closed'].includes(t.status)).length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Active support requests (current page)
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-card-foreground">Critical Priority</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-card-foreground">
+              {tickets.filter(t => t.priority === 'Critical').length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Requires immediate attention (current page)
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="hover:shadow-md transition-shadow">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-card-foreground">Resolved Today</CardTitle>
+            <CheckCircle className="h-4 w-4 text-theme-accent" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-card-foreground">
+              {tickets.filter(t => {
+                if (t.status !== 'Resolved') return false;
+                const today = new Date().toDateString();
+                const ticketDate = t.resolution_date ? new Date(t.resolution_date).toDateString() : 
+                                   t.modified ? new Date(t.modified).toDateString() : null;
+                return ticketDate === today;
+              }).length}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Completed support tickets (current page)
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Enhanced Search and Filters */}
+      <Card className="border-border bg-card">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-card-foreground">Search & Filter Tickets</CardTitle>
+              <CardDescription className="text-muted-foreground">
+                Find specific tickets using advanced search and filtering options
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              {activeFiltersCount > 0 && (
+                <Badge variant="secondary" className="bg-theme-accent/10 text-theme-accent">
+                  {activeFiltersCount} filters active
+                </Badge>
+              )}
+              {(activeFiltersCount > 0 || sortCriteria.length > 0) && (
+                <div className="flex gap-2">
+                  {activeFiltersCount > 0 && (
+                    <Button
+                      onClick={clearAllFilters}
+                      variant="outline"
+                      size="sm"
+                      className="border-border text-foreground hover:bg-accent"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Clear Filters
+                    </Button>
+                  )}
+                  {sortCriteria.length > 0 && (
+                    <Button
+                      onClick={clearAllSorting}
+                      variant="outline"
+                      size="sm"
+                      className="border-border text-foreground hover:bg-accent"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Clear Sorting
+                    </Button>
+                  )}
+                  <Button
+                    onClick={resetColumnWidths}
+                    variant="outline"
+                    size="sm"
+                    className="border-border text-foreground hover:bg-accent"
+                    title="Reset column widths to defaults"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Reset Columns
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardHeader>
         <CardContent>
           <div className="flex flex-col gap-4">
             {/* Search Bar */}
@@ -1281,16 +1169,6 @@ export function FrappeTicketDashboard() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 bg-input-background border-border text-foreground"
               />
-              {searchQuery && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
-                >
-                  <X className="w-3 h-3" />
-                </Button>
-              )}
             </div>
 
             {/* Filters Row */}
@@ -1300,7 +1178,7 @@ export function FrappeTicketDashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="justify-between border-border text-foreground hover:bg-accent">
                     <Filter className="w-4 h-4 mr-2" />
-                    Status {pendingFilters.status.length > 0 && `(${pendingFilters.status.length})`}
+                    Status {filters.status.length > 0 && `(${filters.status.length})`}
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1310,7 +1188,7 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.statuses.map((status) => (
                     <DropdownMenuCheckboxItem
                       key={status}
-                      checked={pendingFilters.status.includes(status)}
+                      checked={filters.status.includes(status)}
                       onCheckedChange={(checked) => handleFilterChange('status', status, checked)}
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1325,7 +1203,7 @@ export function FrappeTicketDashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="justify-between border-border text-foreground hover:bg-accent">
                     <AlertTriangle className="w-4 h-4 mr-2" />
-                    Priority {pendingFilters.priority.length > 0 && `(${pendingFilters.priority.length})`}
+                    Priority {filters.priority.length > 0 && `(${filters.priority.length})`}
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1335,7 +1213,7 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.priorities.map((priority) => (
                     <DropdownMenuCheckboxItem
                       key={priority}
-                      checked={pendingFilters.priority.includes(priority)}
+                      checked={filters.priority.includes(priority)}
                       onCheckedChange={(checked) => handleFilterChange('priority', priority, checked)}
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1350,7 +1228,7 @@ export function FrappeTicketDashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="justify-between border-border text-foreground hover:bg-accent">
                     <Tag className="w-4 h-4 mr-2" />
-                    Category {pendingFilters.category.length > 0 && `(${pendingFilters.category.length})`}
+                    Category {filters.category.length > 0 && `(${filters.category.length})`}
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1360,7 +1238,7 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.categories.map((category) => (
                     <DropdownMenuCheckboxItem
                       key={category}
-                      checked={pendingFilters.category.includes(category)}
+                      checked={filters.category.includes(category)}
                       onCheckedChange={(checked) => handleFilterChange('category', category, checked)}
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1375,7 +1253,7 @@ export function FrappeTicketDashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="justify-between border-border text-foreground hover:bg-accent">
                     <User className="w-4 h-4 mr-2" />
-                    Users {pendingFilters.users.length > 0 && `(${pendingFilters.users.length})`}
+                    Users {filters.users.length > 0 && `(${filters.users.length})`}
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1385,7 +1263,7 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.users.map((user) => (
                     <DropdownMenuCheckboxItem
                       key={user}
-                      checked={pendingFilters.users.includes(user)}
+                      checked={filters.users.includes(user)}
                       onCheckedChange={(checked) => handleFilterChange('users', user, checked)}
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1400,7 +1278,7 @@ export function FrappeTicketDashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="justify-between border-border text-foreground hover:bg-accent">
                     <UserCheck className="w-4 h-4 mr-2" />
-                    Assignee {pendingFilters.assignees.length > 0 && `(${pendingFilters.assignees.length})`}
+                    Assignee {filters.assignees.length > 0 && `(${filters.assignees.length})`}
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1410,7 +1288,7 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.assignees.map((assignee) => (
                     <DropdownMenuCheckboxItem
                       key={assignee}
-                      checked={pendingFilters.assignees.includes(assignee)}
+                      checked={filters.assignees.includes(assignee)}
                       onCheckedChange={(checked) => handleFilterChange('assignees', assignee, checked)}
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1425,7 +1303,7 @@ export function FrappeTicketDashboard() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="justify-between border-border text-foreground hover:bg-accent">
                     <Building className="w-4 h-4 mr-2" />
-                    Department {pendingFilters.departments.length > 0 && `(${pendingFilters.departments.length})`}
+                    Department {filters.departments.length > 0 && `(${filters.departments.length})`}
                     <ChevronDown className="w-4 h-4 ml-2" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -1435,7 +1313,7 @@ export function FrappeTicketDashboard() {
                   {uniqueValues.departments.map((department) => (
                     <DropdownMenuCheckboxItem
                       key={department}
-                      checked={pendingFilters.departments.includes(department)}
+                      checked={filters.departments.includes(department)}
                       onCheckedChange={(checked) => handleFilterChange('departments', department, checked)}
                       className="text-popover-foreground hover:bg-accent"
                     >
@@ -1447,8 +1325,8 @@ export function FrappeTicketDashboard() {
 
               {/* Date Range Filter */}
               <Select
-                value={pendingFilters.dateRange}
-                onValueChange={(value) => setPendingFilters(prev => ({ ...prev, dateRange: value }))}
+                value={filters.dateRange}
+                onValueChange={(value) => setFilters(prev => ({ ...prev, dateRange: value }))}
               >
                 <SelectTrigger className="bg-input-background border-border text-foreground">
                   <Calendar className="w-4 h-4 mr-2" />
@@ -1506,589 +1384,572 @@ export function FrappeTicketDashboard() {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-
-            {/* Filter Actions Row */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Button 
-                  onClick={applyFilters}
-                  disabled={!hasUnappliedChanges}
-                  className={`${hasUnappliedChanges 
-                    ? 'bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground' 
-                    : 'bg-muted text-muted-foreground cursor-not-allowed'
-                  } transition-colors`}
-                >
-                  <Check className="w-4 h-4 mr-2" />
-                  Apply Filters
-                  {hasUnappliedChanges && (
-                    <Badge variant="secondary" className="ml-2 bg-white/20 text-current">
-                      {[
-                        ...Object.values(pendingFilters).flat(),
-                        ...(pendingFilters.dateRange !== 'all' ? [pendingFilters.dateRange] : []),
-                        ...(searchQuery.trim() ? ['search'] : [])
-                      ].length}
-                    </Badge>
-                  )}
-                </Button>
-                
-                {(activeFilterCount > 0 || appliedSearchQuery) && (
-                  <Button 
-                    variant="outline" 
-                    onClick={clearAllFilters}
-                    className="border-border text-foreground hover:bg-accent"
-                  >
-                    <FilterX className="w-4 h-4 mr-2" />
-                    Clear All
-                  </Button>
-                )}
-                
-                {sortCriteria.length > 0 && (
-                  <Button 
-                    variant="outline" 
-                    onClick={clearAllSorting}
-                    className="border-border text-foreground hover:bg-accent"
-                  >
-                    <ArrowUpDown className="w-4 h-4 mr-2" />
-                    Clear Sorting
-                  </Button>
-                )}
-              </div>
-              
-              <div className="text-sm text-muted-foreground">
-                {hasUnappliedChanges && (
-                  <span className="text-theme-accent">
-                    {[
-                      ...Object.values(pendingFilters).flat(),
-                      ...(pendingFilters.dateRange !== 'all' ? [pendingFilters.dateRange] : []),
-                      ...(searchQuery.trim() ? ['search'] : [])
-                    ].length} unapplied changes
-                  </span>
-                )}
-              </div>
-            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Data Table */}
-      <Card className="bg-card border-border mytick-theme">
-        <CardHeader className="pb-3">
+      {/* Enhanced Tickets Table with Resizable Columns */}
+      <Card className="border-border bg-card">
+        <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-card-foreground">
-              Tickets ({sortedTickets.length} 
-              {sortedTickets.length !== tickets.length && ` of ${tickets.length}`})
-            </CardTitle>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Page {currentPage} of {totalPages}</span>
-              {isPageLoading && <Loader2 className="w-3 h-3 animate-spin" />}
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-card-foreground">
+                    Tickets (Page {currentPage} of {totalPages})
+                  </CardTitle>
+                  <CardDescription className="text-muted-foreground">
+                    {connectionStatus === 'connected' && totalTicketCount !== null 
+                      ? `Showing ${Math.min((currentPage - 1) * pageSize + 1, totalTicketCount)}-${Math.min(currentPage * pageSize, totalTicketCount)} of ${totalTicketCount} tickets`
+                      : `Showing ${Math.min((currentPage - 1) * pageSize + 1, mockTickets.length)}-${Math.min(currentPage * pageSize, mockTickets.length)} of ${mockTickets.length} tickets (demo data)`
+                    }
+                  </CardDescription>
+                </div>
+                
+                {/* Pagination Controls */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    onClick={handlePreviousPage}
+                    variant="outline"
+                    size="sm"
+                    disabled={!canGoPrevious || loading || isPageLoading}
+                    className="border-border text-foreground hover:bg-accent"
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Previous
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {/* Show page numbers around current page */}
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      let pageNum;
+                      if (totalPages <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= totalPages - 2) {
+                        pageNum = totalPages - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+                      
+                      return (
+                        <Button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          variant={pageNum === currentPage ? "default" : "outline"}
+                          size="sm"
+                          disabled={loading || isPageLoading}
+                          className={pageNum === currentPage 
+                            ? "bg-theme-accent text-theme-accent-foreground hover:bg-theme-accent-hover" 
+                            : "border-border text-foreground hover:bg-accent"
+                          }
+                        >
+                          {pageNum}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button
+                    onClick={handleNextPage}
+                    variant="outline"
+                    size="sm"
+                    disabled={!canGoNext || loading || isPageLoading}
+                    className="border-border text-foreground hover:bg-accent"
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                  
+                  {(loading || isPageLoading) && (
+                    <Loader2 className="w-4 h-4 animate-spin text-theme-accent" />
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-2 ml-4">
+              <Button
+                onClick={() => setConfigDialogOpen(true)}
+                variant="outline"
+                size="sm"
+                className="border-border text-foreground hover:bg-accent"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                API Config
+              </Button>
             </div>
           </div>
         </CardHeader>
-        
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="flex items-center gap-2">
-                <Loader2 className="w-5 h-5 animate-spin text-theme-accent" />
-                <span>Loading tickets...</span>
-              </div>
-            </div>
-          ) : (
-            <div className="relative">
-              <div 
-                ref={tableRef}
-                className="overflow-x-auto"
-                style={{ 
-                  maxWidth: '100%',
-                  userSelect: resizeState?.isResizing ? 'none' : 'auto'
-                }}
-              >
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border hover:bg-muted/50">
-                      {/* Select Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 relative"
-                        style={{ width: columnWidths.select, minWidth: 50 }}
+        <CardContent>
+          <div className="rounded-md border border-border overflow-hidden" ref={tableRef}>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50 border-border hover:bg-muted/80">
+                    {/* Select Column */}
+                    <TableHead 
+                      className="relative border-r border-border bg-muted/50 text-muted-foreground"
+                      style={{ width: columnWidths.select, minWidth: columnWidths.select }}
+                    >
+                      <input
+                        type="checkbox"
+                        className="rounded border-border"
+                        checked={selectedTickets.length === tickets.length && tickets.length > 0}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedTickets(tickets.map(t => t.name));
+                          } else {
+                            setSelectedTickets([]);
+                          }
+                        }}
+                      />
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'select')}
                       >
-                        <input
-                          type="checkbox"
-                          checked={selectedTickets.length === sortedTickets.length && sortedTickets.length > 0}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedTickets(sortedTickets.map(t => t.name));
-                            } else {
-                              setSelectedTickets([]);
-                            }
-                          }}
-                          className="rounded border-border"
-                        />
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent"
-                          onMouseDown={(e) => handleResizeStart(e, 'select')}
-                        />
-                      </TableHead>
-
-                      {/* Ticket ID Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.ticket_id, minWidth: 120 }}
-                        onClick={() => handleSort('ticket_id')}
-                      >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Ticket ID</span>
-                          {getSortIndicator('ticket_id')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'ticket_id')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Title Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.title, minWidth: 200 }}
-                        onClick={() => handleSort('title')}
+                    {/* Ticket ID Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('ticket_id')}
+                      style={{ width: columnWidths.ticket_id, minWidth: columnWidths.ticket_id }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Ticket ID</span>
+                        {getSortIndicator('ticket_id')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'ticket_id')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Title</span>
-                          {getSortIndicator('title')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'title')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* User Name Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.user_name, minWidth: 150 }}
-                        onClick={() => handleSort('user_name')}
+                    {/* Title Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('title')}
+                      style={{ width: columnWidths.title, minWidth: columnWidths.title }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Title</span>
+                        {getSortIndicator('title')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'title')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>User</span>
-                          {getSortIndicator('user_name')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'user_name')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Department Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.department, minWidth: 130 }}
-                        onClick={() => handleSort('department')}
+                    {/* User Name Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('user_name')}
+                      style={{ width: columnWidths.user_name, minWidth: columnWidths.user_name }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">User</span>
+                        {getSortIndicator('user_name')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'user_name')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Department</span>
-                          {getSortIndicator('department')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'department')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Priority Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.priority, minWidth: 100 }}
-                        onClick={() => handleSort('priority')}
+                    {/* Department Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('department')}
+                      style={{ width: columnWidths.department, minWidth: columnWidths.department }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Department</span>
+                        {getSortIndicator('department')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'department')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Priority</span>
-                          {getSortIndicator('priority')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'priority')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Status Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.status, minWidth: 120 }}
-                        onClick={() => handleSort('status')}
+                    {/* Priority Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('priority')}
+                      style={{ width: columnWidths.priority, minWidth: columnWidths.priority }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Priority</span>
+                        {getSortIndicator('priority')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'priority')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Status</span>
-                          {getSortIndicator('status')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'status')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Category Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.category, minWidth: 110 }}
-                        onClick={() => handleSort('category')}
+                    {/* Status Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('status')}
+                      style={{ width: columnWidths.status, minWidth: columnWidths.status }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Status</span>
+                        {getSortIndicator('status')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'status')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Category</span>
-                          {getSortIndicator('category')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'category')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Created Date Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.created_datetime, minWidth: 160 }}
-                        onClick={() => handleSort('created_datetime')}
+                    {/* Category Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('category')}
+                      style={{ width: columnWidths.category, minWidth: columnWidths.category }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Category</span>
+                        {getSortIndicator('category')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'category')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Created</span>
-                          {getSortIndicator('created_datetime')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'created_datetime')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Due Date Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.due_datetime, minWidth: 160 }}
-                        onClick={() => handleSort('due_datetime')}
+                    {/* Created Date Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('created_datetime')}
+                      style={{ width: columnWidths.created_datetime, minWidth: columnWidths.created_datetime }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Created</span>
+                        {getSortIndicator('created_datetime')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'created_datetime')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Due Date</span>
-                          {getSortIndicator('due_datetime')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'due_datetime')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Assignee Column */}
-                      <TableHead 
-                        className="bg-card border-r border-border py-3 px-3 cursor-pointer hover:bg-muted/50 relative group"
-                        style={{ width: columnWidths.assignee, minWidth: 130 }}
-                        onClick={() => handleSort('assignee')}
+                    {/* Due Date Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('due_datetime')}
+                      style={{ width: columnWidths.due_datetime, minWidth: columnWidths.due_datetime }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Due Date</span>
+                        {getSortIndicator('due_datetime')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'due_datetime')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Assignee</span>
-                          {getSortIndicator('assignee')}
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                        <div
-                          className="absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-theme-accent/50 active:bg-theme-accent z-10"
-                          onMouseDown={(e) => handleResizeStart(e, 'assignee')}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </TableHead>
+                      </div>
+                    </TableHead>
 
-                      {/* Actions Column */}
-                      <TableHead 
-                        className="bg-card py-3 px-3 relative"
-                        style={{ width: columnWidths.actions, minWidth: 100 }}
+                    {/* Assignee Column */}
+                    <TableHead 
+                      className="relative cursor-pointer hover:bg-muted/50 transition-colors select-none border-r border-border"
+                      onClick={() => handleSort('assignee')}
+                      style={{ width: columnWidths.assignee, minWidth: columnWidths.assignee }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-semibold text-card-foreground">Assignee</span>
+                        {getSortIndicator('assignee')}
+                      </div>
+                      <div 
+                        className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-theme-accent/20 transition-colors group"
+                        onMouseDown={(e) => handleResizeStart(e, 'assignee')}
                       >
-                        <div className="flex items-center justify-between gap-2">
-                          <span>Actions</span>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm" className="h-6 w-6 p-0">
-                                <Settings className="w-3 h-3" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="bg-popover border-border">
-                              <DropdownMenuItem 
-                                onClick={resetColumnWidths}
-                                className="text-popover-foreground hover:bg-accent"
-                              >
-                                Reset Column Widths
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        <div className="w-full h-full flex items-center justify-center">
+                          <GripVertical className="w-3 h-3 text-transparent group-hover:text-theme-accent transition-colors" />
                         </div>
-                      </TableHead>
+                      </div>
+                    </TableHead>
+
+                    {/* Actions Column */}
+                    <TableHead 
+                      className="relative bg-muted/50 text-muted-foreground"
+                      style={{ width: columnWidths.actions, minWidth: columnWidths.actions }}
+                    >
+                      <span className="font-semibold">Actions</span>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {tickets.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
+                        {loading || isPageLoading 
+                          ? 'Loading tickets...' 
+                          : 'No tickets available on this page.'
+                        }
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  
-                  <TableBody>
-                    {sortedTickets.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
-                          {appliedSearchQuery || activeFilterCount > 0 ? (
-                            <div className="flex flex-col items-center gap-2">
-                              <Search className="w-8 h-8 text-muted-foreground/50" />
-                              <p>No tickets match your search criteria</p>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                onClick={clearAllFilters}
-                                className="border-border text-foreground hover:bg-accent"
-                              >
-                                Clear filters
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center gap-2">
-                              <FileText className="w-8 h-8 text-muted-foreground/50" />
-                              <p>No tickets found</p>
-                            </div>
-                          )}
+                  ) : (
+                    tickets.map((ticket) => (
+                      <TableRow 
+                        key={ticket.name} 
+                        className="border-border hover:bg-muted/30 cursor-pointer transition-colors"
+                        onClick={() => handleTicketClick(ticket)}
+                      >
+                        {/* Select Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.select, minWidth: columnWidths.select }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <input
+                            type="checkbox"
+                            className="rounded border-border"
+                            checked={selectedTickets.includes(ticket.name)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedTickets(prev => [...prev, ticket.name]);
+                              } else {
+                                setSelectedTickets(prev => prev.filter(id => id !== ticket.name));
+                              }
+                            }}
+                          />
+                        </TableCell>
+
+                        {/* Ticket ID Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.ticket_id, minWidth: columnWidths.ticket_id }}
+                        >
+                          <div className="font-medium text-theme-accent">
+                            {ticket.ticket_id || ticket.name}
+                          </div>
+                        </TableCell>
+
+                        {/* Title Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.title, minWidth: columnWidths.title }}
+                        >
+                          <div className="max-w-[200px] truncate" title={ticket.title || 'No title'}>
+                            {truncateText(ticket.title, 40)}
+                          </div>
+                        </TableCell>
+
+                        {/* User Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.user_name, minWidth: columnWidths.user_name }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-theme-accent flex-shrink-0" />
+                            <span className="truncate">{ticket.user_name || 'Unknown'}</span>
+                          </div>
+                        </TableCell>
+
+                        {/* Department Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.department, minWidth: columnWidths.department }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Building className="w-4 h-4 text-theme-accent flex-shrink-0" />
+                            <span className="truncate">{ticket.department || 'N/A'}</span>
+                          </div>
+                        </TableCell>
+
+                        {/* Priority Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.priority, minWidth: columnWidths.priority }}
+                        >
+                          {getPriorityBadge(ticket.priority)}
+                        </TableCell>
+
+                        {/* Status Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.status, minWidth: columnWidths.status }}
+                        >
+                          {getStatusBadge(ticket.status)}
+                        </TableCell>
+
+                        {/* Category Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.category, minWidth: columnWidths.category }}
+                        >
+                          <Badge variant="outline" className="text-foreground border-border">
+                            {ticket.category || 'N/A'}
+                          </Badge>
+                        </TableCell>
+
+                        {/* Created Date Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.created_datetime, minWidth: columnWidths.created_datetime }}
+                        >
+                          <div className="text-sm">
+                            {formatDate(ticket.created_datetime || ticket.creation)}
+                          </div>
+                        </TableCell>
+
+                        {/* Due Date Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.due_datetime, minWidth: columnWidths.due_datetime }}
+                        >
+                          <div className="text-sm">
+                            {formatDate(ticket.due_datetime)}
+                          </div>
+                        </TableCell>
+
+                        {/* Assignee Cell */}
+                        <TableCell 
+                          className="border-r border-border"
+                          style={{ width: columnWidths.assignee, minWidth: columnWidths.assignee }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <UserCheck className="w-4 h-4 text-theme-accent flex-shrink-0" />
+                            <span className="truncate">{ticket.assignee || 'Unassigned'}</span>
+                          </div>
+                        </TableCell>
+
+                        {/* Actions Cell */}
+                        <TableCell 
+                          className="p-2"
+                          style={{ width: columnWidths.actions, minWidth: columnWidths.actions }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleTicketClick(ticket);
+                              }}
+                              className="h-7 w-7 p-0 hover:bg-accent"
+                              title="View Details"
+                            >
+                              <Eye className="h-3 w-3 text-muted-foreground" />
+                            </Button>
+
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0 hover:bg-accent"
+                                >
+                                  <MoreHorizontal className="h-3 w-3 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="bg-popover border-border">
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleTicketClick(ticket);
+                                  }}
+                                  className="text-popover-foreground hover:bg-accent"
+                                >
+                                  <Eye className="w-4 h-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                {ticket.docstatus === 0 && (
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleSubmitTicket(ticket.name);
+                                    }}
+                                    disabled={actionLoading === ticket.name}
+                                    className="text-popover-foreground hover:bg-accent"
+                                  >
+                                    {actionLoading === ticket.name ? (
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                      <Send className="w-4 h-4 mr-2" />
+                                    )}
+                                    Submit Ticket
+                                  </DropdownMenuItem>
+                                )}
+                                {ticket.docstatus === 1 && (
+                                  <DropdownMenuItem 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCancelTicket(ticket.name);
+                                    }}
+                                    disabled={actionLoading === ticket.name}
+                                    className="text-popover-foreground hover:bg-accent"
+                                  >
+                                    {actionLoading === ticket.name ? (
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                      <Archive className="w-4 h-4 mr-2" />
+                                    )}
+                                    Archive Ticket
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      sortedTickets.map((ticket) => (
-                        <TableRow 
-                          key={ticket.name} 
-                          className="border-border hover:bg-muted/50 cursor-pointer"
-                          onClick={() => handleTicketClick(ticket)}
-                        >
-                          {/* Select Cell */}
-                          <TableCell 
-                            className="border-r border-border py-2 px-3"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={selectedTickets.includes(ticket.name)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedTickets(prev => [...prev, ticket.name]);
-                                } else {
-                                  setSelectedTickets(prev => prev.filter(id => id !== ticket.name));
-                                }
-                              }}
-                              className="rounded border-border"
-                            />
-                          </TableCell>
-
-                          {/* Ticket ID Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <div className="font-mono text-sm">
-                              {ticket.ticket_id || ticket.name}
-                            </div>
-                          </TableCell>
-
-                          {/* Title Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <div className="max-w-full">
-                              <div className="truncate" title={ticket.title || 'No title'}>
-                                {ticket.title || 'No title'}
-                              </div>
-                            </div>
-                          </TableCell>
-
-                          {/* User Name Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <div className="flex items-center gap-2">
-                              <User className="w-4 h-4 text-muted-foreground" />
-                              <span className="truncate" title={ticket.user_name || 'Unassigned'}>
-                                {ticket.user_name || 'Unassigned'}
-                              </span>
-                            </div>
-                          </TableCell>
-
-                          {/* Department Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <div className="flex items-center gap-2">
-                              <Building className="w-4 h-4 text-muted-foreground" />
-                              <span className="truncate" title={ticket.department || 'N/A'}>
-                                {ticket.department || 'N/A'}
-                              </span>
-                            </div>
-                          </TableCell>
-
-                          {/* Priority Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <Badge 
-                              variant="secondary" 
-                              className={`${getPriorityColor(ticket.priority)} border-0 text-xs`}
-                            >
-                              {ticket.priority || 'None'}
-                            </Badge>
-                          </TableCell>
-
-                          {/* Status Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <Badge 
-                              variant="secondary" 
-                              className={`${getStatusColor(ticket.status)} border-0 text-xs`}
-                            >
-                              {ticket.status || 'Unknown'}
-                            </Badge>
-                          </TableCell>
-
-                          {/* Category Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <div className="flex items-center gap-2">
-                              <Tag className="w-4 h-4 text-muted-foreground" />
-                              <span className="truncate" title={ticket.category || 'None'}>
-                                {ticket.category || 'None'}
-                              </span>
-                            </div>
-                          </TableCell>
-
-                          {/* Created Date Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Calendar className="w-4 h-4" />
-                              <span>{formatDateTime(ticket.created_datetime || ticket.creation)}</span>
-                            </div>
-                          </TableCell>
-
-                          {/* Due Date Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Clock className="w-4 h-4" />
-                              <span>{formatDateTime(ticket.due_datetime)}</span>
-                            </div>
-                          </TableCell>
-
-                          {/* Assignee Cell */}
-                          <TableCell className="border-r border-border py-2 px-3">
-                            <div className="flex items-center gap-2">
-                              <UserCheck className="w-4 h-4 text-muted-foreground" />
-                              <span className="truncate" title={ticket.assignee || 'Unassigned'}>
-                                {ticket.assignee || 'Unassigned'}
-                              </span>
-                            </div>
-                          </TableCell>
-
-                          {/* Actions Cell */}
-                          <TableCell className="py-2 px-3" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleTicketClick(ticket)}
-                                className="h-8 w-8 p-0 hover:bg-muted"
-                              >
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                              
-                              {ticket.docstatus === 0 && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleSubmitTicket(ticket.name)}
-                                  disabled={actionLoading === ticket.name}
-                                  className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
-                                >
-                                  {actionLoading === ticket.name ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <CheckCircle className="w-4 h-4" />
-                                  )}
-                                </Button>
-                              )}
-                              
-                              {ticket.docstatus !== 2 && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleCancelTicket(ticket.name)}
-                                  disabled={actionLoading === ticket.name}
-                                  className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600"
-                                >
-                                  {actionLoading === ticket.name ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <XCircle className="w-4 h-4" />
-                                  )}
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Enhanced Pagination */}
-      {totalPages > 1 && (
-        <Card className="bg-card border-border mytick-theme">
-          <CardContent className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Showing page {currentPage} of {totalPages} 
-                ({sortedTickets.length} of {totalTicketCount || mockTickets.length} tickets)
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handlePreviousPage}
-                  disabled={!canGoPrevious || isPageLoading}
-                  className="border-border text-foreground hover:bg-accent"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Previous
-                </Button>
-                
-                {/* Page Numbers */}
-                <div className="flex items-center gap-1">
-                  {getPaginationRange().map((page, index) => (
-                    <div key={index}>
-                      {page === '...' ? (
-                        <span className="px-2 py-1 text-muted-foreground">...</span>
-                      ) : (
-                        <Button
-                          variant={currentPage === page ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => handlePageChange(page as number)}
-                          disabled={isPageLoading}
-                          className={
-                            currentPage === page
-                              ? "bg-theme-accent hover:bg-theme-accent-hover text-theme-accent-foreground"
-                              : "border-border text-foreground hover:bg-accent"
-                          }
-                        >
-                          {page}
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleNextPage}
-                  disabled={!canGoNext || isPageLoading}
-                  className="border-border text-foreground hover:bg-accent"
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Dialogs */}
+      {/* API Configuration Dialog */}
       <ApiConfigDialog
         open={configDialogOpen}
         onOpenChange={setConfigDialogOpen}
@@ -2097,12 +1958,15 @@ export function FrappeTicketDashboard() {
         onTestConnection={handleTestConnection}
       />
 
+      {/* New Ticket Dialog */}
       <NewTicketDialog
         open={newTicketDialogOpen}
         onOpenChange={setNewTicketDialogOpen}
         onTicketCreated={handleTicketCreated}
+        connectionStatus={connectionStatus}
       />
 
+      {/* Ticket Details Popover */}
       <TicketDetailsPopover
         ticket={selectedTicket}
         open={detailsPopoverOpen}
