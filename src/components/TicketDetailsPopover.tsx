@@ -56,7 +56,9 @@ export function TicketDetailsPopover({
   useEffect(() => {
     if (open) {
       setTimeout(() => {
-        const portals = document.querySelectorAll("[data-radix-portal]");
+        const portals = document.querySelectorAll(
+          "[data-radix-portal]",
+        );
         portals.forEach((portal) => {
           // Remove existing theme classes
           portal.classList.remove(
@@ -202,7 +204,10 @@ export function TicketDetailsPopover({
         );
       default:
         return (
-          <Badge variant="outline" className="border-border text-foreground">
+          <Badge
+            variant="outline"
+            className="border-border text-foreground"
+          >
             Unknown
           </Badge>
         );
@@ -241,7 +246,9 @@ export function TicketDetailsPopover({
                 {getDocStatusBadge(ticket.docstatus)}
                 <span className="text-muted-foreground">
                   Created{" "}
-                  {formatDateShort(ticket.created_datetime || ticket.creation)}
+                  {formatDateShort(
+                    ticket.created_datetime || ticket.creation,
+                  )}
                 </span>
               </DialogDescription>
             </div>
@@ -250,7 +257,10 @@ export function TicketDetailsPopover({
                 variant="outline"
                 size="sm"
                 onClick={() =>
-                  copyToClipboard(ticket.ticket_id || ticket.name, "Ticket ID")
+                  copyToClipboard(
+                    ticket.ticket_id || ticket.name,
+                    "Ticket ID",
+                  )
                 }
                 className="border-border text-foreground hover:bg-accent hover:text-accent-foreground"
               >
@@ -279,12 +289,16 @@ export function TicketDetailsPopover({
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
                   <Target className="w-5 h-5 text-theme-accent" />
-                  <span className="text-foreground">Status & Priority</span>
+                  <span className="text-foreground">
+                    Status & Priority
+                  </span>
                 </h3>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Status:</span>
+                    <span className="text-muted-foreground">
+                      Status:
+                    </span>
                     {statusConfig ? (
                       <Badge
                         variant="secondary"
@@ -304,7 +318,9 @@ export function TicketDetailsPopover({
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Priority:</span>
+                    <span className="text-muted-foreground">
+                      Priority:
+                    </span>
                     {priorityConfig ? (
                       <Badge
                         variant="secondary"
@@ -324,22 +340,30 @@ export function TicketDetailsPopover({
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Impact:</span>
+                    <span className="text-muted-foreground">
+                      Impact:
+                    </span>
                     <Badge
                       variant="outline"
                       className="text-xs border-border text-foreground"
                     >
-                      <span>{ticket.impact || "Not specified"}</span>
+                      <span>
+                        {ticket.impact || "Not specified"}
+                      </span>
                     </Badge>
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Category:</span>
+                    <span className="text-muted-foreground">
+                      Category:
+                    </span>
                     <Badge
                       variant="outline"
                       className="text-xs border-border text-foreground"
                     >
-                      <span>{ticket.category || "Not categorized"}</span>
+                      <span>
+                        {ticket.category || "Not categorized"}
+                      </span>
                     </Badge>
                   </div>
 
@@ -359,14 +383,18 @@ export function TicketDetailsPopover({
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
                   <User className="w-5 h-5 text-theme-accent" />
-                  <span className="text-foreground">Contact Information</span>
+                  <span className="text-foreground">
+                    Contact Information
+                  </span>
                 </h3>
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <User className="w-4 h-4 text-muted-foreground" />
                     <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">Requester</p>
+                      <p className="text-sm text-muted-foreground">
+                        Requester
+                      </p>
                       <p className="font-medium text-foreground">
                         {ticket.user_name || "Unknown"}
                       </p>
@@ -391,7 +419,9 @@ export function TicketDetailsPopover({
                     <div className="flex items-center gap-3">
                       <Mail className="w-4 h-4 text-muted-foreground" />
                       <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">Email</p>
+                        <p className="text-sm text-muted-foreground">
+                          Email
+                        </p>
                         <p className="font-medium text-foreground">
                           {ticket.contact_email}
                         </p>
@@ -400,7 +430,10 @@ export function TicketDetailsPopover({
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          copyToClipboard(ticket.contact_email!, "Email")
+                          copyToClipboard(
+                            ticket.contact_email!,
+                            "Email",
+                          )
                         }
                         className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                       >
@@ -413,7 +446,9 @@ export function TicketDetailsPopover({
                     <div className="flex items-center gap-3">
                       <Phone className="w-4 h-4 text-muted-foreground" />
                       <div className="flex-1">
-                        <p className="text-sm text-muted-foreground">Phone</p>
+                        <p className="text-sm text-muted-foreground">
+                          Phone
+                        </p>
                         <p className="font-medium text-foreground">
                           {ticket.contact_phone}
                         </p>
@@ -422,7 +457,10 @@ export function TicketDetailsPopover({
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          copyToClipboard(ticket.contact_phone!, "Phone")
+                          copyToClipboard(
+                            ticket.contact_phone!,
+                            "Phone",
+                          )
                         }
                         className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-accent"
                       >
@@ -440,11 +478,14 @@ export function TicketDetailsPopover({
             <div className="space-y-4">
               <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
                 <MessageSquare className="w-5 h-5 text-theme-accent" />
-                <span className="text-foreground">Description</span>
+                <span className="text-foreground">
+                  Description
+                </span>
               </h3>
               <div className="bg-muted/50 rounded-lg p-4 border border-border">
                 <p className="text-sm whitespace-pre-wrap leading-relaxed text-foreground">
-                  {ticket.description || "No description provided."}
+                  {ticket.description ||
+                    "No description provided."}
                 </p>
               </div>
             </div>
@@ -454,7 +495,9 @@ export function TicketDetailsPopover({
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
                   <UserCheck className="w-5 h-5 text-theme-accent" />
-                  <span className="text-foreground">Assignment</span>
+                  <span className="text-foreground">
+                    Assignment
+                  </span>
                 </h3>
 
                 <div className="space-y-3">
@@ -493,17 +536,21 @@ export function TicketDetailsPopover({
                         </p>
                         <Badge
                           variant={
-                            ticket.requester_confirmation === "Yes"
+                            ticket.requester_confirmation ===
+                            "Yes"
                               ? "default"
                               : "secondary"
                           }
                           className={
-                            ticket.requester_confirmation === "Yes"
+                            ticket.requester_confirmation ===
+                            "Yes"
                               ? "bg-theme-accent text-theme-accent-foreground"
                               : "bg-secondary text-secondary-foreground"
                           }
                         >
-                          <span>{ticket.requester_confirmation}</span>
+                          <span>
+                            {ticket.requester_confirmation}
+                          </span>
                         </Badge>
                       </div>
                     </div>
@@ -514,16 +561,23 @@ export function TicketDetailsPopover({
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
                   <Calendar className="w-5 h-5 text-theme-accent" />
-                  <span className="text-foreground">Important Dates</span>
+                  <span className="text-foreground">
+                    Important Dates
+                  </span>
                 </h3>
 
                 <div className="space-y-3">
                   <div className="flex items-center gap-3">
                     <Calendar className="w-4 h-4 text-muted-foreground" />
                     <div className="flex-1">
-                      <p className="text-sm text-muted-foreground">Created</p>
+                      <p className="text-sm text-muted-foreground">
+                        Created
+                      </p>
                       <p className="font-medium text-foreground">
-                        {formatDate(ticket.created_datetime || ticket.creation)}
+                        {formatDate(
+                          ticket.created_datetime ||
+                            ticket.creation,
+                        )}
                       </p>
                     </div>
                   </div>
@@ -550,7 +604,9 @@ export function TicketDetailsPopover({
                           Resolved
                         </p>
                         <p className="font-medium text-foreground">
-                          {formatDate(ticket.resolution_datetime)}
+                          {formatDate(
+                            ticket.resolution_datetime,
+                          )}
                         </p>
                       </div>
                     </div>
@@ -572,13 +628,16 @@ export function TicketDetailsPopover({
             </div>
 
             {/* Resolution Section */}
-            {(ticket.resolution_summary || ticket.root_cause) && (
+            {(ticket.resolution_summary ||
+              ticket.root_cause) && (
               <>
                 <Separator className="bg-border" />
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
                     <CheckCircle className="w-5 h-5 text-theme-accent" />
-                    <span className="text-foreground">Resolution Details</span>
+                    <span className="text-foreground">
+                      Resolution Details
+                    </span>
                   </h3>
 
                   {ticket.resolution_summary && (
@@ -615,7 +674,9 @@ export function TicketDetailsPopover({
             <div className="space-y-4">
               <h3 className="font-semibold text-lg flex items-center gap-2 text-foreground">
                 <FileText className="w-5 h-5 text-theme-accent" />
-                <span className="text-foreground">Additional Information</span>
+                <span className="text-foreground">
+                  Additional Information
+                </span>
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -626,15 +687,17 @@ export function TicketDetailsPopover({
                       <span>Tags</span>
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {ticket.tags.split(",").map((tag, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          className="text-xs bg-secondary text-secondary-foreground border-border"
-                        >
-                          <span>{tag.trim()}</span>
-                        </Badge>
-                      ))}
+                      {ticket.tags
+                        .split(",")
+                        .map((tag, index) => (
+                          <Badge
+                            key={index}
+                            variant="secondary"
+                            className="text-xs bg-secondary text-secondary-foreground border-border"
+                          >
+                            <span>{tag.trim()}</span>
+                          </Badge>
+                        ))}
                     </div>
                   </div>
                 )}
