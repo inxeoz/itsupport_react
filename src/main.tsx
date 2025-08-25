@@ -1,8 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.tsx";
+import App from "@/App.tsx";
 // import "./styles/index.css";
-import "./styles/globals.css";
+import "@/styles/globals.css";
 // import "./styles/isolated.css";
 
 // Controlled mount

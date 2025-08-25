@@ -1,20 +1,20 @@
 import { useState, useCallback, useEffect } from "react";
-import { TopBar } from "./components/TopBar";
-import { TicketDashboard } from "./components/TicketDashboard";
-import { KanbanBoard } from "./components/KanbanBoard";
-import { AddTicket } from "./components/AddTicket";
-import { AnalyticsDashboard } from "./components/AnalyticsDashboard";
-import { FormView } from "./components/FormView";
-import { GanttView } from "./components/GanttView";
-import { CalendarView } from "./components/CalendarView";
-import { DocumentView } from "./components/DocumentView";
-import { FileGalleryView } from "./components/FileGalleryView";
-import { CustomizableDashboard } from "./components/CustomizableDashboard";
-import { DeveloperDashboard } from "./components/DeveloperDashboard";
-import { HackerProDashboard } from "./components/HackerProDashboard";
-import { TesterDashboard } from "./components/TesterDashboard";
-import { Toaster } from "./components/ui/sonner";
-import { ThemeProvider, type Theme } from "./components/ThemeProvider";
+import { TopBar } from "@/components/Navigation/TopBar.tsx";
+import { TicketDashboard } from "@/components/FrappeTicketDashboard/TicketDashboard.tsx";
+import { KanbanBoard } from "@/components/KanbanDashboard/KanbanBoard.tsx";
+import { AddTicket } from "@/components/AddTicket/AddTicket.tsx";
+import { AnalyticsDashboard } from "@/components/AnalyticsDashboard/AnalyticsDashboard.tsx";
+import { FormView } from "@/components/FormviewDashboard/FormView.tsx";
+import { GanttView } from "@/components/GanttDashboard/GanttView.tsx";
+import { CalendarView } from "@/components/CalendarDashboard/CalendarView.tsx";
+import { DocumentView } from "@/components/DocumentDashboard/DocumentView.tsx";
+import { FileGalleryView } from "@/components/FileGalleryDashboard/FileGalleryView.tsx";
+import { CustomizableDashboard } from "@/components/CustomizableDashboard/CustomizableDashboard.tsx";
+import { DeveloperDashboard } from "@/components/Developer/DeveloperDashboard.tsx";
+import { HackerProDashboard } from "@/components/Developer/HackerproDashboard/HackerProDashboard.tsx";
+import { TesterDashboard } from "@/components/Developer/TesterDashboard/TesterDashboard.tsx";
+import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider, type Theme } from "@/components/ThemeProvider";
 
 interface AppContentProps {
   activeTab: string;
@@ -103,7 +103,7 @@ function AppContent({
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("main-table");
-  
+
   // Load theme from localStorage or use system default
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window !== 'undefined') {
@@ -112,7 +112,7 @@ export default function App() {
         if (savedTheme) {
           const parsed = JSON.parse(savedTheme);
           // Validate the parsed theme
-          if (parsed && 
+          if (parsed &&
               ['light', 'dark', 'system'].includes(parsed.mode) &&
               ['default', 'blue', 'orange', 'green'].includes(parsed.accent)) {
             return parsed;
@@ -168,7 +168,7 @@ export default function App() {
       }
 
       const newTabs = prevTabs.filter((tab) => tab.id !== tabId);
-      
+
       // If the removed tab was the active tab, switch to another tab
       if (activeTab === tabId && newTabs.length > 0) {
         // Switch to the first remaining tab
@@ -182,7 +182,7 @@ export default function App() {
   const handleMoveTab = useCallback(
     (dragIndex: number, hoverIndex: number) => {
       setTabs((prevTabs) => {
-        if (dragIndex < 0 || dragIndex >= prevTabs.length || 
+        if (dragIndex < 0 || dragIndex >= prevTabs.length ||
             hoverIndex < 0 || hoverIndex >= prevTabs.length) {
           return prevTabs;
         }
