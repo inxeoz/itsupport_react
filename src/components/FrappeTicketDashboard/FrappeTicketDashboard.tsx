@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
     Card, CardContent, CardDescription, CardHeader, CardTitle,
-} from "../ui/card";
+} from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ import {
     type FrappeTicket,
     DEFAULT_API_CONFIG,
     type ApiConfig,
-} from "../../services/frappeApi";
+} from "@/services/frappeApi";
 
 import { ApiConfigDialog } from "@/components/ApiDialog/ApiConfigDialog.tsx";
 import { NewTicketDialog } from "@/components/FrappeTicketDashboard/NewTicketDialog.tsx";
