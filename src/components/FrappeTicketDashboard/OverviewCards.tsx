@@ -1,4 +1,4 @@
-import { Card, CardContent } from "../ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { List, Clock, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 
 export function OverviewCards({

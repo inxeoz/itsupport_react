@@ -4,11 +4,11 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "../ui/dialog.tsx";
-import { Badge } from "../ui/badge.tsx";
-import { Button } from "../ui/button.tsx";
-import { Separator } from "../ui/separator.tsx";
-import { ScrollArea } from "../ui/scroll-area.tsx";
+} from "@/components/ui/dialog.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Separator } from "@/components/ui/separator.tsx";
+import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import {
   User,
   Building,

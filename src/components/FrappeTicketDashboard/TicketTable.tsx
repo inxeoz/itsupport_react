@@ -1,12 +1,12 @@
 import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "../ui/table";
-import { Badge } from "../ui/badge";
-import { Button } from "../ui/button";
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
     Calendar, Clock, Eye, CheckCircle, XCircle, ArrowUpDown, User, UserCheck, Building, Tag,
 } from "lucide-react";
-import type { FrappeTicket } from "../../services/frappeApi";
+import type { FrappeTicket } from "@/services/frappeApi";
 import type { ColumnVisibility, ColumnWidths, SortField } from "@/components/types/tickets";
 import { formatDateTime } from "@/components/utils/date";
 

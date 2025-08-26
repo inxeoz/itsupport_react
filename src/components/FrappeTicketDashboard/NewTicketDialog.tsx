@@ -1,15 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog.tsx';
-import { Button } from '../ui/button.tsx';
-import { Input } from '../ui/input.tsx';
-import { Label } from '../ui/label.tsx';
-import { Textarea } from '../ui/textarea.tsx';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select.tsx';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs.tsx';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog.tsx';
+import { Button } from '@/components/ui/button.tsx';
+import { Input } from '@/components/ui/input.tsx';
+import { Label } from '@/components/ui/label.tsx';
+import { Textarea } from '@/components/ui/textarea.tsx';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select.tsx';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs.tsx';
 import { Loader2, Plus, User, FileText, MessageSquare, AlertTriangle, Building, Mail, Phone, Tag, Calendar, UserCheck, Clock, CheckCircle, Paperclip } from 'lucide-react';
-import { Alert, AlertDescription } from '../ui/alert.tsx';
+import { Alert, AlertDescription } from '@/components/ui/alert.tsx';
 import { toast } from "sonner";
-import { frappeApi, type FrappeTicket } from '../../services/frappeApi.ts';
+import { frappeApi, type FrappeTicket } from '@/services/frappeApi.ts';
 
 interface NewTicketDialogProps {
   open: boolean;

@@ -1,12 +1,12 @@
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent,
     DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
     Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "../ui/select";
+} from "@/components/ui/select";
 import {
     Calendar, ChevronDown, Filter as FilterIcon, Tag, User, UserCheck, Building, FilterX, Check, AlertTriangle, Search,
 } from "lucide-react";
