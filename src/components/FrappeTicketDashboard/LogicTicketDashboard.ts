@@ -1,20 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
-import {
-    frappeApi,
-    mockTickets,
-    type FrappeTicket,
-    DEFAULT_API_CONFIG,
-    type ApiConfig,
-} from "@/services/frappeApi";
+import {useEffect, useMemo, useState} from "react";
+import {toast} from "sonner";
+import {type ApiConfig, DEFAULT_API_CONFIG, frappeApi, type FrappeTicket, mockTickets,} from "@/services/frappeApi";
 
-import { useLocalStorage } from "@/components/hooks/useLocalStorage";
-import { usePagination } from "@/components/hooks/usePagination";
-import { useSorting } from "@/components/hooks/useSorting";
-import { useResizeColumns } from "@/components/hooks/useResizeColumns";
+import {useLocalStorage} from "@/components/hooks/useLocalStorage";
+import {usePagination} from "@/components/hooks/usePagination";
+import {useSorting} from "@/components/hooks/useSorting";
+import {useResizeColumns} from "@/components/hooks/useResizeColumns";
 
-import { exportCSV } from "@/components/utils/exportData";
-import { useFilters } from "@/components/utils/useFilters";
+import {exportCSV} from "@/components/utils/exportData";
+import {useFilters} from "@/components/utils/useFilters";
 
 export const DEFAULT_WIDTHS = {
     select: 50, ticket_id: 120, title: 200, user_name: 150, department: 130,
@@ -57,7 +51,7 @@ export function useFrappeTicketDashboardLogic() {
         "frappe-dashboard-column-visibility",
         DEFAULT_VISIBILITY,
     );
-    const { widths, start: startResize } = useResizeColumns(columnWidths, setColumnWidths);
+    const {widths, start: startResize} = useResizeColumns(columnWidths, setColumnWidths);
     const visibleColumns = Object.entries(columnVisibility)
         .filter(([, v]) => v)
         .map(([k]) => k);
@@ -70,13 +64,13 @@ export function useFrappeTicketDashboardLogic() {
     } = useFilters(tickets);
 
     // sorting
-    const { criteria, toggleSort, clear: clearSorting, sorted } = useSorting(filtered);
+    const {criteria, toggleSort, clear: clearSorting, sorted} = useSorting(filtered);
 
     // selection
     const [selectedTickets, setSelectedTickets] = useState<string[]>([]);
 
     // pagination
-    const { page, setPage, pages, canPrev, canNext, range, pageSize } =
+    const {page, setPage, pages, canPrev, canNext, range, pageSize} =
         usePagination(totalTicketCount, 20, Math.ceil(mockTickets.length));
 
     // fetchers
@@ -126,7 +120,8 @@ export function useFrappeTicketDashboardLogic() {
                 const parsed = JSON.parse(saved);
                 setApiConfig(parsed);
                 frappeApi.updateConfig(parsed);
-            } catch {}
+            } catch {
+            }
         }
         fetchTickets(true, 1);
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,7 +176,10 @@ export function useFrappeTicketDashboardLogic() {
     };
 
     // ticket actions
-    const onView = (t: FrappeTicket) => { setSelectedTicket(t); setDetailsOpen(true); };
+    const onView = (t: FrappeTicket) => {
+        setSelectedTicket(t);
+        setDetailsOpen(true);
+    };
 
     const onSubmit = async (id: string) => {
         setActionLoading(id);
@@ -192,14 +190,14 @@ export function useFrappeTicketDashboardLogic() {
                 toast.success("Ticket submitted");
             } else {
                 setTickets((prev) =>
-                    prev.map((t) => (t.name === id ? { ...t, docstatus: 1, modified: new Date().toISOString() } : t)),
+                    prev.map((t) => (t.name === id ? {...t, docstatus: 1, modified: new Date().toISOString()} : t)),
                 );
                 toast.success("Ticket submitted (Demo)");
             }
         } catch (e: any) {
-            toast.error("Failed to submit", { description: e?.message || "Please try again." });
+            toast.error("Failed to submit", {description: e?.message || "Please try again."});
             setTickets((prev) =>
-                prev.map((t) => (t.name === id ? { ...t, docstatus: 1, modified: new Date().toISOString() } : t)),
+                prev.map((t) => (t.name === id ? {...t, docstatus: 1, modified: new Date().toISOString()} : t)),
             );
         } finally {
             setActionLoading(null);
@@ -215,14 +213,14 @@ export function useFrappeTicketDashboardLogic() {
                 toast.success("Ticket cancelled");
             } else {
                 setTickets((prev) =>
-                    prev.map((t) => (t.name === id ? { ...t, docstatus: 2, modified: new Date().toISOString() } : t)),
+                    prev.map((t) => (t.name === id ? {...t, docstatus: 2, modified: new Date().toISOString()} : t)),
                 );
                 toast.success("Ticket cancelled (Demo)");
             }
         } catch (e: any) {
-            toast.error("Failed to cancel", { description: e?.message || "Please try again." });
+            toast.error("Failed to cancel", {description: e?.message || "Please try again."});
             setTickets((prev) =>
-                prev.map((t) => (t.name === id ? { ...t, docstatus: 2, modified: new Date().toISOString() } : t)),
+                prev.map((t) => (t.name === id ? {...t, docstatus: 2, modified: new Date().toISOString()} : t)),
             );
         } finally {
             setActionLoading(null);
@@ -232,7 +230,7 @@ export function useFrappeTicketDashboardLogic() {
     // export
     const exportCsv = () => {
         const ok = exportCSV(sorted);
-        if (!ok) toast.error("No data to export", { description: "Apply filters or check search." });
+        if (!ok) toast.error("No data to export", {description: "Apply filters or check search."});
         else toast.success(`Exported ${sorted.length} tickets to CSV`);
     };
 

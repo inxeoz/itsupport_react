@@ -1,13 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-    DragDropContext,
-    Droppable,
-    Draggable,
-    type DropResult,
-} from "@hello-pangea/dnd";
+import React, {useCallback, useEffect, useMemo, useState} from "react";
+import {DragDropContext, Draggable, Droppable, type DropResult,} from "@hello-pangea/dnd";
+import {useDashboardStore} from "@/common/GlobalStore.ts";
+
 
 /** -------- helpers -------- */
-const reorder = <T,>(list: T[], startIndex: number, endIndex: number) => {
+const reorder = <T, >(list: T[], startIndex: number, endIndex: number) => {
     const copy = list.slice();
     const [removed] = copy.splice(startIndex, 1);
     copy.splice(endIndex, 0, removed);
@@ -96,7 +93,7 @@ export default function UniversalDashboard({
     const onDragEnd = useCallback(
         (result: DropResult) => {
             if (!editable) return;
-            const { source, destination } = result;
+            const {source, destination} = result;
             if (!destination || destination.index === source.index) return;
             setOrder((prev) => {
                 const next = reorder(prev, source.index, destination.index);
@@ -106,6 +103,10 @@ export default function UniversalDashboard({
         },
         [editable, onOrderChange]
     );
+
+
+    const {isEditable, toggleEditable} = useDashboardStore();
+
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
@@ -155,14 +156,15 @@ export default function UniversalDashboard({
                                         {section.content}
 
                                         {/* emoji on hover — the only visible affordance */}
-                                        <span
+
+                                        {isEditable && <span
                                             className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100
                                  transition-opacity bg-white border border-gray-300 rounded-full
                                  text-sm px-1.5 pointer-events-none select-none"
                                             aria-hidden="true"
                                         >
                       {emoji}
-                    </span>
+                    </span>}
                                     </div>
                                 )}
                             </Draggable>
