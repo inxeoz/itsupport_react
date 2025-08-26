@@ -39,13 +39,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuGroup,
 } from "../ui/dropdown-menu.tsx";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { DraggableTab } from "./DraggableTab.tsx";
 import { ApiConfigDialog, ApiConfig } from "../ApiDialog/ApiConfigDialog.tsx";
 import { toast } from "sonner";
 import { useTheme, type Theme } from "../ThemeProvider.tsx";
+
+import { useTicketDashboardStore } from "@/common/GlobalStore.ts";
+
 
 interface TopBarProps {
   activeTab: string;
@@ -430,6 +433,8 @@ export function TopBar({
     );
   };
 
+    const { isEditable, toggleEditable } = useTicketDashboardStore();
+
   return (
     <TooltipProvider>
       <header className="bg-card border-b border-border px-6 py-3 flex items-center justify-between mytick-theme">
@@ -563,10 +568,18 @@ export function TopBar({
         {/* Right side - Branding and controls */}
         <div className="flex items-center gap-4 flex-shrink-0 mytick-theme">
           <div className="flex items-center gap-4 mytick-theme">
+
             <h1 className="text-xl font-medium text-foreground mytick-theme">
               MYTICK
             </h1>
-            <Badge
+
+              {/* optional quick toggle for demo */}
+              <Button variant="outline" size="sm" onClick={toggleEditable}>
+                  {isEditable ? "Lock layout" : "Unlock layout"}
+              </Button>
+
+
+              <Badge
               variant="secondary"
               className={getBadgeAccentClass()}
             >

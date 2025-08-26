@@ -141,10 +141,6 @@ export default function FrappeTicketDashboard() {
                                         {L.countLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                                     </div>
 
-                                    {/* optional quick toggle for demo */}
-                                    <Button variant="outline" size="sm" onClick={toggleEditable}>
-                                        {isEditable ? "Lock layout" : "Unlock layout"}
-                                    </Button>
 
                                     <Button variant="outline" size="sm" onClick={() => L.fetchTickets()} disabled={L.loading}>
                                         {L.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
