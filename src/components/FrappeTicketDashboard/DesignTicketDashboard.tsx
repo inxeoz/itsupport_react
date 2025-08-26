@@ -310,7 +310,7 @@ export default function FrappeTicketDashboard() {
             <Droppable droppableId="ticket_dashboard" direction="vertical" isDropDisabled={!isEditable}>
                 {(dropProvided, dropSnapshot) => (
                     <div
-                        className="space-y-6 ticket_dashboard"
+                        className="space-y-6 ticket_dashboard p-4"
                         ref={dropProvided.innerRef}
                         {...dropProvided.droppableProps}
                         style={{
@@ -331,6 +331,7 @@ export default function FrappeTicketDashboard() {
                                         ref={dragProvided.innerRef}
                                         {...dragProvided.draggableProps}
                                         {...dragProvided.dragHandleProps}
+                                        className="relative group"
                                         style={{
                                             boxShadow: dragSnapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.10)" : "none",
                                             borderRadius: 12,
@@ -340,6 +341,15 @@ export default function FrappeTicketDashboard() {
                                         aria-disabled={!isEditable}
                                     >
                                         {renderSection(sectionId)}
+
+                                        {/* Emoji badge */}
+                                        <span
+                                            className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100
+                                 transition-opacity bg-white border border-gray-300 rounded-full
+                                 text-sm px-1.5 pointer-events-none"
+                                        >
+                      ✨
+                    </span>
                                     </div>
                                 )}
                             </Draggable>
