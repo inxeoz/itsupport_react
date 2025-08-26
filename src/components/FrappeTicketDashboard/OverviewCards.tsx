@@ -10,7 +10,7 @@ export function OverviewCards({
     connectionStatus: "connected" | "disconnected" | "testing";
 }) {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4  bg-primary-foreground">
             <Metric title="Total Tickets" icon={<List className="w-5 h-5" />} highlight>
         <span className="text-2xl font-bold">
           {loadingTotal ? <Loader2 className="w-6 h-6 animate-spin" /> : total ?? 0}

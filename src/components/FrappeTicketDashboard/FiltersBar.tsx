@@ -37,13 +37,13 @@ export function FiltersBar({
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="relative">
+            <div className="relative bg-accent" >
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                     placeholder="Search tickets by ID, title, user, description..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 bg-primary-foreground"
                 />
             </div>
 
