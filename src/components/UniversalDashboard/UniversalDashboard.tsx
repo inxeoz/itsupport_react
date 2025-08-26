@@ -1,16 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
-import { useDashboardStore } from "@/common/GlobalStore.ts";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-    DropdownMenuSub,
-    DropdownMenuSubTrigger,
-    DropdownMenuSubContent,
-} from "@/components/ui/dropdown-menu";
+import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {DragDropContext, Draggable, Droppable, type DropResult} from "@hello-pangea/dnd";
+import {useDashboardStore} from "@/common/GlobalStore.ts";
+import ToolMenu from "@/components/UniversalDashboard/ToolMenu";
 
 /* ------------------------- types ------------------------- */
 export type SectionId = string;
@@ -44,7 +35,7 @@ const MIN_SIZE = 40;
 
 /* ------------------------- utils ------------------------- */
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
-const reorder = <T,>(list: T[], startIndex: number, endIndex: number) => {
+const reorder = <T, >(list: T[], startIndex: number, endIndex: number) => {
     const copy = list.slice();
     const [removed] = copy.splice(startIndex, 1);
     copy.splice(endIndex, 0, removed);
@@ -74,7 +65,7 @@ function useVisibleOrder(sections: DashboardSection[], initialOrder?: SectionId[
         });
     }, [visibleIds]);
 
-    return { order, setOrder, visibleIds };
+    return {order, setOrder, visibleIds};
 }
 
 function useFixedMaxSizes(sections: DashboardSection[]) {
@@ -101,7 +92,7 @@ function useFixedMaxSizes(sections: DashboardSection[]) {
         });
     }, [sections]);
 
-    return { attachMeasuredRef, getMax };
+    return {attachMeasuredRef, getMax};
 }
 
 function createSizeController(
@@ -114,7 +105,7 @@ function createSizeController(
         setOverrides((prev) => {
             const current = prev[id]?.width ?? fixed.maxWidth;
             const next = clamp(current + delta, MIN_SIZE, fixed.maxWidth);
-            return { ...prev, [id]: { ...prev[id], width: next } };
+            return {...prev, [id]: {...prev[id], width: next}};
         });
     };
 
@@ -124,18 +115,18 @@ function createSizeController(
         setOverrides((prev) => {
             const current = prev[id]?.height ?? fixed.maxHeight;
             const next = clamp(current + delta, MIN_SIZE, fixed.maxHeight);
-            return { ...prev, [id]: { ...prev[id], height: next } };
+            return {...prev, [id]: {...prev[id], height: next}};
         });
     };
 
     const resetSize = (id: SectionId) => {
         setOverrides((prev) => {
-            const { [id]: _omit, ...rest } = prev;
+            const {[id]: _omit, ...rest} = prev;
             return rest;
         });
     };
 
-    return { nudgeWidth, nudgeHeight, resetSize };
+    return {nudgeWidth, nudgeHeight, resetSize};
 }
 
 /* ------------------------- component ------------------------- */
@@ -155,13 +146,13 @@ export default function UniversalDashboard({
     const isEditableFromStore = useDashboardStore((s) => s.isEditable);
     const canEdit = editable || isEditableFromStore;
 
-    const { order, setOrder } = useVisibleOrder(sections, initialOrder);
+    const {order, setOrder} = useVisibleOrder(sections, initialOrder);
 
     const [overrides, setOverrides] = useState<SizeOverrides>({});
     useEffect(() => {
         const ids = new Set(sections.map((s) => s.id));
         setOverrides((prev) => {
-            const next = { ...prev };
+            const next = {...prev};
             Object.keys(next).forEach((id) => {
                 if (!ids.has(id)) delete next[id as SectionId];
             });
@@ -186,7 +177,7 @@ export default function UniversalDashboard({
     const onDragEnd = useCallback(
         (result: DropResult) => {
             if (!canEdit) return;
-            const { source, destination } = result;
+            const {source, destination} = result;
             if (!destination || destination.index === source.index) return;
             setOrder((prev) => {
                 const next = reorder(prev, source.index, destination.index);
@@ -197,8 +188,8 @@ export default function UniversalDashboard({
         [canEdit, onOrderChange, setOrder]
     );
 
-    const { attachMeasuredRef, getMax } = useFixedMaxSizes(sections);
-    const { nudgeWidth, nudgeHeight, resetSize } = createSizeController(getMax, setOverrides);
+    const {attachMeasuredRef, getMax} = useFixedMaxSizes(sections);
+    const {nudgeWidth, nudgeHeight, resetSize} = createSizeController(getMax, setOverrides);
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
@@ -241,8 +232,8 @@ export default function UniversalDashboard({
                                                 cursor: canEdit ? "grab" : "default",
                                                 background: "white",
                                                 overflow: "hidden",
-                                                ...(ov.width != null ? { width: ov.width } : {}),
-                                                ...(ov.height != null ? { height: ov.height } : {}),
+                                                ...(ov.width != null ? {width: ov.width} : {}),
+                                                ...(ov.height != null ? {height: ov.height} : {}),
                                                 ...(dragProvided.draggableProps.style || {}),
                                             }}
                                         >
@@ -270,87 +261,5 @@ export default function UniversalDashboard({
                 )}
             </Droppable>
         </DragDropContext>
-    );
-}
-
-/* ------------------------- ToolMenu ------------------------- */
-
-type ToolMenuProps = {
-    show: boolean;
-    emoji: string;
-    sectionId: SectionId;
-    onEditSection?: (id: SectionId) => void;
-    onHideSection?: (id: SectionId) => void;
-    onPinSection?: (id: SectionId) => void;
-    nudgeWidth: (id: SectionId, delta: number) => void;
-    nudgeHeight: (id: SectionId, delta: number) => void;
-    resetSize: (id: SectionId) => void;
-    maxLabel?: string;
-};
-
-function ToolMenu({
-                      show,
-                      emoji,
-                      sectionId,
-                      onEditSection,
-                      onHideSection,
-                      onPinSection,
-                      nudgeWidth,
-                      nudgeHeight,
-                      resetSize,
-                      maxLabel,
-                  }: ToolMenuProps) {
-    if (!show) return null;
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <button
-                    type="button"
-                    className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100 transition-opacity bg-white border border-gray-300 rounded-full text-sm px-1.5 leading-[1.6] cursor-pointer select-none"
-                    aria-label="Open section options"
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    {emoji}
-                </button>
-            </DropdownMenuTrigger>
-
-            <DropdownMenuContent align="end" className="w-52">
-                <DropdownMenuItem onClick={() => onEditSection?.(sectionId)}>Edit</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onHideSection?.(sectionId)}>Hide</DropdownMenuItem>
-                <DropdownMenuSeparator />
-
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>{"< Width >"}</DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                        <DropdownMenuItem onClick={() => nudgeWidth(sectionId, -WIDTH_STEP)}>Decrease</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => nudgeWidth(sectionId, +WIDTH_STEP)}>Increase</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuSub>
-                    <DropdownMenuSubTrigger>{"< Height >"}</DropdownMenuSubTrigger>
-                    <DropdownMenuSubContent>
-                        <DropdownMenuItem onClick={() => nudgeHeight(sectionId, -HEIGHT_STEP)}>Decrease</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => nudgeHeight(sectionId, +HEIGHT_STEP)}>Increase</DropdownMenuItem>
-                    </DropdownMenuSubContent>
-                </DropdownMenuSub>
-
-                <DropdownMenuItem onClick={() => resetSize(sectionId)}>Reset size</DropdownMenuItem>
-
-                {maxLabel && (
-                    <>
-                        <DropdownMenuSeparator />
-                        <div className="px-2 py-1 text-xs text-muted-foreground select-none">
-                            Max: {maxLabel}
-                        </div>
-                    </>
-                )}
-
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => onPinSection?.(sectionId)}>Pin</DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
     );
 }
