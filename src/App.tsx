@@ -1,6 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { TopBar } from "@/components/Navigation/TopBar.tsx";
-import { TicketDashboard } from "@/components/FrappeTicketDashboard/TicketDashboard.tsx";
+
+// import { TicketDashboard } from "@/components/FrappeTicketDashboard/TicketDashboard.tsx";
+import FrappeTicketDashboard from "@/components/FrappeTicketDashboard/TicketDashboard.tsx";
+
 import { KanbanBoard } from "@/components/KanbanDashboard/KanbanBoard.tsx";
 import { AddTicket } from "@/components/AddTicket/AddTicket.tsx";
 import { AnalyticsDashboard } from "@/components/AnalyticsDashboard/AnalyticsDashboard.tsx";
@@ -41,7 +44,7 @@ function AppContent({
     switch (activeTab) {
       case "main-table":
       case "table":
-        return <TicketDashboard />;
+        return <FrappeTicketDashboard />;
       case "kanban":
         return <KanbanBoard />;
       case "add-ticket":
@@ -67,7 +70,7 @@ function AppContent({
       case "tester":
         return <TesterDashboard />;
       default:
-        return <TicketDashboard />;
+        return <FrappeTicketDashboard />;
     }
   };
 
