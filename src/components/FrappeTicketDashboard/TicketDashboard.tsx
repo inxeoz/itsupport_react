@@ -71,6 +71,7 @@ export default function FrappeTicketDashboard() {
         const S: Record<TicketDashboardSectionId, DashboardSection> = {
             header: {
                 id: "header",
+                maxWidth: 900,
                 content: (
                     <Card>
                         <CardHeader className="pb-3">
@@ -143,6 +144,8 @@ export default function FrappeTicketDashboard() {
 
             overview: {
                 id: "overview",
+                maxWidth: 900,
+
                 content: (
                     <OverviewCards
                         total={L.overview.total}
