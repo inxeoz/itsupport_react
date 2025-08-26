@@ -15,17 +15,19 @@ export const useDashboardStore = create<DashboardState>((set) => ({
 }));
 
 
-enum Dashboard {
+// GlobalStore.ts
+export enum Dashboard {
     TicketDashboard = 0,
-    FormDashboard=1,
-    KanbanDashboard =2,
-    GanttDashboard =3,
+    FormDashboard = 1,
+    KanbanDashboard = 2,
+    GanttDashboard = 3,
     DeveloperDashboard = 4,
     AddTaskDashboard = 5,
     ChartDashboard = 6,
     CalendarDashboard = 7,
     FileGalleryDashboard = 8,
 }
+
 
 
 type CurrentDashboard = {
