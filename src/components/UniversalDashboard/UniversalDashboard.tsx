@@ -3,15 +3,14 @@ import {DragDropContext, Draggable, Droppable, type DropResult} from "@hello-pan
 import {useDashboardStore} from "@/common/GlobalStore.ts";
 import {
     DropdownMenu,
-    DropdownMenuTrigger,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ConditionalTooltip } from "@/components/Navigation/ConditionalTooltip";
 
 /** -------- helpers -------- */
-const reorder = <T,>(list: T[], startIndex: number, endIndex: number) => {
+const reorder = <T, >(list: T[], startIndex: number, endIndex: number) => {
     const copy = list.slice();
     const [removed] = copy.splice(startIndex, 1);
     copy.splice(endIndex, 0, removed);
@@ -91,7 +90,7 @@ export default function UniversalDashboard({
     const onDragEnd = useCallback(
         (result: DropResult) => {
             if (!canEdit) return;
-            const { source, destination } = result;
+            const {source, destination} = result;
             if (!destination || destination.index === source.index) return;
             setOrder((prev) => {
                 const next = reorder(prev, source.index, destination.index);
@@ -182,28 +181,28 @@ function ToolMenu({
 
     return (
         <DropdownMenu>
-            <ConditionalTooltip content="Section options" show>
-                <DropdownMenuTrigger asChild>
-                    <button
-                        type="button"
-                        className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100
+            <DropdownMenuTrigger asChild>
+                <button
+                    type="button"
+                    className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100
                        transition-opacity bg-white border border-gray-300 rounded-full
                        text-sm px-1.5 leading-[1.6] cursor-pointer select-none"
-                        aria-label="Open section options"
-                        onMouseDown={(e) => e.stopPropagation()}
-                        onClick={(e) => e.stopPropagation()}
-                    >
-                        {emoji}
-                    </button>
-                </DropdownMenuTrigger>
-            </ConditionalTooltip>
+                    aria-label="Open section options"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {emoji}
+                </button>
+            </DropdownMenuTrigger>
+
 
             <DropdownMenuContent align="end" className="w-40">
                 <DropdownMenuItem onClick={() => onEditSection?.(sectionId)}>Edit</DropdownMenuItem>
                 <DropdownMenuItem onClick={() => onHideSection?.(sectionId)}>Hide</DropdownMenuItem>
-                <DropdownMenuSeparator />
+                <DropdownMenuSeparator/>
                 <DropdownMenuItem onClick={() => onPinSection?.(sectionId)}>Pin</DropdownMenuItem>
             </DropdownMenuContent>
         </DropdownMenu>
+
     );
 }
