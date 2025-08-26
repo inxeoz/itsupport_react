@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import {useTicketDashboardStore} from "@/common/GlobalStore.ts";
+import { useTicketDashboardStore } from "@/common/GlobalStore.ts";
 
 import {
     DragDropContext,
@@ -23,7 +23,6 @@ import { mockTickets } from "@/services/frappeApi";
 import type { SortField } from "@/components/types/tickets";
 import { useFrappeTicketDashboardLogic } from "./LogicTicketDashboard.ts";
 
-// presentational children
 import { OverviewCards } from "./OverviewCards";
 import { FiltersBar } from "./FiltersBar";
 import { TicketTable } from "./TicketTable";
@@ -47,12 +46,15 @@ type SectionId = "header" | "overview" | "error" | "filters" | "table";
 export default function FrappeTicketDashboard() {
     const L = useFrappeTicketDashboardLogic();
 
+    // 🔒 global editability flag
+    const { isEditable, toggleEditable } = useTicketDashboardStore();
+
     const [sectionOrder, setSectionOrder] = useState<SectionId[]>([
         "header",
         "overview",
         "filters",
         "table",
-        "error", // will be hidden when no error
+        "error", // hidden when no error
     ]);
 
     const visibleSections = useMemo(
@@ -78,10 +80,11 @@ export default function FrappeTicketDashboard() {
     };
 
     const onDragEnd = useCallback((result: DropResult) => {
+        if (!isEditable) return; // 🔒 no-op when disabled
         const { source, destination } = result;
         if (!destination || destination.index === source.index) return;
         setSectionOrder(prev => reorder(prev, source.index, destination.index));
-    }, []);
+    }, [isEditable]);
 
     const renderSection = (sectionId: SectionId) => {
         switch (sectionId) {
@@ -137,6 +140,12 @@ export default function FrappeTicketDashboard() {
                     </span>
                                         {L.countLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                                     </div>
+
+                                    {/* optional quick toggle for demo */}
+                                    <Button variant="outline" size="sm" onClick={toggleEditable}>
+                                        {isEditable ? "Lock layout" : "Unlock layout"}
+                                    </Button>
+
                                     <Button variant="outline" size="sm" onClick={() => L.fetchTickets()} disabled={L.loading}>
                                         {L.loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                                     </Button>
@@ -301,7 +310,8 @@ export default function FrappeTicketDashboard() {
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable droppableId="ticket_dashboard" direction="vertical">
+            {/* Disable dropping when locked */}
+            <Droppable droppableId="ticket_dashboard" direction="vertical" isDropDisabled={!isEditable}>
                 {(dropProvided, dropSnapshot) => (
                     <div
                         className="space-y-6 ticket_dashboard"
@@ -310,10 +320,16 @@ export default function FrappeTicketDashboard() {
                         style={{
                             background: dropSnapshot.isDraggingOver ? "rgba(59,130,246,0.04)" : undefined,
                             transition: "background 120ms ease",
+                            opacity: isEditable ? 1 : 0.96,
                         }}
                     >
                         {visibleSections.map((sectionId, index) => (
-                            <Draggable key={sectionId} draggableId={sectionId} index={index}>
+                            <Draggable
+                                key={sectionId}
+                                draggableId={sectionId}
+                                index={index}
+                                isDragDisabled={!isEditable} // 🔒 per-item lock
+                            >
                                 {(dragProvided, dragSnapshot) => (
                                     <div
                                         ref={dragProvided.innerRef}
@@ -322,8 +338,10 @@ export default function FrappeTicketDashboard() {
                                         style={{
                                             boxShadow: dragSnapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.10)" : "none",
                                             borderRadius: 12,
+                                            cursor: isEditable ? "grab" : "default",
                                             ...dragProvided.draggableProps.style,
                                         }}
+                                        aria-disabled={!isEditable}
                                     >
                                         {renderSection(sectionId)}
                                     </div>
