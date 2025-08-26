@@ -1,3 +1,5 @@
+// /home/inxeoz/proj/prob/apps/itsupport_frappe/itsupport_frappe/itsupport_react/src/components/Navigation/TopBar.tsx
+
 import {
   Plus,
   Settings,
@@ -26,10 +28,10 @@ import {
   HelpCircle,
   Monitor,
 } from "lucide-react";
-import { Button } from "../ui/button.tsx";
-import { Badge } from "../ui/badge.tsx";
-import { Switch } from "../ui/switch.tsx";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
+import { Switch } from "@/components/ui/switch.tsx";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip.tsx";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -38,14 +40,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup,
-} from "../ui/dropdown-menu.tsx";
+} from "@/components/ui/dropdown-menu.tsx";
 import React, { useEffect, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { DraggableTab } from "./DraggableTab.tsx";
-import { ApiConfigDialog, ApiConfig } from "../ApiDialog/ApiConfigDialog.tsx";
+import { DraggableTab } from "@/components/Navigation/DraggableTab.tsx";
+import { ApiConfigDialog, ApiConfig } from "@/components/ApiDialog/ApiConfigDialog.tsx";
 import { toast } from "sonner";
-import { useTheme, type Theme } from "../ThemeProvider.tsx";
+import { useTheme, type Theme } from "@/components/ThemeProvider.tsx";
 
 import {useDashboardStore} from "@/common/GlobalStore.ts";
 

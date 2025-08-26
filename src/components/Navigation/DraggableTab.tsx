@@ -1,8 +1,7 @@
 import React from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { MoreHorizontal, X } from 'lucide-react';
-import { Button } from '../ui/button.tsx';
-import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip.tsx';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip.tsx';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   DropdownMenuGroup,
-} from '../ui/dropdown-menu.tsx';
+} from '@/components/ui/dropdown-menu.tsx';
 
 const ItemType = 'TAB';
 
