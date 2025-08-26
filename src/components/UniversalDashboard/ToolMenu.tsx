@@ -15,7 +15,7 @@ import {
 export type SectionId = string;
 
 /* ------------------------- config (local to menu) ------------------------- */
-const WIDTH_STEP = 40;
+const WIDTH_STEP = 400;
 const HEIGHT_STEP = 40;
 
 /* ------------------------- props ------------------------- */
