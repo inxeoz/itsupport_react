@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 
 import { mockTickets } from "@/services/frappeApi";
-import type { SortField } from "./Logic";
-import { useFrappeTicketDashboardLogic } from "./Logic";
+import type { SortField } from "@/components/types/tickets";
+import { useFrappeTicketDashboardLogic } from "./LogicTicketDashboard.ts";
 
 // presentational children
 import { OverviewCards } from "./OverviewCards";

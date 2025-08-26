@@ -15,7 +15,6 @@ import { useResizeColumns } from "@/components/hooks/useResizeColumns";
 
 import { exportCSV } from "@/components/utils/exportData";
 import { useFilters } from "@/components/utils/useFilters";
-import type { SortField } from "@/components/types/tickets";
 
 export const DEFAULT_WIDTHS = {
     select: 50, ticket_id: 120, title: 200, user_name: 150, department: 130,
@@ -296,4 +295,3 @@ export function useFrappeTicketDashboardLogic() {
 }
 
 export type DashboardLogic = ReturnType<typeof useFrappeTicketDashboardLogic>;
-export type { SortField } from "@/components/types/tickets";
