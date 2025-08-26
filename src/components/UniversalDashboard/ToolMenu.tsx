@@ -1,3 +1,4 @@
+import React from "react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,8 +10,15 @@ import {
     DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 
-type SectionId = string;
+/* ------------------------- local types ------------------------- */
+// Kept local to avoid circular deps. Matches the main file's definition.
+export type SectionId = string;
 
+/* ------------------------- config (local to menu) ------------------------- */
+const WIDTH_STEP = 40;
+const HEIGHT_STEP = 40;
+
+/* ------------------------- props ------------------------- */
 type ToolMenuProps = {
     show: boolean;
     emoji: string;
@@ -24,18 +32,19 @@ type ToolMenuProps = {
     maxLabel?: string;
 };
 
-function ToolMenu({
-                      show,
-                      emoji,
-                      sectionId,
-                      onEditSection,
-                      onHideSection,
-                      onPinSection,
-                      nudgeWidth,
-                      nudgeHeight,
-                      resetSize,
-                      maxLabel,
-                  }: ToolMenuProps) {
+/* ------------------------- component ------------------------- */
+export default function ToolMenu({
+                                     show,
+                                     emoji,
+                                     sectionId,
+                                     onEditSection,
+                                     onHideSection,
+                                     onPinSection,
+                                     nudgeWidth,
+                                     nudgeHeight,
+                                     resetSize,
+                                     maxLabel,
+                                 }: ToolMenuProps) {
     if (!show) return null;
 
     return (
@@ -60,16 +69,16 @@ function ToolMenu({
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger>{"< Width >"}</DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
-                        <DropdownMenuItem onClick={() => nudgeWidth(sectionId, -40)}>Decrease</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => nudgeWidth(sectionId, +40)}>Increase</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => nudgeWidth(sectionId, -WIDTH_STEP)}>Decrease</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => nudgeWidth(sectionId, +WIDTH_STEP)}>Increase</DropdownMenuItem>
                     </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
                 <DropdownMenuSub>
                     <DropdownMenuSubTrigger>{"< Height >"}</DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
-                        <DropdownMenuItem onClick={() => nudgeHeight(sectionId, -40)}>Decrease</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => nudgeHeight(sectionId, +40)}>Increase</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => nudgeHeight(sectionId, -HEIGHT_STEP)}>Decrease</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => nudgeHeight(sectionId, +HEIGHT_STEP)}>Increase</DropdownMenuItem>
                     </DropdownMenuSubContent>
                 </DropdownMenuSub>
 
@@ -78,9 +87,7 @@ function ToolMenu({
                 {maxLabel && (
                     <>
                         <DropdownMenuSeparator />
-                        <div className="px-2 py-1 text-xs text-muted-foreground select-none">
-                            Max: {maxLabel}
-                        </div>
+                        <div className="px-2 py-1 text-xs text-muted-foreground select-none">Max: {maxLabel}</div>
                     </>
                 )}
 
@@ -90,5 +97,3 @@ function ToolMenu({
         </DropdownMenu>
     );
 }
-
-export default ToolMenu;

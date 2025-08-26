@@ -1,7 +1,7 @@
-import React, {useCallback, useEffect, useMemo, useRef, useState} from "react";
-import {DragDropContext, Draggable, Droppable, type DropResult} from "@hello-pangea/dnd";
-import {useDashboardStore} from "@/common/GlobalStore.ts";
-import ToolMenu from "@/components/UniversalDashboard/ToolMenu";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { DragDropContext, Draggable, Droppable, type DropResult } from "@hello-pangea/dnd";
+import { useDashboardStore } from "@/common/GlobalStore.ts";
+import ToolMenu from "./ToolMenu";
 
 /* ------------------------- types ------------------------- */
 export type SectionId = string;
@@ -29,13 +29,11 @@ export type UniversalDashboardProps = {
 };
 
 /* ------------------------- config ------------------------- */
-const WIDTH_STEP = 40;
-const HEIGHT_STEP = 40;
 const MIN_SIZE = 40;
 
 /* ------------------------- utils ------------------------- */
 const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
-const reorder = <T, >(list: T[], startIndex: number, endIndex: number) => {
+const reorder = <T,>(list: T[], startIndex: number, endIndex: number) => {
     const copy = list.slice();
     const [removed] = copy.splice(startIndex, 1);
     copy.splice(endIndex, 0, removed);
@@ -65,23 +63,24 @@ function useVisibleOrder(sections: DashboardSection[], initialOrder?: SectionId[
         });
     }, [visibleIds]);
 
-    return {order, setOrder, visibleIds};
+    return { order, setOrder, visibleIds };
 }
 
 function useFixedMaxSizes(sections: DashboardSection[]) {
     const fixedMaxSizes = useRef<FixedMaxMap>({});
     const sectionRefs = useRef<Record<SectionId, HTMLDivElement | null>>({});
 
-    const attachMeasuredRef = (id: SectionId, section: DashboardSection) => (el: HTMLDivElement | null) => {
-        sectionRefs.current[id] = el;
+    const attachMeasuredRef =
+        (id: SectionId, section: DashboardSection) => (el: HTMLDivElement | null) => {
+            sectionRefs.current[id] = el;
 
-        if (el && !fixedMaxSizes.current[id]) {
-            fixedMaxSizes.current[id] = {
-                maxWidth: section.maxWidth ?? el.offsetWidth,
-                maxHeight: section.maxHeight ?? el.offsetHeight,
-            };
-        }
-    };
+            if (el && !fixedMaxSizes.current[id]) {
+                fixedMaxSizes.current[id] = {
+                    maxWidth: section.maxWidth ?? el.offsetWidth,
+                    maxHeight: section.maxHeight ?? el.offsetHeight,
+                };
+            }
+        };
 
     const getMax = (id: SectionId) => fixedMaxSizes.current[id];
 
@@ -92,7 +91,7 @@ function useFixedMaxSizes(sections: DashboardSection[]) {
         });
     }, [sections]);
 
-    return {attachMeasuredRef, getMax};
+    return { attachMeasuredRef, getMax };
 }
 
 function createSizeController(
@@ -105,7 +104,7 @@ function createSizeController(
         setOverrides((prev) => {
             const current = prev[id]?.width ?? fixed.maxWidth;
             const next = clamp(current + delta, MIN_SIZE, fixed.maxWidth);
-            return {...prev, [id]: {...prev[id], width: next}};
+            return { ...prev, [id]: { ...prev[id], width: next } };
         });
     };
 
@@ -115,18 +114,18 @@ function createSizeController(
         setOverrides((prev) => {
             const current = prev[id]?.height ?? fixed.maxHeight;
             const next = clamp(current + delta, MIN_SIZE, fixed.maxHeight);
-            return {...prev, [id]: {...prev[id], height: next}};
+            return { ...prev, [id]: { ...prev[id], height: next } };
         });
     };
 
     const resetSize = (id: SectionId) => {
         setOverrides((prev) => {
-            const {[id]: _omit, ...rest} = prev;
+            const { [id]: _omit, ...rest } = prev;
             return rest;
         });
     };
 
-    return {nudgeWidth, nudgeHeight, resetSize};
+    return { nudgeWidth, nudgeHeight, resetSize };
 }
 
 /* ------------------------- component ------------------------- */
@@ -146,13 +145,13 @@ export default function UniversalDashboard({
     const isEditableFromStore = useDashboardStore((s) => s.isEditable);
     const canEdit = editable || isEditableFromStore;
 
-    const {order, setOrder} = useVisibleOrder(sections, initialOrder);
+    const { order, setOrder } = useVisibleOrder(sections, initialOrder);
 
     const [overrides, setOverrides] = useState<SizeOverrides>({});
     useEffect(() => {
         const ids = new Set(sections.map((s) => s.id));
         setOverrides((prev) => {
-            const next = {...prev};
+            const next = { ...prev };
             Object.keys(next).forEach((id) => {
                 if (!ids.has(id)) delete next[id as SectionId];
             });
@@ -177,7 +176,7 @@ export default function UniversalDashboard({
     const onDragEnd = useCallback(
         (result: DropResult) => {
             if (!canEdit) return;
-            const {source, destination} = result;
+            const { source, destination } = result;
             if (!destination || destination.index === source.index) return;
             setOrder((prev) => {
                 const next = reorder(prev, source.index, destination.index);
@@ -188,8 +187,8 @@ export default function UniversalDashboard({
         [canEdit, onOrderChange, setOrder]
     );
 
-    const {attachMeasuredRef, getMax} = useFixedMaxSizes(sections);
-    const {nudgeWidth, nudgeHeight, resetSize} = createSizeController(getMax, setOverrides);
+    const { attachMeasuredRef, getMax } = useFixedMaxSizes(sections);
+    const { nudgeWidth, nudgeHeight, resetSize } = createSizeController(getMax, setOverrides);
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
@@ -232,8 +231,8 @@ export default function UniversalDashboard({
                                                 cursor: canEdit ? "grab" : "default",
                                                 background: "white",
                                                 overflow: "hidden",
-                                                ...(ov.width != null ? {width: ov.width} : {}),
-                                                ...(ov.height != null ? {height: ov.height} : {}),
+                                                ...(ov.width != null ? { width: ov.width } : {}),
+                                                ...(ov.height != null ? { height: ov.height } : {}),
                                                 ...(dragProvided.draggableProps.style || {}),
                                             }}
                                         >
