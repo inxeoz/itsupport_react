@@ -1,10 +1,17 @@
 import React, {useCallback, useEffect, useMemo, useState} from "react";
-import {DragDropContext, Draggable, Droppable, type DropResult,} from "@hello-pangea/dnd";
+import {DragDropContext, Draggable, Droppable, type DropResult} from "@hello-pangea/dnd";
 import {useDashboardStore} from "@/common/GlobalStore.ts";
-
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { ConditionalTooltip } from "@/components/Navigation/ConditionalTooltip";
 
 /** -------- helpers -------- */
-const reorder = <T, >(list: T[], startIndex: number, endIndex: number) => {
+const reorder = <T,>(list: T[], startIndex: number, endIndex: number) => {
     const copy = list.slice();
     const [removed] = copy.splice(startIndex, 1);
     copy.splice(endIndex, 0, removed);
@@ -15,31 +22,23 @@ const reorder = <T, >(list: T[], startIndex: number, endIndex: number) => {
 export type SectionId = string;
 
 export type DashboardSection = {
-    /** stable unique id for DnD */
     id: SectionId;
-    /** what to render inside the section */
     content: React.ReactNode;
-    /** optional visibility toggle (default: visible) */
     hidden?: boolean;
-    /** optional className for the section wrapper */
     className?: string;
 };
 
 export type UniversalDashboardProps = {
-    /** list of sections to render */
     sections: DashboardSection[];
-    /** enable drag n drop (default: false) */
     editable?: boolean;
-    /** initial order (ids). If omitted, uses `sections` order */
     initialOrder?: SectionId[];
-    /** called whenever the order changes */
     onOrderChange?: (order: SectionId[]) => void;
-    /** droppable id (useful when multiple dashboards on a page) */
     droppableId?: string;
-    /** emoji shown on hover (default: ✨) */
     emoji?: string;
-    /** optional className for the dashboard container */
     className?: string;
+    onEditSection?: (id: SectionId) => void;
+    onHideSection?: (id: SectionId) => void;
+    onPinSection?: (id: SectionId) => void;
 };
 
 /** -------- component -------- */
@@ -51,28 +50,27 @@ export default function UniversalDashboard({
                                                droppableId = "universal_dashboard",
                                                emoji = "✨",
                                                className = "",
+                                               onEditSection,
+                                               onHideSection,
+                                               onPinSection,
                                            }: UniversalDashboardProps) {
-    // derive the canonical list of visible ids from props
+    const isEditableFromStore = useDashboardStore((s) => s.isEditable);
+    const canEdit = editable || isEditableFromStore;
+
     const visibleIdsFromProps = useMemo(
         () => sections.filter((s) => !s.hidden).map((s) => s.id),
         [sections]
     );
 
-    // local order state (ids). start from initialOrder or incoming sections order.
     const [order, setOrder] = useState<SectionId[]>(
         initialOrder?.length ? initialOrder : visibleIdsFromProps
     );
 
-    // keep local order in sync when sections list changes:
-    // - preserve existing order for ids that still exist
-    // - append any new ids at the end
-    // - drop ids no longer provided
     useEffect(() => {
         setOrder((prev) => {
             const existing = prev.filter((id) => visibleIdsFromProps.includes(id));
             const additions = visibleIdsFromProps.filter((id) => !existing.includes(id));
-            const next = [...existing, ...additions];
-            return next;
+            return [...existing, ...additions];
         });
     }, [visibleIdsFromProps]);
 
@@ -92,8 +90,8 @@ export default function UniversalDashboard({
 
     const onDragEnd = useCallback(
         (result: DropResult) => {
-            if (!editable) return;
-            const {source, destination} = result;
+            if (!canEdit) return;
+            const { source, destination } = result;
             if (!destination || destination.index === source.index) return;
             setOrder((prev) => {
                 const next = reorder(prev, source.index, destination.index);
@@ -101,31 +99,21 @@ export default function UniversalDashboard({
                 return next;
             });
         },
-        [editable, onOrderChange]
+        [canEdit, onOrderChange]
     );
-
-
-    const {isEditable, toggleEditable} = useDashboardStore();
-
 
     return (
         <DragDropContext onDragEnd={onDragEnd}>
-            <Droppable
-                droppableId={droppableId}
-                direction="vertical"
-                isDropDisabled={!editable}
-            >
+            <Droppable droppableId={droppableId} direction="vertical" isDropDisabled={!canEdit}>
                 {(dropProvided, dropSnapshot) => (
                     <div
                         ref={dropProvided.innerRef}
                         {...dropProvided.droppableProps}
                         className={`space-y-6 p-4 ${className}`}
                         style={{
-                            background: dropSnapshot.isDraggingOver
-                                ? "rgba(59,130,246,0.04)"
-                                : undefined,
+                            background: dropSnapshot.isDraggingOver ? "rgba(59,130,246,0.04)" : undefined,
                             transition: "background 120ms ease",
-                            opacity: editable ? 1 : 0.96,
+                            opacity: canEdit ? 1 : 0.96,
                             borderRadius: 12,
                         }}
                     >
@@ -134,7 +122,7 @@ export default function UniversalDashboard({
                                 key={section.id}
                                 draggableId={section.id}
                                 index={index}
-                                isDragDisabled={!editable}
+                                isDragDisabled={!canEdit}
                             >
                                 {(dragProvided, dragSnapshot) => (
                                     <div
@@ -143,34 +131,23 @@ export default function UniversalDashboard({
                                         {...dragProvided.dragHandleProps}
                                         className={`relative group ${section.className ?? ""}`}
                                         style={{
-                                            boxShadow: dragSnapshot.isDragging
-                                                ? "0 8px 24px rgba(0,0,0,0.10)"
-                                                : "none",
+                                            boxShadow: dragSnapshot.isDragging ? "0 8px 24px rgba(0,0,0,0.10)" : "none",
                                             borderRadius: 12,
-                                            cursor: editable ? "grab" : "default",
+                                            cursor: canEdit ? "grab" : "default",
                                             background: "white",
                                             ...dragProvided.draggableProps.style,
                                         }}
                                     >
-                                        {/* user-provided content */}
                                         {section.content}
 
-                                        {/* emoji on hover — the only visible affordance */}
-
-                                        {
-                                            isEditable && <span
-                                                className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100
-                                 transition-opacity bg-white border border-gray-300 rounded-full
-                                 text-sm px-1.5 cursor-pointer select-none"
-                                                aria-hidden="true"
-
-                                                onClick={() => window.alert("HII")}
-
-                                            >
-                      {emoji}
-                    </span>}
-
-
+                                        <ToolMenu
+                                            show={canEdit}
+                                            emoji={emoji}
+                                            sectionId={section.id}
+                                            onEditSection={onEditSection}
+                                            onHideSection={onHideSection}
+                                            onPinSection={onPinSection}
+                                        />
                                     </div>
                                 )}
                             </Draggable>
@@ -180,5 +157,53 @@ export default function UniversalDashboard({
                 )}
             </Droppable>
         </DragDropContext>
+    );
+}
+
+/** -------- submenu button -------- */
+type ToolMenuProps = {
+    show: boolean;
+    emoji: string;
+    sectionId: SectionId;
+    onEditSection?: (id: SectionId) => void;
+    onHideSection?: (id: SectionId) => void;
+    onPinSection?: (id: SectionId) => void;
+};
+
+function ToolMenu({
+                      show,
+                      emoji,
+                      sectionId,
+                      onEditSection,
+                      onHideSection,
+                      onPinSection,
+                  }: ToolMenuProps) {
+    if (!show) return null;
+
+    return (
+        <DropdownMenu>
+            <ConditionalTooltip content="Section options" show>
+                <DropdownMenuTrigger asChild>
+                    <button
+                        type="button"
+                        className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100
+                       transition-opacity bg-white border border-gray-300 rounded-full
+                       text-sm px-1.5 leading-[1.6] cursor-pointer select-none"
+                        aria-label="Open section options"
+                        onMouseDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {emoji}
+                    </button>
+                </DropdownMenuTrigger>
+            </ConditionalTooltip>
+
+            <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuItem onClick={() => onEditSection?.(sectionId)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onHideSection?.(sectionId)}>Hide</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onPinSection?.(sectionId)}>Pin</DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
     );
 }
