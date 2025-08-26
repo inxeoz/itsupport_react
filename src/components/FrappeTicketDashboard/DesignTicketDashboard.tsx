@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import { useTicketDashboardStore } from "@/common/GlobalStore.ts";
+import { useDashboardStore } from "@/common/GlobalStore.ts";
 
 import {
     DragDropContext,
@@ -47,7 +47,7 @@ export default function FrappeTicketDashboard() {
     const L = useFrappeTicketDashboardLogic();
 
     // 🔒 global editability flag
-    const { isEditable, toggleEditable } = useTicketDashboardStore();
+    const { isEditable, toggleEditable } = useDashboardStore();
 
     const [sectionOrder, setSectionOrder] = useState<SectionId[]>([
         "header",

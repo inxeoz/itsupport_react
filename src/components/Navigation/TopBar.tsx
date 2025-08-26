@@ -47,7 +47,7 @@ import { ApiConfigDialog, ApiConfig } from "../ApiDialog/ApiConfigDialog.tsx";
 import { toast } from "sonner";
 import { useTheme, type Theme } from "../ThemeProvider.tsx";
 
-import { useTicketDashboardStore } from "@/common/GlobalStore.ts";
+import {useDashboardStore} from "@/common/GlobalStore.ts";
 
 
 interface TopBarProps {
@@ -433,7 +433,7 @@ export function TopBar({
     );
   };
 
-    const { isEditable, toggleEditable } = useTicketDashboardStore();
+    const { isEditable, toggleEditable } = useDashboardStore();
 
   return (
     <TooltipProvider>

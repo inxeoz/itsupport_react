@@ -18,13 +18,13 @@ export const useCounterStore = create<CounterState>((set) => ({
 }));
 
 
-type TicketDashboardState = {
+type DashboardState = {
     isEditable: boolean;
     toggleEditable: () => void;
     setEditable: (value: boolean) => void;
 };
 
-export const useTicketDashboardStore = create<TicketDashboardState>((set) => ({
+export const useDashboardStore = create<DashboardState>((set) => ({
     isEditable: false,
     toggleEditable: () => set((s) => ({ isEditable: !s.isEditable })),
     setEditable: (value) => set({ isEditable: value }),
