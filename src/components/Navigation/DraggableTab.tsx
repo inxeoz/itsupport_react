@@ -1,3 +1,5 @@
+// /home/inxeoz/proj/prob/apps/itsupport_frappe/itsupport_frappe/itsupport_react/src/components/Navigation/DraggableTab.tsx
+
 import React from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { MoreHorizontal, X } from 'lucide-react';
