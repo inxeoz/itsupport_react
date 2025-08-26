@@ -157,14 +157,20 @@ export default function UniversalDashboard({
 
                                         {/* emoji on hover — the only visible affordance */}
 
-                                        {isEditable && <span
-                                            className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100
+                                        {
+                                            isEditable && <span
+                                                className="absolute -top-2 right-3 opacity-0 group-hover:opacity-100
                                  transition-opacity bg-white border border-gray-300 rounded-full
-                                 text-sm px-1.5 pointer-events-none select-none"
-                                            aria-hidden="true"
-                                        >
+                                 text-sm px-1.5 cursor-pointer select-none"
+                                                aria-hidden="true"
+
+                                                onClick={() => window.alert("HII")}
+
+                                            >
                       {emoji}
                     </span>}
+
+
                                     </div>
                                 )}
                             </Draggable>
