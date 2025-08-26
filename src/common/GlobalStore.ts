@@ -44,3 +44,30 @@ export const useCurrentDashboard = create<CurrentDashboard> (
     )
 );
 
+
+
+type DashboardResizeAble = {
+    isDashboardResizeAble: boolean;
+    toggleDashboardResizeAble:() => void;
+    setDashboardResizeAble: (value: boolean) => void;
+};
+
+export const useDashboardResizeAble = create<DashboardResizeAble>((set) => ({
+    isDashboardResizeAble: false,
+    toggleDashboardResizeAble: () => set((s) => ({isDashboardResizeAble: !s.isDashboardResizeAble})),
+    setDashboardResizeAble: (value: boolean) => set({isDashboardResizeAble: value})
+}));
+
+
+type DashboardDropAble = {
+    isDashboardDropAble: boolean;
+    toggleDashboardDropAble:() => void;
+    setDashboardDropAble: (value: boolean) => void;
+};
+
+export const useDashboardDropAble = create<DashboardDropAble>((set) => ({
+    isDashboardDropAble: false,
+    toggleDashboardDropAble: () => set((s) => ({isDashboardDropAble: !s.isDashboardDropAble})),
+    setDashboardDropAble: (value: boolean) => set({isDashboardDropAble: value})
+}));
+
