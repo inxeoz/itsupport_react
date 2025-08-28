@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import {useCallback, useEffect, useState} from "react";
 import {
     Dialog,
     DialogContent,
@@ -7,14 +7,14 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, AlertCircle, Key, User, Cookie } from "lucide-react";
-import { useAuthCred, useAuthCookie, useAuthToken, useBASE_URL } from "@/common/GlobalStore.ts";
-import { toast } from "sonner";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Label} from "@/components/ui/label";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import {Alert, AlertDescription} from "@/components/ui/alert";
+import {AlertCircle, Cookie, Key, Loader2, User} from "lucide-react";
+import {useAuthCookie, useAuthCred, useAuthToken, useBASE_URL} from "@/common/GlobalStore.ts";
+import {toast} from "sonner";
 
 // Authentication methods enum
 enum AuthMethod {
@@ -36,12 +36,12 @@ interface FormData {
     baseUrl: string;
 }
 
-export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
+export function LoginDialog({open, onOpenChange}: LoginDialogProps) {
     // Global state hooks
-    const { AuthToken, setAuthToken } = useAuthToken();
-    const { AuthCookie, setAuthCookie } = useAuthCookie();
-    const { AuthCredUsr, AuthCredPwd, setAuthCred } = useAuthCred();
-    const { base_url, setBASE_URL } = useBASE_URL();
+    const {AuthToken, setAuthToken} = useAuthToken();
+    const {AuthCookie, setAuthCookie} = useAuthCookie();
+    const {AuthCredUsr, AuthCredPwd, setAuthCred} = useAuthCred();
+    const {base_url, setBASE_URL} = useBASE_URL();
 
     // Local state
     const [activeTab, setActiveTab] = useState<AuthMethod>(AuthMethod.CREDENTIALS);
@@ -71,7 +71,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
 
     // Handle input changes
     const handleInputChange = useCallback((field: keyof FormData, value: string) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
+        setFormData(prev => ({...prev, [field]: value}));
         // Clear error when user starts typing
         if (error) setError(null);
     }, [error]);
@@ -206,7 +206,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
             <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <Key className="w-5 h-5" />
+                        <Key className="w-5 h-5"/>
                         Authenticate to Frappe
                     </DialogTitle>
                     <DialogDescription>
@@ -218,7 +218,7 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                     <div className="space-y-4">
                         {error && (
                             <Alert variant="destructive">
-                                <AlertCircle className="h-4 w-4" />
+                                <AlertCircle className="h-4 w-4"/>
                                 <AlertDescription>{error}</AlertDescription>
                             </Alert>
                         )}
@@ -241,15 +241,15 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                         <Tabs value={activeTab} onValueChange={handleTabChange}>
                             <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value={AuthMethod.CREDENTIALS} className="flex items-center gap-2">
-                                    <User className="w-4 h-4" />
+                                    <User className="w-4 h-4"/>
                                     Credentials
                                 </TabsTrigger>
                                 <TabsTrigger value={AuthMethod.TOKEN} className="flex items-center gap-2">
-                                    <Key className="w-4 h-4" />
+                                    <Key className="w-4 h-4"/>
                                     API Token
                                 </TabsTrigger>
                                 <TabsTrigger value={AuthMethod.COOKIE} className="flex items-center gap-2">
-                                    <Cookie className="w-4 h-4" />
+                                    <Cookie className="w-4 h-4"/>
                                     Cookie
                                 </TabsTrigger>
                             </TabsList>
@@ -282,6 +282,22 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                                         required
                                     />
                                 </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="password">Get Cookie Using Credentials*</Label>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={handleClose}
+                                        disabled={isLoading}
+                                    >
+                                        Fetch Cookie
+                                    </Button>
+
+                                    
+
+                                </div>
+
                                 <p className="text-sm text-muted-foreground">
                                     Login with your Frappe username and password. The system will authenticate
                                     and store session cookies automatically.
@@ -345,12 +361,12 @@ export function LoginDialog({ open, onOpenChange }: LoginDialogProps) {
                         <Button type="submit" disabled={isLoading}>
                             {isLoading ? (
                                 <>
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
                                     Authenticating...
                                 </>
                             ) : (
                                 <>
-                                    <Key className="mr-2 h-4 w-4" />
+                                    <Key className="mr-2 h-4 w-4"/>
                                     Authenticate
                                 </>
                             )}

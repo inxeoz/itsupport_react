@@ -6,7 +6,7 @@ import {TooltipProvider} from "@/components/ui/tooltip.tsx";
 import {toast} from "sonner";
 import {type Theme, useTheme} from "@/components/ThemeProvider.tsx";
 import {ApiConfig, ApiConfigDialog,} from "@/components/ApiDialog/ApiConfigDialog.tsx";
-import {LoginDialog} from "@/components/Auth/LoginDialog.tsx";
+import {LoginDialog} from "@/components/Login/LoginDialog.tsx";
 import {TabsNav} from "@/components/Navigation/TabsNav.tsx";
 import {AddViewMenu, type ViewItem,} from "@/components/Navigation/AddViewMenu.tsx";
 import {ThemeMenu} from "@/components/Navigation/ThemeMenu.tsx";

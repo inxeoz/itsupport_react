@@ -88,15 +88,15 @@ await QuickFix.testSingleTicket();
 
 ```javascript
 // Import the test functions
-import { 
-  testApiAuthenticationFix, 
-  testTicketCreation, 
-  runComprehensiveApiTest 
+import {
+  testApiAuthenticationFix,
+  testTicketCreation,
+  runComprehensiveApiTest
 } from './src/services/frappeApiTest.ts';
 
 // Test authentication
 const authResult = await testApiAuthenticationFix();
-console.log('Auth test:', authResult ? 'PASS' : 'FAIL');
+console.log('Login test:', authResult ? 'PASS' : 'FAIL');
 
 // Test ticket creation
 const ticket = await testTicketCreation();
