@@ -1,40 +1,31 @@
 // src/components/Navigation/TopBar.tsx
-import React, { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button.tsx";
-import { Badge } from "@/components/ui/badge.tsx";
-import { TooltipProvider } from "@/components/ui/tooltip.tsx";
-import { toast } from "sonner";
-import { useTheme, type Theme } from "@/components/ThemeProvider.tsx";
+import React, {useEffect, useState} from "react";
+import {Button} from "@/components/ui/button.tsx";
+import {Badge} from "@/components/ui/badge.tsx";
+import {TooltipProvider} from "@/components/ui/tooltip.tsx";
+import {toast} from "sonner";
+import {type Theme, useTheme} from "@/components/ThemeProvider.tsx";
+import {ApiConfig, ApiConfigDialog,} from "@/components/ApiDialog/ApiConfigDialog.tsx";
+import {LoginDialog} from "@/components/Auth/LoginDialog.tsx";
+import {TabsNav} from "@/components/Navigation/TabsNav.tsx";
+import {AddViewMenu, type ViewItem,} from "@/components/Navigation/AddViewMenu.tsx";
+import {ThemeMenu} from "@/components/Navigation/ThemeMenu.tsx";
+import {ProfileMenu} from "@/components/Navigation/ProfileMenu.tsx";
 import {
-    ApiConfigDialog,
-    ApiConfig,
-} from "@/components/ApiDialog/ApiConfigDialog.tsx";
-import { TabsNav } from "@/components/Navigation/TabsNav.tsx";
-import {
-    AddViewMenu,
-    type ViewItem,
-} from "@/components/Navigation/AddViewMenu.tsx";
-import { ThemeMenu } from "@/components/Navigation/ThemeMenu.tsx";
-import { ProfileMenu } from "@/components/Navigation/ProfileMenu.tsx";
-import {
-    Plug,
-    Table,
     BarChart3,
     Calendar,
+    Code,
     FileText,
     FolderOpen,
     FormInput,
     Layers,
     MoreHorizontal,
+    Plug,
+    Table,
     Terminal,
-    Code,
     TestTube,
 } from "lucide-react";
-import {
-    useDashboardStore,
-    useCurrentDashboard,
-    Dashboard,
-} from "@/common/GlobalStore.ts";
+import {Dashboard, useCurrentDashboard, useDashboardStore, useOpenLoginDialog,} from "@/common/GlobalStore.ts";
 
 interface TopBarProps {
     activeTab: string;
@@ -100,9 +91,11 @@ export function TopBar({
         retries: 3,
     });
 
-    const { getThemeClasses, getActualMode } = useTheme();
-    const { isEditable, toggleEditable } = useDashboardStore();
-    const { setDashboard } = useCurrentDashboard();
+    const {getThemeClasses, getActualMode} = useTheme();
+    const {isEditable, toggleEditable} = useDashboardStore();
+    const {setDashboard} = useCurrentDashboard();
+    const {isOpenLoginDialog, setOpenLoginDialog} = useOpenLoginDialog();
+
 
     // Persist tooltip preference
     useEffect(() => {
@@ -173,15 +166,15 @@ export function TopBar({
     };
 
     const boardViews: ViewItem[] = [
-        { id: "table", label: "Table", icon: Table },
-        { id: "gantt", label: "Gantt", icon: BarChart3 },
-        { id: "chart", label: "Chart", icon: BarChart3 },
-        { id: "calendar", label: "Calendar", icon: Calendar },
-        { id: "kanban", label: "Kanban", icon: Layers },
-        { id: "doc", label: "Doc", icon: FileText, badge: "New" },
-        { id: "file-gallery", label: "File gallery", icon: FolderOpen },
-        { id: "form", label: "Form", icon: FormInput },
-        { id: "customizable", label: "Customizable view", icon: MoreHorizontal },
+        {id: "table", label: "Table", icon: Table},
+        {id: "gantt", label: "Gantt", icon: BarChart3},
+        {id: "chart", label: "Chart", icon: BarChart3},
+        {id: "calendar", label: "Calendar", icon: Calendar},
+        {id: "kanban", label: "Kanban", icon: Layers},
+        {id: "doc", label: "Doc", icon: FileText, badge: "New"},
+        {id: "file-gallery", label: "File gallery", icon: FolderOpen},
+        {id: "form", label: "Form", icon: FormInput},
+        {id: "customizable", label: "Customizable view", icon: MoreHorizontal},
     ];
 
     const developerTools: ViewItem[] = [
@@ -337,7 +330,7 @@ export function TopBar({
                             onClick={() => setIsApiConfigOpen(true)}
                             title="API Configuration"
                         >
-                            <Plug className="w-4 h-4 text-muted-foreground mytick-theme" />
+                            <Plug className="w-4 h-4 text-muted-foreground mytick-theme"/>
                         </Button>
 
                         {/* Theme Menu */}
@@ -356,6 +349,7 @@ export function TopBar({
                             showTooltips={showTooltips}
                             onToggleTooltips={handleTooltipToggle}
                             onOpenApiConfig={() => setIsApiConfigOpen(true)}
+                            onLoginDialogOpen={() => setOpenLoginDialog(true)}
                         />
                     </div>
                 </div>
@@ -369,6 +363,16 @@ export function TopBar({
                 onConfigChange={handleApiConfigChange}
                 onTestConnection={handleTestConnection}
             />
+
+
+            {isOpenLoginDialog && (
+                <LoginDialog
+                open={isOpenLoginDialog}
+                onOpenChange={setOpenLoginDialog}
+
+                />
+            )}
+
         </TooltipProvider>
     );
 }

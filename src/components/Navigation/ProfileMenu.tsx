@@ -6,7 +6,7 @@ import React from "react";
 import { Button } from "@/components/ui/button.tsx";
 import { Switch } from "@/components/ui/switch.tsx";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup } from "@/components/ui/dropdown-menu.tsx";
-import { User, UserIcon, Settings, Plug, LogOut, HelpCircle, Palette } from "lucide-react";
+import { User, UserIcon, Settings, Plug, LogOut, HelpCircle, Palette, Fingerprint } from "lucide-react";
 import { ConditionalTooltip } from "@/components/Navigation/ConditionalTooltip.tsx";
 
 interface ProfileMenuProps {
@@ -15,9 +15,10 @@ interface ProfileMenuProps {
   showTooltips: boolean;
   onToggleTooltips: (checked: boolean) => void;
   onOpenApiConfig: () => void;
+    onLoginDialogOpen:()=>void;
 }
 
-export function ProfileMenu({ getThemeClasses, getAccentColorClass, showTooltips, onToggleTooltips, onOpenApiConfig }: ProfileMenuProps) {
+export function ProfileMenu({ getThemeClasses, getAccentColorClass, showTooltips, onToggleTooltips, onOpenApiConfig , onLoginDialogOpen}: ProfileMenuProps) {
   return (
     <ConditionalTooltip
       show={showTooltips}
@@ -84,6 +85,17 @@ export function ProfileMenu({ getThemeClasses, getAccentColorClass, showTooltips
           </div>
 
           <DropdownMenuSeparator className="bg-border mytick-theme" />
+
+
+            <div className="flex items-center justify-between px-3 py-2 mytick-theme hover:cursor-pointer" onClick={onLoginDialogOpen}>
+                <div className="flex items-center gap-3 mytick-theme">
+                    <Fingerprint className="w-4 h-4 text-muted-foreground mytick-theme" />
+                    <span className="text-foreground text-sm mytick-theme">Login</span>
+                </div>
+            </div>
+
+            <DropdownMenuSeparator className="bg-border mytick-theme" />
+
 
           <DropdownMenuItem className="flex items-center gap-3 px-3 py-2 cursor-pointer text-destructive hover:bg-destructive hover:text-destructive-foreground focus:text-destructive mytick-theme">
             <LogOut className="w-4 h-4 mytick-theme" />

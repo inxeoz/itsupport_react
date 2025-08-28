@@ -71,3 +71,17 @@ export const useDashboardDropAble = create<DashboardDropAble>((set) => ({
     setDashboardDropAble: (value: boolean) => set({isDashboardDropAble: value})
 }));
 
+
+type OpenLoginDialog = {
+    isOpenLoginDialog: boolean;
+    toggleOpenLoginDialog:() => void;
+    setOpenLoginDialog: (value: boolean) => void;
+};
+
+export const useOpenLoginDialog = create<OpenLoginDialog>((set) => ({
+    isOpenLoginDialog: false,
+    toggleOpenLoginDialog: () => set((s) => ({isOpenLoginDialog: !s.isOpenLoginDialog})),
+    setOpenLoginDialog: (value: boolean) => set({isOpenLoginDialog: value})
+}));
+
+
