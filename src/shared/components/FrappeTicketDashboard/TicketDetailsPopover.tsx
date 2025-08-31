@@ -31,7 +31,7 @@ import {
   Copy,
 } from "lucide-react";
 import { toast } from "sonner";
-import type { FrappeTicket } from "../../services/frappeApi.ts";
+import type { FrappeTicket } from "@/shared/services/frappeApi.ts";
 import { useEffect } from "react";
 import { useTheme } from "@/app/providers";
 

@@ -16,22 +16,22 @@ import {
 
 import { mockTickets } from "@/shared/services/frappeApi.ts";
 import type { SortField } from "@/shared/types/tickets.ts";
-import { useFrappeTicketDashboardLogic } from "@/components/FrappeTicketDashboard/LogicTicketDashboard.ts";
+import { useFrappeTicketDashboardLogic } from "./LogicTicketDashboard.ts";
 
-import { OverviewCards } from "@/components/FrappeTicketDashboard/OverviewCards.tsx";
-import { FiltersBar } from "@/components/FrappeTicketDashboard/FiltersBar.tsx";
-import { TicketTable } from "@/components/FrappeTicketDashboard/TicketTable.tsx";
-import { PaginationBar } from "@/components/FrappeTicketDashboard/PaginationBar.tsx";
+import { OverviewCards } from "./OverviewCards.tsx";
+import { FiltersBar } from "./FiltersBar.tsx";
+import { TicketTable } from "./TicketTable.tsx";
+import { PaginationBar } from "./PaginationBar.tsx";
 
-import { ApiConfigDialog } from "@/components/ApiDialog/ApiConfigDialog.tsx";
-import { NewTicketDialog } from "@/components/FrappeTicketDashboard/NewTicketDialog.tsx";
-import { TicketDetailsPopover } from "@/components/FrappeTicketDashboard/TicketDetailsPopover.tsx";
-import { ColumnSettingsDialog } from "@/components/FrappeTicketDashboard/columns_settings/ColumnSettingsDialog.tsx";
+import { ApiConfigDialog } from "@/shared/components/ApiDialog/ApiConfigDialog.tsx";
+import { NewTicketDialog } from "./NewTicketDialog.tsx";
+import { TicketDetailsPopover } from "./TicketDetailsPopover.tsx";
+import { ColumnSettingsDialog } from "./columns_settings/ColumnSettingsDialog.tsx";
 
 import UniversalDashboard, {
     type DashboardSection,
     type SectionId,
-} from "@/components/UniversalDashboard/UniversalDashboard.tsx"; // <-- your new generic component
+} from "@/shared/components/UniversalDashboard/UniversalDashboard.tsx"; // <-- your new generic component
 
 import { useLocalStorage } from "@/shared/hooks/useLocalStorage.ts";
 
