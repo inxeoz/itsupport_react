@@ -16,7 +16,7 @@ export default defineConfig({
     "process.env": {},
   },
 build: {
-  outDir: "./static_ui",
+  outDir: "../public/static_ui",
   emptyOutDir: true,
   rollupOptions: {
     output: {
