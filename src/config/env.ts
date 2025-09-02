@@ -2,7 +2,7 @@
 //
 export const API_TOKEN = "1212:1212";
 // 97299629556d968:bf70432185b6d73
-export const BASE_URL = "https://itsupport.inxeoz.com";
+export const BASE_URL = "localhost:8000";
 
 /**
  * Extracts the base URL (protocol + host + optional port) from the current browser URL.
