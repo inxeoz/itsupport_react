@@ -15,15 +15,16 @@ export default defineConfig({
   define: {
     "process.env": {},
   },
-  build: {
-    outDir: "../public/static_ui",
-    emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        entryFileNames: "assets/main.js", // no hash
-        chunkFileNames: "assets/[name].js", // no hash for chunks
-        assetFileNames: "assets/[name].[ext]", // no hash for CSS/images
-      },
+build: {
+  outDir: "./static_ui",
+  emptyOutDir: true,
+  rollupOptions: {
+    output: {
+      manualChunks: () => "everything.js", // disable splitting
+      entryFileNames: "main.js",
+      assetFileNames: "[name].[ext]",      // css/images
     },
   },
+},
+
 });
